@@ -1,11 +1,26 @@
 (ns amps-excel-plugin.core
-  (:require [cheshire.core :as json]))
+  (:require [cheshire.core :as json]
+            [clojure.string :as string]))
 
-(declare keys-in row)
+(declare keys-in rows row row-key)
 
-(defn render [json]
-  (let [m (json/parse-string json)]
-    (to-array-2d (map #(row m %) (keys-in m)))))
+(defn render
+  [json]
+  (to-array-2d (rows (json/parse-string json))))
+
+(defn rows
+  ([m]
+   (mapcat #(rows m %) (keys-in m)))
+
+  ([m keys]
+   (let [x (get-in m keys)]
+     (cond
+       (or (number? x)
+           (string? x)) [(row keys x)]
+       (sequential? x)  (mapcat #(rows {(string/join "/" keys) %}) x)
+       :else            (throw (RuntimeException.
+                                 (format "%s no supported as value in map"
+                                         (.getName (type x)))))))))
 
 (defn keys-in
   ;; https://stackoverflow.com/a/21769786/614800
@@ -21,9 +36,13 @@
              m))
     []))
 
-(defn- row [m keys]
-  (let [v (get-in m keys)]
-    [(clojure.string/join "/" (cons "" keys)) v]))
+(defn- row
+  [keys primitive]
+  [(row-key keys) primitive])
+
+(defn- row-key
+  [strings]
+  (string/join "/" (cons "" strings)))
 
 
 (comment

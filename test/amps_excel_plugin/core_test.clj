@@ -5,19 +5,20 @@
 
 (declare replace-longs-with-ints)
 
+(deftest render
+  (is (java.util.Arrays/deepEquals
+        (core/render (json/generate-string {"a" 1}))
+        (replace-longs-with-ints (to-array-2d [["/a" 1]])))))
+
 (deftest json-of-primitives-no-lists
-  (are [json-as-map vec-2d] (java.util.Arrays/deepEquals
-                                (core/render (json/generate-string json-as-map))
-                                (replace-longs-with-ints (to-array-2d vec-2d)))
+  (are [m rows] (= (core/rows m) rows)
     {"a" 1}       [["/a"   1]]
     {"a" 1
      "b" {"c" 2}} [["/a"   1]
                    ["/b/c" 2]]))
 
 (deftest lists
-  (are [json-as-map vec-2d] (java.util.Arrays/deepEquals
-                              (core/render (json/generate-string json-as-map))
-                              (replace-longs-with-ints (to-array-2d vec-2d)))
+  (are [m rows] (= (core/rows m) rows)
     {"a" [1 2]} [["/a" 1]
                  ["/a" 2]]))
 
@@ -27,7 +28,7 @@
   (doseq [x (range 0 (alength arr))
           y [0 1]]
     (let [e (aget arr x y)]
-      (println (type e))
+      #_(println (type e))
       (when (= Long (type e))
         (aset arr x y (int e)))))
   arr)
