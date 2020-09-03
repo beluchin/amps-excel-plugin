@@ -22,7 +22,7 @@
                                  (format "%s no supported as value in map"
                                          (.getName (type x)))))))))
 
-(defn keys-in
+(defn- keys-in
   ;; https://stackoverflow.com/a/21769786/614800
   [m]
   (if (map? m)
