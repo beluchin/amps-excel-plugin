@@ -1,9 +1,14 @@
 (ns amps-excel-plugin.shell.logging
   (:require [clojure.pprint :as pprint]))
 
+(declare new-logger)
+
+(def ^:constant default-logger
+  (new-logger "amps_excel_plugin"))
+
 (defn info
-  [logger x]
-  (.info logger (with-out-str (pprint/pprint x))))
+  ([x] (info default-logger x))
+  ([logger x] (.info logger (with-out-str (pprint/pprint x)))))
 
 (defn new-logger
   "All logging from Java is done using the 

@@ -14,8 +14,6 @@
             [clojure.pprint :as pprint])
   (:import [com.crankuptheamps.client Client Command MessageHandler]))
 
-(def ^:constant logger
-  (logging/new-logger "amps_excel_plugin.excel.Functions"))
 
 (defn java-subscribe
   [uri topic]
