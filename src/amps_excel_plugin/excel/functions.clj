@@ -8,34 +8,36 @@
                        expand [java.lang.Object] "[[Ljava.lang.Object;"]])
   (:require [amps-excel-plugin.amps :as amps]
             [amps-excel-plugin.core :as core]
-            [amps-excel-plugin.shell :as shell]
-            [amps-excel-plugin.shell.logging :as logging]
-            [cheshire.core :as json]
-            [clojure.pprint :as pprint])
+            [amps-excel-plugin.excel :as excel]
+            [cheshire.core :as json])
   (:import [com.crankuptheamps.client Client Command MessageHandler]))
 
+(defrecord RtdPayload [toStringValue]
+  Object
+  (toString [_] toStringValue))
 
 (defn java-subscribe
   [uri topic]
-  (let [client  (Client. (amps/new-client-name))
-        command (.. (Command. "subscribe") (setTopic topic))
-        rtd     (com.exceljava.jinx.Rtd.)
-        handler (reify MessageHandler
-                  (invoke [_ msg]
-                    (let [json (.getData msg)
-                          rows (core/rows (json/parse-string json))]
-                      (.notify rtd rows))))]
+  (let [subscription (format "topic:%s uri:%s" topic uri)
+        client       (Client. (amps/new-client-name))
+        command      (.. (Command. "subscribe") (setTopic topic))
+        rtd          (com.exceljava.jinx.Rtd.)
+        handler      (reify MessageHandler
+                       (invoke [_ msg]
+                         (let [json (.getData msg)
+                               rows (core/rows (json/parse-string json))]
+                           (swap! excel/subscription->rows assoc subscription rows)
+                           (.notify rtd subscription))))]
     (doto client
       (.connect uri)
       (.logon)
       (.executeAsync command handler))
+    (.notify rtd subscription)
     rtd))
 
 (defn java-expand
-  [x]
-  (if (= clojure.lang.LazySeq (type x))
-    (to-array-2d x)
-    (to-array-2d [["pending"]])))
+  [subscription]
+  (to-array-2d (get @excel/subscription->rows subscription [["pending"]])))
 
 
 (comment
