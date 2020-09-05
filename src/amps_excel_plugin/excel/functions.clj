@@ -23,7 +23,12 @@
                         (swap! excel/subscription->data assoc subscription json)
                         (.notify rtd subscription))]
     (amps/subscribe-json uri topic json-consumer)
+
+    ;; notifying the rtd with the subscription (string) 
+    ;; makes Excel show the string on the cell where the 
+    ;; subscribe function was called.
     (.notify rtd subscription)
+    
     rtd))
 
 (defn java-expand
