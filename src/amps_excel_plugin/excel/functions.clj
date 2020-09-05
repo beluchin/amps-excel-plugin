@@ -24,9 +24,8 @@
         rtd          (com.exceljava.jinx.Rtd.)
         handler      (reify MessageHandler
                        (invoke [_ msg]
-                         (let [json (.getData msg)
-                               rows (core/rows (json/parse-string json))]
-                           (swap! excel/subscription->rows assoc subscription rows)
+                         (let [json (.getData msg)]
+                           (swap! excel/subscription->data assoc subscription json)
                            (.notify rtd subscription))))]
     (doto client
       (.connect uri)
@@ -37,7 +36,10 @@
 
 (defn java-expand
   [subscription]
-  (to-array-2d (get @excel/subscription->rows subscription [["pending"]])))
+  (let [json (@excel/subscription->data subscription)]
+    (if json
+      (to-array-2d (core/rows (json/parse-string json)))
+      (to-array-2d [["pending"]]))))
 
 
 (comment

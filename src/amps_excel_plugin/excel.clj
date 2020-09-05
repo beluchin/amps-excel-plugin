@@ -1,3 +1,3 @@
 (ns amps-excel-plugin.excel)
 
-(def subscription->rows (atom {}))
+(def subscription->data (atom {}))
