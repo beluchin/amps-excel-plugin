@@ -9,8 +9,7 @@
   (:require [amps-excel-plugin.amps :as amps]
             [amps-excel-plugin.core :as core]
             [amps-excel-plugin.excel :as excel]
-            [cheshire.core :as json])
-  (:import [com.crankuptheamps.client Client Command MessageHandler]))
+            [cheshire.core :as json]))
 
 (defrecord RtdPayload [toStringValue]
   Object
@@ -18,19 +17,12 @@
 
 (defn java-subscribe
   [uri topic]
-  (let [subscription (format "topic:%s uri:%s" topic uri)
-        client       (Client. (amps/new-client-name))
-        command      (.. (Command. "subscribe") (setTopic topic))
-        rtd          (com.exceljava.jinx.Rtd.)
-        handler      (reify MessageHandler
-                       (invoke [_ msg]
-                         (let [json (.getData msg)]
-                           (swap! excel/subscription->data assoc subscription json)
-                           (.notify rtd subscription))))]
-    (doto client
-      (.connect uri)
-      (.logon)
-      (.executeAsync command handler))
+  (let [subscription  (format "%s@%s" topic uri)
+        rtd           (com.exceljava.jinx.Rtd.)
+        json-consumer (fn [json]
+                        (swap! excel/subscription->data assoc subscription json)
+                        (.notify rtd subscription))]
+    (amps/subscribe-json uri topic json-consumer)
     (.notify rtd subscription)
     rtd))
 
