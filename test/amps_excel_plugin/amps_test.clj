@@ -1,15 +1,20 @@
 (ns amps-excel-plugin.amps-test
-  (:require [amps-excel-plugin.amps :as sut]
+  (:require [amps-excel-plugin.amps :as amps]
             [clojure.test :as t]))
 
 (declare returning-fn)
 
 (t/deftest get-client
   (t/testing "reuses connections"
-    (with-redefs [sut/get-new-client (returning-fn :blah :bleh :blih)]
+    (with-redefs [amps/get-new-client (returning-fn :blah :bleh :blih)]
       (t/is (= :blah (do
-                       (sut/get-client "anything")
-                       (sut/get-client "anything")))))))
+                       (amps/get-client "anything")
+                       (amps/get-client "anything")))))))
+
+(t/deftest components
+  (t/is (= {::amps/host-port "localhost:8080"
+            ::amps/message-format "json"}
+           (amps/components "tcp://localhost:8080/amps/json"))))
 
 (defn returning-fn 
   "returns a function that returns the args one at time e.g.:
