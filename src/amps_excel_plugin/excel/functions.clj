@@ -38,6 +38,7 @@
 (declare new-rtd new-subscription-id new-subscription)
 (defn java-subscribe
   [uri topic]
+  (logging/info (str "subscribe uri:" uri " topic:" topic))
   (let [subscription-id (new-subscription-id uri topic)
         rtd             (new-rtd subscription-id)
         subscription    (new-subscription uri topic rtd subscription-id)]
@@ -54,6 +55,7 @@
 (declare rtd)
 (defn java-unsubscribe
   [s]
+  (logging/info (str "unsubscribe " s))
   (when (not (.contains s "unsubscribed"))
     (let [subscription (state/get-subscription s)]
       (amps/unsubscribe subscription)
