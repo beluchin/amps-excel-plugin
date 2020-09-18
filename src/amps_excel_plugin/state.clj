@@ -7,17 +7,17 @@
   [subscription-id]
   (@subscription-id->data subscription-id))
 
-(defn get-new-subscription-id
+(defn get-subscription 
+  [subscription-id]
+  (@subscription-id->subscription subscription-id))
+
+(defn new-subscription-id
   [uri topic]
   (let [uri-components (amps/components uri)]
     (format "%s:%s@%s"
             (::amps/message-format uri-components)
             topic
             (::amps/host-port uri-components))))
-
-(defn get-subscription 
-  [subscription-id]
-  (@subscription-id->subscription subscription-id))
 
 (defn put-data
   [subscription-id data]

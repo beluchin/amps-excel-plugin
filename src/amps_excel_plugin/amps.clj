@@ -24,9 +24,9 @@
 
 (defn get-new-client-name [] (.toString (java.util.UUID/randomUUID)))
 
-(defn get-new-json-subscription
+(defn new-json-subscription
   "assumes the uri is truly json i.e tcp://.../amps/json/..."
-  [uri topic json-consumer]
+  [json-consumer uri topic]
   (let [client     (get-client uri)
         command    (.. (Command. "subscribe") (setTopic topic))
         handler    (reify MessageHandler

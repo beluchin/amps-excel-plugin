@@ -4,8 +4,8 @@
    :prefix "java-"
    :methods [
              ^:static
-             [^{com.exceljava.jinx.ExcelFunction {:value "amps.getNewSubscription"}}
-              getNewSubscription [String String] com.exceljava.jinx.Rtd]
+             [^{com.exceljava.jinx.ExcelFunction {:value "amps.subscribe"}}
+              subscribe [String String] com.exceljava.jinx.Rtd]
 
              ;; --
              ^:static
@@ -22,50 +22,74 @@
   (:require [amps-excel-plugin.amps :as amps]
             [amps-excel-plugin.core :as core]
             [amps-excel-plugin.state :as state]
+            [amps-excel-plugin.shell.logging :as logging]
             [cheshire.core :as json]
             [amps-excel-plugin.excel :as excel])
   (:import [com.exceljava.jinx ExcelAddIn Rtd ExcelReference]))
 
+(declare get-2dim-vector)
 (defn java-expand
   [s]
   (to-array-2d
     (if (not (.contains s "unsubscribed"))
-      (let [subscription-id s
-            json            (state/get-data subscription-id)]
-        (if json
-          (core/rows (json/parse-string json))
-          [["pending"]]))
+      (get-2dim-vector s)
       [["**unsubscribed**"]])))
 
-(defn java-getNewSubscription
+(declare new-rtd new-subscription-id new-subscription)
+(defn java-subscribe
   [uri topic]
-  (let [subscription-id (state/get-new-subscription-id uri topic)
-        rtd             (Rtd.)
-        json-consumer   (fn [json]
-                          (println "here!")
-                          (state/put-data subscription-id json)
-                          (.notify rtd subscription-id))
-        subscription    (amps/get-new-json-subscription uri topic json-consumer)]
-    
-    (state/put-subscription subscription-id
-                            (assoc subscription ::excel/rtd rtd))
+  (let [subscription-id (new-subscription-id uri topic)
+        rtd             (new-rtd subscription-id)
+        subscription    (new-subscription uri topic rtd subscription-id)]
 
-    ;; notifying the rtd with the subscription id (string) 
-    ;; makes Excel show the string on the cell where the 
-    ;; subscribe function was called.
+    (state/put-subscription subscription-id subscription)
+
+    ;; notifying the rtd with the subscription id 
+    ;; makes Excel show the latter on the cell where the 
+    ;; this function was called.
     (.notify rtd subscription-id)
 
     rtd))
 
+(declare unsubscribe)
 (defn java-unsubscribe
   [s]
-  (when (not (.contains s "unsubscribed"))
-    (let [subscription-id s
-          subscription    (state/get-subscription subscription-id)]
-      (amps/unsubscribe subscription)
-      (.notify (::excel/rtd subscription)
-               (str "**unsubscribed** " subscription-id))))
+  (when (not (.contains s "unsubscribed")) (unsubscribe s))
   "OK")
+
+(defn- get-2dim-vector
+  [subscription-id]
+  (let [json (state/get-data subscription-id)]
+    (if json
+      (core/rows (json/parse-string json))
+      [["pending"]])))
+
+(defn- new-rtd
+  [subscription-id]
+  (proxy [Rtd] []
+    ;; supports deleting the cell where the subscription
+    ;; was created
+    (onDisconnected [] (unsubscribe subscription-id))))
+
+(defn- new-subscription
+  [uri topic rtd subscription-id]
+  (let [json-consumer (fn [json]
+                        (state/put-data subscription-id json)
+                        (.notify rtd subscription-id))]
+    (-> json-consumer
+        (amps/new-json-subscription uri topic)
+        (assoc ::excel/rtd rtd))))
+
+(defn- new-subscription-id
+  [uri topic]
+  (state/new-subscription-id uri topic))
+
+(defn- unsubscribe
+  [subscription-id]
+  (let [subscription (state/get-subscription subscription-id)]
+    (amps/unsubscribe subscription)
+    (.notify (::excel/rtd subscription)
+             (str "**unsubscribed** " subscription-id))))
 
 (comment
   (println [1 2])
