@@ -51,10 +51,13 @@
 
     rtd))
 
-(declare unsubscribe)
+(declare rtd)
 (defn java-unsubscribe
   [s]
-  (when (not (.contains s "unsubscribed")) (unsubscribe s))
+  (when (not (.contains s "unsubscribed"))
+    (let [subscription (state/get-subscription s)]
+      (amps/unsubscribe subscription)
+      (.notify (rtd subscription) (str "**unsubscribed** " s))))
   "OK")
 
 (defn- get-2dim-vector
@@ -69,7 +72,10 @@
   (proxy [Rtd] []
     ;; supports deleting the cell where the subscription
     ;; was created
-    (onDisconnected [] (unsubscribe subscription-id))))
+    (onDisconnected
+      []
+      (logging/info (str "deleted " subscription-id))
+      (amps/unsubscribe (state/get-subscription subscription-id)))))
 
 (defn- new-subscription
   [uri topic rtd subscription-id]
@@ -84,12 +90,7 @@
   [uri topic]
   (state/new-subscription-id uri topic))
 
-(defn- unsubscribe
-  [subscription-id]
-  (let [subscription (state/get-subscription subscription-id)]
-    (amps/unsubscribe subscription)
-    (.notify (::excel/rtd subscription)
-             (str "**unsubscribed** " subscription-id))))
+(defn- rtd [subscription] (::excel/rtd subscription))
 
 (comment
   (println [1 2])
