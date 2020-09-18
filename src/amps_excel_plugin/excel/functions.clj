@@ -21,11 +21,11 @@
              ])
   (:require [amps-excel-plugin.amps :as amps]
             [amps-excel-plugin.core :as core]
+            [amps-excel-plugin.excel :as excel]
+            [amps-excel-plugin.logging :as logging]
             [amps-excel-plugin.state :as state]
-            [amps-excel-plugin.shell.logging :as logging]
-            [cheshire.core :as json]
-            [amps-excel-plugin.excel :as excel])
-  (:import [com.exceljava.jinx ExcelAddIn Rtd ExcelReference]))
+            [cheshire.core :as json])
+  (:import com.exceljava.jinx.Rtd))
 
 (declare get-2dim-vector)
 (defn java-expand

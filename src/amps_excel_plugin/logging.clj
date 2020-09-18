@@ -1,4 +1,4 @@
-(ns amps-excel-plugin.shell.logging
+(ns amps-excel-plugin.logging
   (:require [clojure.pprint :as pprint]))
 
 (declare default-logger)
