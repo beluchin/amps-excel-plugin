@@ -3,7 +3,11 @@
 
 (declare subscription-id->data subscription-id->subscription)
 
-(defn get-data
+(defn subscription?
+  [s]
+  (contains? @subscription-id->subscription s))
+
+(defn find-data
   [subscription-id]
   (@subscription-id->data subscription-id))
 

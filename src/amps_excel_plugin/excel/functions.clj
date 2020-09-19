@@ -27,13 +27,10 @@
             [cheshire.core :as json])
   (:import com.exceljava.jinx.Rtd))
 
-(declare get-2dim-vector)
+(declare get-vector-2d)
 (defn java-expand
-  [s]
-  (to-array-2d
-    (if (not (.contains s "unsubscribed"))
-      (get-2dim-vector s)
-      [["**unsubscribed**"]])))
+  [s?]
+  (to-array-2d (get-vector-2d s?)))
 
 (declare new-rtd new-subscription-id new-subscription)
 (defn java-subscribe
@@ -62,12 +59,14 @@
       (.notify (rtd subscription) (str "**unsubscribed** " s))))
   "OK")
 
-(defn- get-2dim-vector
-  [subscription-id]
-  (let [json (state/get-data subscription-id)]
-    (if json
-      (core/rows (json/parse-string json))
-      [["pending"]])))
+(defn- get-vector-2d
+  [s?]
+  (if (state/subscription? s?)
+    (let [json? (state/find-data s?)]
+      (if json?
+        (core/rows (json/parse-string json?))
+        [["pending"]]))
+    [["invalid subscription"]]))
 
 (defn- new-rtd
   [subscription-id]
