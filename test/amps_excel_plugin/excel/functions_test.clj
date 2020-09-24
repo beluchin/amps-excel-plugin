@@ -19,9 +19,9 @@
               (sut/java-expand :foo))))))
 
 (t/deftest java-unsubscribe
-  (t/testing "terminated subscriptions"
-    (t/is (= (sut/java-unsubscribe "with - unsubscribed - anywhere")
-             "OK"))))
+  (t/testing "invalid subscription"
+    (t/is (= (sut/java-unsubscribe :invalid-subscription)
+             "invalid subscription"))))
 
 (defn- array-2d
   [x]

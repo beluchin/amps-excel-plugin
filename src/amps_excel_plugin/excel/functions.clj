@@ -40,7 +40,7 @@
         rtd             (new-rtd subscription-id)
         subscription    (new-subscription uri topic rtd subscription-id)]
 
-    (state/put-subscription subscription-id subscription)
+    (state/assoc-subscription subscription-id subscription)
 
     ;; notifying the rtd with the subscription id 
     ;; makes Excel show the latter on the cell where the 
@@ -53,11 +53,15 @@
 (defn java-unsubscribe
   [s]
   (logging/info (str "unsubscribe " s))
-  (when (not (.contains s "unsubscribed"))
-    (let [subscription (state/get-subscription s)]
-      (amps/unsubscribe subscription)
-      (.notify (rtd subscription) (str "**unsubscribed** " s))))
-  "OK")
+  (if (.contains s "**unsubscribed**")
+    "OK"
+    (let [subscription? (state/find-subscription s)]
+      (if subscription?
+        (do (amps/unsubscribe subscription?)
+            (state/remove s)
+            (.notify (rtd subscription?) (str "**unsubscribed** " s))
+            "OK")
+        "invalid subscription"))))
 
 (defn- get-vector-2d
   [s?]
@@ -81,7 +85,7 @@
 (defn- new-subscription
   [uri topic rtd subscription-id]
   (let [json-consumer (fn [json]
-                        (state/put-data subscription-id json)
+                        (state/assoc-data-if-subscribed subscription-id json)
                         (.notify rtd subscription-id))]
     (-> json-consumer
         (amps/new-json-subscription uri topic)
@@ -93,6 +97,3 @@
 
 (defn- rtd [subscription] (::excel/rtd subscription))
 
-(comment
-  (println [1 2])
-  )
