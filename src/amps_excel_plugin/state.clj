@@ -1,6 +1,6 @@
 (ns amps-excel-plugin.state
   (:require [amps-excel-plugin.amps :as amps])
-  (:refer-clojure :exclude [remove]))
+  (:refer-clojure :exclude [dissoc]))
 
 (declare id->data-subscription)
 
@@ -34,7 +34,7 @@
             topic
             (::amps/host-port uri-components))))
 
-(defn remove
+(defn dissoc
   [id]
   (swap! id->data-subscription dissoc id))
 

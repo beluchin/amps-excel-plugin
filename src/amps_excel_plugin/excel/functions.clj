@@ -49,17 +49,19 @@
 
     rtd))
 
-(declare rtd)
+(declare unsubscribe)
 (defn java-unsubscribe
   [s]
   (logging/info (str "unsubscribe " s))
   (if (.contains s "**unsubscribed**")
+
+    ;; excel calls this function again with the string displayed
+    ;; on the subscription cell after unsubscribing
     "OK"
+    
     (let [subscription? (state/find-subscription s)]
       (if subscription?
-        (do (amps/unsubscribe subscription?)
-            (state/remove s)
-            (.notify (rtd subscription?) (str "**unsubscribed** " s))
+        (do (unsubscribe s subscription?)
             "OK")
         "invalid subscription"))))
 
@@ -97,3 +99,8 @@
 
 (defn- rtd [subscription] (::excel/rtd subscription))
 
+(defn- unsubscribe
+  [id subscription]
+  (amps/unsubscribe subscription)
+  (state/dissoc id)
+  (.notify (rtd subscription) (str "**unsubscribed** " id)))

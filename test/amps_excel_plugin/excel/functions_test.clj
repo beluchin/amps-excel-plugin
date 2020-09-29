@@ -20,8 +20,12 @@
 
 (t/deftest java-unsubscribe
   (t/testing "invalid subscription"
-    (t/is (= (sut/java-unsubscribe :invalid-subscription)
-             "invalid subscription"))))
+    (t/is (= "invalid subscription"
+             (sut/java-unsubscribe "something invalid"))))
+
+  (t/testing "**unsubscribed**"
+    (t/is (= "OK"
+             (sut/java-unsubscribe "**unsubscribed** whatever")))))
 
 (defn- array-2d
   [x]
