@@ -15,6 +15,10 @@
   [id subscription]
   (swap! id->data-subscription assoc-in [id ::subscription] subscription))
 
+(defn dissoc
+  [id]
+  (swap! id->data-subscription clojure.core/dissoc id))
+
 (defn find-data [s] (get-in @id->data-subscription [s ::data]))
 
 (defn find-subscription [s] (get-in @id->data-subscription [s ::subscription]))
@@ -33,10 +37,6 @@
             (::amps/message-format uri-components)
             topic
             (::amps/host-port uri-components))))
-
-(defn dissoc
-  [id]
-  (swap! id->data-subscription dissoc id))
 
 (defn subscription? [s] (contains? @id->data-subscription s))
 
