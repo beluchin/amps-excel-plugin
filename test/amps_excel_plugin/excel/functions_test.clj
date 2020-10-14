@@ -6,14 +6,13 @@
 (declare array-2d-equals)
 (t/deftest java-expand
   (t/testing "existing subscription; no data"
-    (with-redefs [state/subscription? (constantly true)
-                  state/find-data (constantly nil)]
+    (with-redefs [state/try-get (constantly {})]
       (t/is (array-2d-equals
               [["pending"]]
               (sut/java-expand :foo)))))
 
   (t/testing "invalid subscriptions"
-    (with-redefs [state/subscription? (constantly false)]
+    (with-redefs [state/try-get (constantly nil)]
       (t/is (array-2d-equals 
               [["invalid subscription"]]
               (sut/java-expand :foo))))))

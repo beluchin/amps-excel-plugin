@@ -1,15 +1,17 @@
 (ns amps-excel-plugin.state
-  (:require [amps-excel-plugin.amps :as amps])
-  (:refer-clojure :exclude [dissoc]))
+  (:refer-clojure :exclude [dissoc find])
+  (:require [amps-excel-plugin.amps :as amps]
+            [amps-excel-plugin.logging :as logging]))
 
 (declare id->data-subscription)
 
 (defn assoc-data-if-subscribed
   [id data]
   (swap! id->data-subscription 
-         #(if (% id)
-            (assoc-in % [id ::data] data)
-            %)))
+         #(let [m? (clojure.core/find % id)]
+            (if m?
+              (assoc-in % [id ::data] data)
+              %))))
 
 (defn assoc-subscription
   [id subscription]
@@ -19,13 +21,10 @@
   [id]
   (swap! id->data-subscription clojure.core/dissoc id))
 
-(defn find-data [s] (get-in @id->data-subscription [s ::data]))
-
-(defn find-subscription [s] (get-in @id->data-subscription [s ::subscription]))
-
+(declare try-get-subscription)
 (defn get-subscription 
   [id]
-  (let [subscription? (find-subscription id)]
+  (let [subscription? (try-get-subscription id)]
     (if subscription?
       subscription?
       (throw (IllegalStateException.)))))
@@ -39,5 +38,10 @@
             (::amps/host-port uri-components))))
 
 (defn subscription? [s] (contains? @id->data-subscription s))
+
+(defn try-get [s] (get @id->data-subscription s))
+
+(defn try-get-subscription [s] (get-in @id->data-subscription [s ::subscription]))
+
 
 (def ^:private id->data-subscription (atom {}))

@@ -27,25 +27,33 @@
             [cheshire.core :as json])
   (:import com.exceljava.jinx.Rtd))
 
-(declare get-vector-2d)
+(declare vector-2d)
 (defn java-expand
-  [s?]
-  (to-array-2d (get-vector-2d s?)))
+  [s]
+  ;; no logging because it is high frequency
+  (to-array-2d
+    (let [map? (state/try-get s)]
+      #_(logging/info map?)
+      #_(logging/info (clojure.core/find map? ::state/data))
+      (cond
+        (nil? map?) [["invalid subscription"]]
+        (nil? (::state/data map?)) [["pending"]]
+        :else (vector-2d (::state/data map?))))))
 
 (declare new-rtd new-subscription-id new-subscription)
 (defn java-subscribe
   [uri topic]
   (logging/info (str "subscribe uri:" uri " topic:" topic))
-  (let [subscription-id (new-subscription-id uri topic)
-        rtd             (new-rtd subscription-id)
-        subscription    (new-subscription uri topic rtd subscription-id)]
+  (let [id           (new-subscription-id uri topic)
+        rtd          (new-rtd id)
+        subscription (new-subscription uri topic rtd id)]
 
-    (state/assoc-subscription subscription-id subscription)
+    (state/assoc-subscription id subscription)
 
     ;; notifying the rtd with the subscription id 
     ;; makes Excel show the latter on the cell where the 
     ;; this function was called.
-    (.notify rtd subscription-id)
+    (.notify rtd id)
 
     rtd))
 
@@ -59,20 +67,11 @@
     ;; on the subscription cell after unsubscribing
     "OK"
     
-    (let [subscription? (state/find-subscription s)]
+    (let [subscription? (state/try-get-subscription s)]
       (if subscription?
         (do (unsubscribe s subscription?)
             "OK")
         "invalid subscription"))))
-
-(defn- get-vector-2d
-  [s?]
-  (if (state/subscription? s?)
-    (let [json? (state/find-data s?)]
-      (if json?
-        (core/rows (json/parse-string json?))
-        [["pending"]]))
-    [["invalid subscription"]]))
 
 (defn- new-rtd
   [subscription-id]
@@ -85,10 +84,10 @@
       (amps/unsubscribe (state/get-subscription subscription-id)))))
 
 (defn- new-subscription
-  [uri topic rtd subscription-id]
+  [uri topic rtd id]
   (let [json-consumer (fn [json]
-                        (state/assoc-data-if-subscribed subscription-id json)
-                        (.notify rtd subscription-id))]
+                        (state/assoc-data-if-subscribed id json)
+                        (.notify rtd id))]
     (-> json-consumer
         (amps/new-json-subscription uri topic)
         (assoc ::excel/rtd rtd))))
@@ -104,3 +103,7 @@
   (amps/unsubscribe subscription)
   (state/dissoc id)
   (.notify (rtd subscription) (str "**unsubscribed** " id)))
+
+(defn- vector-2d
+  [json]
+  (core/rows (json/parse-string json)))
