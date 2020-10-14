@@ -10,12 +10,12 @@
   (swap! id->data-subscription 
          #(let [m? (clojure.core/find % id)]
             (if m?
-              (assoc-in % [id ::data] data)
+              (assoc-in % [id :data] data)
               %))))
 
 (defn assoc-subscription
   [id subscription]
-  (swap! id->data-subscription assoc-in [id ::subscription] subscription))
+  (swap! id->data-subscription assoc-in [id :subscription] subscription))
 
 (defn dissoc
   [id]
@@ -41,7 +41,7 @@
 
 (defn try-get [s] (get @id->data-subscription s))
 
-(defn try-get-subscription [s] (get-in @id->data-subscription [s ::subscription]))
+(defn try-get-subscription [s] (get-in @id->data-subscription [s :subscription]))
 
 
 (def ^:private id->data-subscription (atom {}))

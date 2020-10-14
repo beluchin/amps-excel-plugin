@@ -33,12 +33,10 @@
   ;; no logging because it is high frequency
   (to-array-2d
     (let [map? (state/try-get s)]
-      #_(logging/info map?)
-      #_(logging/info (clojure.core/find map? ::state/data))
       (cond
         (nil? map?) [["invalid subscription"]]
-        (nil? (::state/data map?)) [["pending"]]
-        :else (vector-2d (::state/data map?))))))
+        (nil? (:data map?)) [["pending"]]
+        :else (vector-2d (:data map?))))))
 
 (declare new-rtd new-subscription-id new-subscription)
 (defn java-subscribe
@@ -90,13 +88,13 @@
                         (.notify rtd id))]
     (-> json-consumer
         (amps/new-json-subscription uri topic)
-        (assoc ::excel/rtd rtd))))
+        (assoc :rtd rtd))))
 
 (defn- new-subscription-id
   [uri topic]
   (state/new-subscription-id uri topic))
 
-(defn- rtd [subscription] (::excel/rtd subscription))
+(defn- rtd [subscription] (:rtd subscription))
 
 (defn- unsubscribe
   [id subscription]
