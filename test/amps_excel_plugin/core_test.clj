@@ -12,15 +12,17 @@
 
 (deftest json-of-primitives-no-lists
   (are [m rows] (= (core/rows m) rows)
-    {"a" 1}       [["/a"   1]]
-    {"a" 1
-     "b" {"c" 2}} [["/a"   1]
-                   ["/b/c" 2]]))
+    {"a" 1}              [["/a" 1]]
+    {"a" 1, "b" {"c" 2}} [["/a" 1] ["/b/c" 2]]))
 
 (deftest lists
   (are [m rows] (= (core/rows m) rows)
-    {"a" [1 2]} [["/a" 1]
-                 ["/a" 2]]))
+    {"a" [1 2]} [["/a" 1] ["/a" 2]]))
+
+(deftest preserve-the-order
+  (are [m rows] (= (core/rows m) rows)
+    {"a" 1, "b" 2} [["/a" 1] ["/b" 2]]
+    {"b" 2, "a" 1} [["/b" 2] ["/a" 1]]))
 
 (defn- replace-longs-with-ints 
   "replaces longs for ints on the input two-dim Java array"
