@@ -1,4 +1,6 @@
-(ns amps-excel-plugin.functional.multi-message)
+(ns amps-excel-plugin.functional.multi-message
+  (:require [amps-excel-plugin.functional :as functional]
+            [clojure.string :as string]))
 
 (declare ok-advance-first?)
 (defn merged
@@ -23,6 +25,19 @@
           :else ;; advance second
           (recur prior-k1? ks1 k2? (next ks2) (conj accum k2?)))))))
 
+(declare row-key)
+(defn rows 
+  [ks m1 m2]
+  [(row-key ks) (get-in m1 ks) (get-in m2 ks)])
+
+(defn side-by-side
+  "rows of a side-by-side rendering of two maps"
+  [m1 m2]
+  (into [] (map #(rows % m1 m2)
+                (merged (functional/keys-in m1) (functional/keys-in m2)))))
+
+(declare parent)
+
 (defn- ancestor?
   [coll? k]
   (cond
@@ -38,7 +53,6 @@
     :else
     false))
 
-(declare parent)
 (defn- ok-advance-first?
   "only one of k1? and k2? can be nil"
   [prior-k1? k1? prior-k2? k2?]
@@ -52,6 +66,10 @@
   "nil if key is nil or contains only one element"
   [k?]
   (butlast k?))
+
+(defn- row-key
+  [strings]
+  (string/join "/" (cons "" strings)))
 
 (comment
   (conj [1 2] 3) ; [1 2 3]
