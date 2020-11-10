@@ -2,7 +2,7 @@
   (:require [amps-excel-plugin.functional.multi-message :as multi-message]
             [clojure.test :as t]))
 
-(t/deftest merged
+(t/deftest merged-test
   (t/testing "every empty"
     (t/is (= [] (multi-message/merged [] []))))
 
@@ -31,11 +31,17 @@
       [[:a] [:b]]     [[:c :d1] [:c :d2]]      [[:a] [:b] [:c :d1] [:c :d2]]
       [[:a :b1] [:c]] [[:a :b1] [:a :b2] [:d]] [[:a :b1] [:a :b2] [:c] [:d]])))
 
-(t/deftest side-by-side
-  (t/are [m1 m2 rows] (= rows (multi-message/side-by-side m1 m2))
-      {"a" 1}       {"a" 2}       [["/a"   1   2]]
+(t/deftest side-by-side-test
+  (t/testing "flat"
+    (t/are [m1 m2 rows] (= rows (multi-message/side-by-side m1 m2))
+      ;; flat
+      {"a" 1}       {"a" 2}       [["/a"   1   2  ]]
       {"a" 1}       {}            [["/a"   1   nil]]
-      {"a" 1 "b" 2} {"a" 1 "c" 3} [["/a"   1   1]
+      {"a" 1 "b" 2} {"a" 1 "c" 3} [["/a"   1   1  ]
                                    ["/b"   2   nil]
-                                   ["/c"   nil 3]]
+                                   ["/c"   nil 3  ]]
       {"a" {"b" 1}} {}            [["/a/b" 1   nil]]))
+
+  (t/testing "nested"
+    (t/are [m1 m2 rows] (= rows (multi-message/side-by-side m1 m2))
+      {:a [1]}      {:a [1]}      [["/a" 1 1]])))

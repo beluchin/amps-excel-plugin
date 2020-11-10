@@ -28,13 +28,13 @@
 (declare row-key)
 (defn rows 
   [ks m1 m2]
-  [(row-key ks) (get-in m1 ks) (get-in m2 ks)])
+  [[(row-key ks) (get-in m1 ks) (get-in m2 ks)]])
 
 (defn side-by-side
-  "rows of a side-by-side rendering of two maps"
+  "a sequence of rows of a side-by-side rendering of two maps"
   [m1 m2]
-  (into [] (map #(rows % m1 m2)
-                (merged (functional/keys-in m1) (functional/keys-in m2)))))
+  (mapcat #(rows % m1 m2)
+          (merged (functional/keys-in m1) (functional/keys-in m2))))
 
 (declare parent)
 
