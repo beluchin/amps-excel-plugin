@@ -34,7 +34,6 @@
 (t/deftest side-by-side-test
   (t/testing "flat"
     (t/are [m1 m2 rows] (= rows (multi-message/side-by-side m1 m2))
-      ;; flat
       {"a" 1}       {"a" 2}       [["/a"   1   2  ]]
       {"a" 1}       {}            [["/a"   1   nil]]
       {"a" 1 "b" 2} {"a" 1 "c" 3} [["/a"   1   1  ]

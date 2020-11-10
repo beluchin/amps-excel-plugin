@@ -2,7 +2,7 @@
   (:require [cheshire.core :as json]
             [clojure.string :as string]))
 
-(declare keys-in rows row row-key)
+(declare leafpaths rows row row-key)
 
 (defn render
   [json]
@@ -10,7 +10,7 @@
 
 (defn rows
   ([m]
-   (mapcat #(rows m %) (keys-in m)))
+   (mapcat #(rows m %) (leafpaths m)))
 
   ([m keys]
    (let [x (get-in m keys)]
@@ -22,13 +22,13 @@
                                  (format "%s no supported as value in map"
                                          (.getName (type x)))))))))
 
-(defn- keys-in
+(defn- leafpaths
   ;; https://stackoverflow.com/a/21769786/614800
   [m]
   (if (map? m)
     (vec 
      (mapcat (fn [[k v]]
-               (let [sub (keys-in v)
+               (let [sub (leafpaths v)
                      nested (map #(into [k] %) (filter (comp not empty?) sub))]
                  (if (seq nested)
                    nested
@@ -55,9 +55,9 @@
   (clojure.string/join "/" ["a" "b"])
   (clojure.string/join "/" ["" "a" "b"])
 
-  (keys-in nil) ; []
-  (keys-in {}) ; []
-  (keys-in {:a 1}) ; [[:a]]
-  (keys-in {:a 1 :b {:c 2}}) ; [[:a] [:b :c]]
-  (keys-in {"a" 1 "b" {"c" 2}}) ; [["a"] ["b" "c"]]
+  (leafpaths nil) ; []
+  (leafpaths {}) ; []
+  (leafpaths {:a 1}) ; [[:a]]
+  (leafpaths {:a 1 :b {:c 2}}) ; [[:a] [:b :c]]
+  (leafpaths {"a" 1 "b" {"c" 2}}) ; [["a"] ["b" "c"]]
   )

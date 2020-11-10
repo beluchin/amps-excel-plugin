@@ -4,37 +4,37 @@
 
 (declare ok-advance-first?)
 (defn merged
-  "merges two vectors of map keys - as returned by keys-in"
-  [keys1 keys2]
-  (loop [prior-k1? nil
-         ks1       keys1
-         prior-k2? nil
-         ks2       keys2
-         accum     []]
-    (if (every? empty? [ks1 ks2])
+  "merges two sequences of leafpaths"
+  [leafpaths1 leafpaths2]
+  (loop [prior-lp1  nil
+         lps1       leafpaths1
+         prior-lp2  nil
+         lps2       leafpaths2
+         accum      []]
+    (if (every? empty? [lps1 lps2])
       accum
-      (let [k1? (first ks1)
-            k2? (first ks2)]
+      (let [lp1 (first lps1)
+            lp2 (first lps2)]
         (cond
-          (= k1? k2?)
-          (recur k1? (next ks1) k2? (next ks2) (conj accum k1?))
+          (= lp1 lp2)
+          (recur lp1 (next lps1) lp2 (next lps2) (conj accum lp1))
           
-          (ok-advance-first? prior-k1? k1? prior-k2? k2?)
-          (recur k1? (next ks1) prior-k2? ks2 (conj accum k1?))
+          (ok-advance-first? prior-lp1 lp1 prior-lp2 lp2)
+          (recur lp1 (next lps1) prior-lp2 lps2 (conj accum lp1))
           
           :else ;; advance second
-          (recur prior-k1? ks1 k2? (next ks2) (conj accum k2?)))))))
+          (recur prior-lp1 lps1 lp2 (next lps2) (conj accum lp2)))))))
 
 (declare row-key)
 (defn rows 
-  [ks m1 m2]
-  [[(row-key ks) (get-in m1 ks) (get-in m2 ks)]])
+  [leafpath m1 m2]
+  [[(row-key leafpath) (get-in m1 leafpath) (get-in m2 leafpath)]])
 
 (defn side-by-side
   "a sequence of rows of a side-by-side rendering of two maps"
   [m1 m2]
   (mapcat #(rows % m1 m2)
-          (merged (functional/keys-in m1) (functional/keys-in m2))))
+          (merged (functional/leafpaths m1) (functional/leafpaths m2))))
 
 (declare parent)
 
@@ -54,18 +54,18 @@
     false))
 
 (defn- ok-advance-first?
-  "only one of k1? and k2? can be nil"
-  [prior-k1? k1? prior-k2? k2?]
+  "only one of lp1 and lp2 can be nil"
+  [prior-lp1 lp1 prior-lp2 lp2]
   (cond
-    (nil? k2?) true
-    (nil? k1?) false
-    (ancestor? (parent prior-k1?) k1?) true
-    :else (not (ancestor? (parent prior-k2?) k2?))))
+    (nil? lp2) true
+    (nil? lp1) false
+    (ancestor? (parent prior-lp1) lp1) true
+    :else (not (ancestor? (parent prior-lp2) lp2))))
 
 (defn- parent
   "nil if key is nil or contains only one element"
-  [k?]
-  (butlast k?))
+  [lp]
+  (butlast lp))
 
 (defn- row-key
   [strings]
