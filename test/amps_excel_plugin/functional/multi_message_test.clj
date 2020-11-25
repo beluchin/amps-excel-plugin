@@ -66,5 +66,9 @@
       [:a] {:a [1 :x]} {:a 2} [["/:a" 1 2]
                                ["/:a" :x nil]]))
 
-  #_(t/testing "leaf is a seq of maps"
-      (throw (UnsupportedOperationException.))))
+  (t/testing "leaf is a seq of maps"
+    (t/are [leafpath m1 m2 rows] (= rows (multi-message/rows leafpath m1 m2))
+      [:a] {:a [{:b 1}]} {:a [{:b 2}]} [["/:a/:b" 1 2]]))
+
+  #_(t/testing "one leaf is seq of maps, the other is not"
+    (throw (UnsupportedOperationException.)) ))
