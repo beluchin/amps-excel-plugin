@@ -60,8 +60,11 @@
       [:a] {:a [1 :x]} {:a [2]} [["/:a" 1 2]
                                  ["/:a" :x nil]]))
 
-  #_(t/testing "leaf is a seq of maps"
-      (throw (UnsupportedOperationException.)))
+  (t/testing "leaf is a seq on one side and not on the other"
+    (t/are [leafpath m1 m2 rows] (= rows (multi-message/rows leafpath m1 m2))
+      [:a] {:a [1]} {:a 2} [["/:a" 1 2]]
+      [:a] {:a [1 :x]} {:a 2} [["/:a" 1 2]
+                               ["/:a" :x nil]]))
 
-  #_(t/testing "leaf is a seq on one side and not on the other"
-    (throw (UnsupportedOperationException.))))
+  #_(t/testing "leaf is a seq of maps"
+      (throw (UnsupportedOperationException.))))

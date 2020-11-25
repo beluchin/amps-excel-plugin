@@ -40,7 +40,7 @@
   (mapcat #(rows % m1 m2)
           (merged (functional/leafpaths m1) (functional/leafpaths m2))))
 
-(declare parent)
+(declare coll pad parent)
 
 (defn- ancestor?
   [coll? k]
@@ -57,6 +57,8 @@
     :else
     false))
 
+(defn- coll [x] (if (sequential? x) x [x]))
+
 (defn- ok-advance-first?
   "only one of lp1 and lp2 can be nil"
   [prior-lp1 lp1 prior-lp2 lp2]
@@ -66,19 +68,23 @@
     (ancestor? (parent prior-lp1) lp1) true
     :else (not (ancestor? (parent prior-lp2) lp2))))
 
+(defn- pad [sequential x] (concat sequential (repeat x)))
+
 (defn- parent
   "nil if key is nil or contains only one element"
   [lp]
   (butlast lp))
 
 (defn- rows-for-sequential-leaf
-  "at least on the leaves must be sequential"
+  "at least on the leaves must be sequential - otherwise undefined behavior"
   [leafpath leaf1 leaf2]
-  (let [size (max (count leaf1) (count leaf2))]
-    (letfn [(pad [sequential x] (concat sequential (repeat x)))]
-      (mapcat (partial rows leafpath)
-              (take size (pad (map #(assoc-in {} leafpath %) leaf1) nil))
-              (take size (pad (map #(assoc-in {} leafpath %) leaf2) nil))))))
+  (let [coll1 (coll leaf1)
+        coll2 (coll leaf2)
+        size (max (count coll1) (count coll2))]
+    (mapcat (partial rows leafpath)
+            (take size (pad (map #(assoc-in {} leafpath %) coll1) nil))
+            (take size (pad (map #(assoc-in {} leafpath %) coll2) nil)))
+    ))
 
 (defn- row-key
   [strings]
