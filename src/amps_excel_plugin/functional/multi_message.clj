@@ -28,7 +28,14 @@
 (declare row-key)
 (defn rows 
   [leafpath m1 m2]
-  [[(row-key leafpath) (get-in m1 leafpath) (get-in m2 leafpath)]])
+  (let [leaf1 (get-in m1 leafpath)
+        leaf2 (get-in m2 leafpath)]
+    (letfn [(pad [sequential x] (concat sequential (repeat x)))]
+      (if (some sequential? [leaf1 leaf2])
+        (mapcat (partial rows leafpath)
+                (map #(assoc-in {} leafpath %) leaf1)
+                (map #(assoc-in {} leafpath %) leaf2)) 
+        [[(row-key leafpath) leaf1 leaf2]]))))
 
 (defn side-by-side
   "a sequence of rows of a side-by-side rendering of two maps"

@@ -44,3 +44,19 @@
   (t/testing "nested"
     (t/are [m1 m2 rows] (= rows (multi-message/side-by-side m1 m2))
       {:a [1]}      {:a [1]}      [["/a" 1 1]])))
+
+(t/deftest rows-test
+  (t/testing "leaf is not a seq"
+    (t/is (= [["/:a" 1 2]] (multi-message/rows [:a] {:a 1} {:a 2}))))
+  
+  (t/testing "leafs are a seq of primitives of the same size"
+    (t/are [leafpath m1 m2 rows] (= rows (multi-message/rows leafpath m1 m2))
+      [:a] {:a [1]}    {:a [2]}    [["/:a" 1 2]]
+      [:a] {:a [1 :x]} {:a [2 :y]} [["/:a" 1 2]
+                                    ["/:a" :x :y]]))
+
+  #_(t/testing "leaf is a seq of maps"
+    (throw (UnsupportedOperationException.)))
+
+  #_(t/testing "leaf is a seq on one side and not on the other"
+    (throw (UnsupportedOperationException.))))
