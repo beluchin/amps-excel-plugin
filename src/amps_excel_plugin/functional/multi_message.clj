@@ -25,17 +25,14 @@
           :else ;; advance second
           (recur prior-lp1 lps1 lp2 (next lps2) (conj accum lp2)))))))
 
-(declare row-key)
+(declare row-key rows-for-sequential-leaf)
 (defn rows 
   [leafpath m1 m2]
   (let [leaf1 (get-in m1 leafpath)
         leaf2 (get-in m2 leafpath)]
-    (letfn [(pad [sequential x] (concat sequential (repeat x)))]
-      (if (some sequential? [leaf1 leaf2])
-        (mapcat (partial rows leafpath)
-                (map #(assoc-in {} leafpath %) leaf1)
-                (map #(assoc-in {} leafpath %) leaf2)) 
-        [[(row-key leafpath) leaf1 leaf2]]))))
+    (if (some sequential? [leaf1 leaf2])
+      (rows-for-sequential-leaf leafpath leaf1 leaf2)
+      [[(row-key leafpath) leaf1 leaf2]])))
 
 (defn side-by-side
   "a sequence of rows of a side-by-side rendering of two maps"
@@ -73,6 +70,15 @@
   "nil if key is nil or contains only one element"
   [lp]
   (butlast lp))
+
+(defn- rows-for-sequential-leaf
+  "at least on the leaves must be sequential"
+  [leafpath leaf1 leaf2]
+  (let [size (max (count leaf1) (count leaf2))]
+    (letfn [(pad [sequential x] (concat sequential (repeat x)))]
+      (mapcat (partial rows leafpath)
+              (take size (pad (map #(assoc-in {} leafpath %) leaf1) nil))
+              (take size (pad (map #(assoc-in {} leafpath %) leaf2) nil))))))
 
 (defn- row-key
   [strings]
