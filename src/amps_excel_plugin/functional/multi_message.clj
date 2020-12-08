@@ -76,15 +76,14 @@
   (butlast lp))
 
 (defn- rows-for-sequential-leaf
-  "at least on the leaves must be sequential - otherwise undefined behavior"
+  "at least one leaf must be sequential - otherwise undefined behavior"
   [leafpath leaf1 leaf2]
   (let [coll1 (coll leaf1)
         coll2 (coll leaf2)
         size (max (count coll1) (count coll2))]
-    (mapcat (partial rows leafpath)
+    (mapcat side-by-side 
             (take size (pad (map #(assoc-in {} leafpath %) coll1) nil))
-            (take size (pad (map #(assoc-in {} leafpath %) coll2) nil)))
-    ))
+            (take size (pad (map #(assoc-in {} leafpath %) coll2) nil)))))
 
 (defn- row-key
   [strings]
