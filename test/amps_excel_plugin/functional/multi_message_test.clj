@@ -70,8 +70,10 @@
 
   (t/testing "one leaf is a primitive, the other not a leaf - a map"
     (t/are [leafpath m1 m2 rows] (= rows (multi-message/rows leafpath m1 m2))
-      [:a] {:a 1} {:a {:b 1}} [["/:a"    1   nil]
-                               ["/:a/:b" nil 2]]))
+      [:a] {:a 1}      {:a {:b 2}} [["/:a"    1   nil]
+                                    ["/:a/:b" nil 2]]
+      [:a] {:a {:b 1}} {:a 2}      [["/:a"    nil 2]
+                                    ["/:a/:b" 1   nil]]))
 
   #_(t/testing "leaf is a seq of maps"
       (t/are [leafpath m1 m2 rows] (= rows (multi-message/rows leafpath m1 m2))

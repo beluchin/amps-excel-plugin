@@ -2,6 +2,11 @@
   (:require [amps-excel-plugin.functional :as functional]
             [clojure.string :as string]))
 
+(declare leaf?)
+(defn leaf [x] (when (leaf? x) x))
+
+(def leaf? (complement map?))
+
 (declare ok-advance-first?)
 (defn merged
   "merges two sequences of leafpaths"
@@ -25,14 +30,16 @@
           :else ;; advance second
           (recur prior-lp1 lps1 lp2 (next lps2) (conj accum lp2)))))))
 
-(declare row-key rows-for-sequential-leaf)
-(defn rows 
+(declare row-key rows-for-sequential-leaf rows-one-not-leaf row-for-leafs)
+(defn rows
+  "assumes at least one of the values is a leaf"
   [leafpath m1 m2]
-  (let [leaf1 (get-in m1 leafpath)
-        leaf2 (get-in m2 leafpath)]
-    (if (some sequential? [leaf1 leaf2])
-      (rows-for-sequential-leaf leafpath leaf1 leaf2)
-      [[(row-key leafpath) leaf1 leaf2]])))
+  (let [x1 (get-in m1 leafpath)
+        x2 (get-in m2 leafpath)]
+    (cond
+      (not (every? leaf? [x1 x2])) (rows-one-not-leaf leafpath x1 x2) 
+      (some sequential? [x1 x2]) (rows-for-sequential-leaf leafpath x1 x2)
+      :else (row-for-leafs leafpath x1 x2))))
 
 (defn side-by-side
   "a sequence of rows of a side-by-side rendering of two maps"
@@ -75,6 +82,10 @@
   [lp]
   (butlast lp))
 
+(defn- row-for-leafs
+  [leafpath x1 x2]
+  [[(row-key leafpath) x1 x2]])
+
 (defn- rows-for-sequential-leaf
   "at least one leaf must be sequential - otherwise undefined behavior"
   [leafpath leaf1 leaf2]
@@ -84,6 +95,12 @@
     (mapcat side-by-side 
             (take size (pad (map #(assoc-in {} leafpath %) coll1) nil))
             (take size (pad (map #(assoc-in {} leafpath %) coll2) nil)))))
+
+(defn- rows-one-not-leaf 
+  [leafpath x1 x2]
+  (letfn [(remap [leafpath x] (when (not (leaf? x)) (assoc-in {} leafpath x)))]
+    (into [] (concat (row-for-leafs leafpath (leaf x1) (leaf x2))
+                     (side-by-side (remap leafpath x1) (remap leafpath x2))))))
 
 (defn- row-key
   [strings]
