@@ -40,7 +40,7 @@
                                    ["/b"   2   nil]
                                    ["/c"   nil 3  ]]
       {"a" {"b" 1}} {}            [["/a/b" 1   nil]]
-      {"a" 1}       {"a" {"b" 1}} [["/a"   1   nil]
+      {"a" 1}       {"a" {"b" 2}} [["/a"   1   nil]
                                    ["/a/b" nil 2]]))
 
   (t/testing "nested"
@@ -70,14 +70,14 @@
 
   (t/testing "one leaf is a primitive, the other not a leaf - a map"
     (t/are [leafpath m1 m2 rows] (= rows (multi-message/rows leafpath m1 m2))
-      [:a] {:a 1}      {:a {:b 2}} [["/:a"    1   nil]
-                                    ["/:a/:b" nil 2]]
-      [:a] {:a {:b 1}} {:a 2}      [["/:a"    nil 2]
-                                    ["/:a/:b" 1   nil]]))
+      [:a] {:a 1}      {:a {:b 2}} [["/:a"    1   nil]]
+      [:a] {:a {:b 1}} {:a 2}      [["/:a"    nil 2]]))
 
   (t/testing "leafs are sequences of maps"
       (t/are [leafpath m1 m2 rows] (= rows (multi-message/rows leafpath m1 m2))
         [:a] {:a [{:b 1}]} {:a [{:b 2}]} [["/:a/:b" 1 2]]))
 
-  #_(t/testing "one leaf is seq of maps, the other is not"
-      (throw (UnsupportedOperationException.))))
+  (t/testing "one leaf is seq of maps, the other is a primitive"
+    (t/are [leafpath m1 m2 rows] (= rows (multi-message/rows leafpath m1 m2))
+      [:a] {:a [{:b 1}]} {:a 2} [["/:a/:b" 1   nil]
+                                 ["/:a"    nil 2]])))

@@ -30,7 +30,7 @@
           :else ;; advance second
           (recur prior-lp1 lps1 lp2 (next lps2) (conj accum lp2)))))))
 
-(declare row-key rows-for-sequential-leaf rows-one-not-leaf row-for-primitives)
+(declare row-key rows-for-sequential-leaf row-for-primitives)
 (defn rows
   "assumes at least one of the values is a leaf"
   [leafpath m1 m2]
@@ -38,7 +38,7 @@
         x2 (get-in m2 leafpath)]
     (cond
       (some sequential? [x1 x2]) (rows-for-sequential-leaf leafpath x1 x2)
-      (not (every? leaf? [x1 x2])) (rows-one-not-leaf leafpath x1 x2) 
+      (not (every? leaf? [x1 x2])) (row-for-primitives leafpath (leaf x1) (leaf x2))
       :else (row-for-primitives leafpath x1 x2))))
 
 (defn side-by-side
@@ -95,12 +95,6 @@
     (mapcat side-by-side 
             (take size (pad (map #(assoc-in {} leafpath %) coll1) nil))
             (take size (pad (map #(assoc-in {} leafpath %) coll2) nil)))))
-
-(defn- rows-one-not-leaf 
-  [leafpath x1 x2]
-  (letfn [(remap [leafpath x] (when (not (leaf? x)) (assoc-in {} leafpath x)))]
-    (into [] (concat (row-for-primitives leafpath (leaf x1) (leaf x2))
-                     (side-by-side (remap leafpath x1) (remap leafpath x2))))))
 
 (defn- row-key
   [strings]
