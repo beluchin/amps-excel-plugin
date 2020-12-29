@@ -23,11 +23,14 @@
                  m-coll)))
 
 (defn- keys-to-sequence
-  [m boolean-expr]
+  [m expr]
   (letfn [(take-until-sequence
             [coll k]
             (let [result (conj coll k)]
               (if (sequential? (get-in m result))
                 (reduced result)
                 result)))]
-    (reduce take-until-sequence [] (expr/common-path boolean-expr))))
+    (let [result (reduce take-until-sequence [] (expr/common-path expr))]
+      (if (sequential? (get-in m result))
+        result
+        (throw (IllegalArgumentException. "expression does not reference a sequential value"))))))

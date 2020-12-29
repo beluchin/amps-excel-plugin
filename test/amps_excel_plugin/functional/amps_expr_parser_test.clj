@@ -11,7 +11,7 @@
   (t/testing "reliability - expression does not reference a sequential value"
     (t/is (thrown-with-msg? IllegalArgumentException
                             #"expression does not reference a sequential value"
-                            (sut/parse-subtree-selector {} [:a]))))
+                            (sut/parse-subtree-selector {} [[:a] 1]))))
 
   (t/testing "reliability - more than one sequential value"
     (throw (UnsupportedOperationException.))))
