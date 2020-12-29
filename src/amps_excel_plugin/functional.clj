@@ -16,7 +16,7 @@
     []))
 
 (defn value-in
-  "on m, the ks1 lead to a sequence of maps. An map from the sequence
+  "on m, the ks1 lead to a sequence of maps. A map from the sequence
   is selected using the index-fn and from there the ks2 are used
   to get to a value. The index-fn takes a sequence and returns an index"
   [m ks1 index-fn ks2]
