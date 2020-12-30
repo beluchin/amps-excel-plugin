@@ -27,17 +27,6 @@
              m))
     []))
 
-(defn value-in
-  "on m, the ks1 lead to a sequence of maps. A map from the sequence
-  is selected using the index-fn and from there the ks2 are used
-  to get to a value. The index-fn takes a sequence and returns an index"
-  ^:deprecated ^:toremove
-  [m ks1 index-fn ks2]
-  (-> m
-      (get-in ks1)
-      (#(nth % (index-fn %)))
-      (get-in ks2)))
-
 (defn- keys-to-first-sequence
   [m expr]
   (letfn [(take-until-sequence
