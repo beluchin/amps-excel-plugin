@@ -3,6 +3,25 @@
             [cheshire.core :as cheshire]
             [clojure.test :as t]))
 
+(t/deftest kite-test
+  (t/testing "happy path"
+    (t/is (= {:a {:b 1 :c 2}}
+             (sut/kite {:a [{:b 1 :c 2} {:b 3}]
+                        :d 4}
+                       [[:a :b] 1]))))
+
+  (t/testing "expr does not reference a sequential value"
+    (throw (UnsupportedOperationException.)))
+
+  (t/testing "expr references more than one sequential value"
+    (throw (UnsupportedOperationException.)))
+
+  (t/testing "more than one spoon available"
+    (throw (UnsupportedOperationException.)))
+
+  (t/testing "expr is not boolean - spoon contains a value for the expr"
+    (throw (UnsupportedOperationException.))))
+
 (t/deftest cheshire
   (t/testing "array of maps"
     (t/is (= {"a" [{"b" 2} {"c" 3}]}

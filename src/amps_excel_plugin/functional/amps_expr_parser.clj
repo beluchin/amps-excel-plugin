@@ -7,7 +7,7 @@
   on the subtree to select. index-fn is the index to the element to select
   out of the sequential value.
 
-  The subtree represents a cross-section of m.
+  The subtree represents a cross-section of m starting at the root.
 
   Right now only the = operator is supported."
   [m eq-expr]
@@ -17,12 +17,14 @@
 (declare index-of-first)
 
 (defn- index-fn 
+  ^:toremove
   [ks expr]
   (fn [m-coll] (functional/index-of-first
                  #(expr/evaluate expr (assoc-in {} ks %))
                  m-coll)))
 
 (defn- keys-to-sequence
+  ^:toremove
   [m expr]
   (letfn [(take-until-sequence
             [coll k]
