@@ -3,24 +3,25 @@
             [cheshire.core :as cheshire]
             [clojure.test :as t]))
 
-(t/deftest kite-test
+(t/deftest first-kite-test
   (t/testing "happy path"
     (t/is (= {:a {:b 1 :c 2}}
-             (sut/kite {:a [{:b 1 :c 2} {:b 3}]
-                        :d 4}
-                       [[:a :b] 1]))))
+             (sut/first-kite {:a [{:b 1 :c 2} {:b 3}]
+                              :d 4}
 
-  (t/testing "expr does not reference a sequential value"
-    (throw (UnsupportedOperationException.)))
+                             ;; /a/b = 1
+                             [[:a :b] 1]))))
 
-  (t/testing "expr references more than one sequential value"
-    (throw (UnsupportedOperationException.)))
+  (t/testing "no sequential value - expr is true - the entire map is the kite"
+    (t/is (= {:a 1} (sut/first-kite {:a 1} [[:a] 1]))))
 
-  (t/testing "more than one kite available"
-    (throw (UnsupportedOperationException.)))
+  (t/testing "nil"
+    (t/are [m expr] (nil? (sut/first-kite m expr))
+      ;; no sequential value - expr is not true
+      {:a 1} [[:a] 42]
 
-  (t/testing "expr is not boolean - kite contains a value for the expr"
-    (throw (UnsupportedOperationException.))))
+      ;; more than one sequential value
+      {:a [{:b [{:c 1}]}]} [[:a :b :c] 1])))
 
 (t/deftest cheshire
   (t/testing "array of maps"

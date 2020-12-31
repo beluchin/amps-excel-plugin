@@ -1,16 +1,19 @@
 (ns amps-excel-plugin.functional
   (:require [amps-excel-plugin.functional.expr :as expr]))
 
-(declare keys-to-first-sequence)
-(defn kite 
-  "Returns a map extracted from m based on the expr. The result is a sequence of 
-  nested one-key maps starting from the root and ending on a complete map value 
-  taken from a map sequence value on the original map"
+(declare keys-to-first-coll)
+(defn first-kite 
+  "Returns a map extracted from m based on the expr or nil. 
+
+  When a map is returned, it is either m itself or a series of nested one-key 
+  maps starting from the root and ending on a complete map value taken from a 
+  map collection value on m"
   [m expr]
-  (let [ks    (keys-to-first-sequence m expr)
-        coll  (get-in m ks)
-        kites (map #(assoc-in {} ks %) coll)]
-    (first (filter #(expr/evaluate expr %) kites))))
+  (if-let [ks (keys-to-first-coll m expr)]
+    (let [coll (get-in m ks)
+          kites (map #(assoc-in {} ks %) coll) ]
+      (first (filter #(expr/evaluate expr %) kites)))
+    (when (expr/evaluate expr m) m)))
 
 (defn leafpaths
   ;; https://stackoverflow.com/a/21769786/614800
@@ -27,15 +30,14 @@
              m))
     []))
 
-(defn- keys-to-first-sequence
+(defn- keys-to-first-coll
   [m expr]
-  (letfn [(take-until-sequence
+  (letfn [(take-until-coll
             [coll k]
             (let [result (conj coll k)]
               (if (sequential? (get-in m result))
                 (reduced result)
                 result)))]
-    (let [result (reduce take-until-sequence [] (expr/common-path expr))]
-      (if (sequential? (get-in m result))
-        result
-        (throw (IllegalArgumentException. "expression does not reference a sequential value"))))))
+    (let [result (reduce take-until-coll [] (expr/common-path expr))]
+      (when(sequential? (get-in m result)) result))))
+
