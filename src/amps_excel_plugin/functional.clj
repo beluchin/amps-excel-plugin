@@ -7,7 +7,9 @@
 
   When a map is returned, it is either m itself or a series of nested one-key 
   maps starting from the root and ending on a complete map value taken from a 
-  map collection value on m"
+  map collection value on m.
+
+  Nested collections are not supported."
   [m expr]
   (if-let [ks (keys-to-first-coll m expr)]
     (let [coll (get-in m ks)
@@ -29,6 +31,10 @@
                    [[k]])))
              m))
     []))
+
+(defn value
+  [m context-expr value-expr]
+  )
 
 (defn- keys-to-first-coll
   [m expr]

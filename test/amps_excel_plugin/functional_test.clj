@@ -3,6 +3,11 @@
             [cheshire.core :as cheshire]
             [clojure.test :as t]))
 
+(t/deftest cheshire
+  (t/testing "array of maps"
+    (t/is (= {"a" [{"b" 2} {"c" 3}]}
+             (cheshire/parse-string "{\"a\": [{\"b\": 2},{\"c\": 3}]}")))))
+
 (t/deftest first-kite-test
   (t/testing "happy path"
     (t/is (= {:a {:b 1 :c 2}}
@@ -23,9 +28,9 @@
       ;; more than one sequential value
       {:a [{:b [{:c 1}]}]} [[:a :b :c] 1])))
 
-(t/deftest cheshire
-  (t/testing "array of maps"
-    (t/is (= {"a" [{"b" 2} {"c" 3}]}
-             (cheshire/parse-string "{\"a\": [{\"b\": 2},{\"c\": 3}]}")))))
-
+(t/deftest value-test
+  (t/testing "happy path"
+    (t/is (= 42 (sut/value {:a [{:b 1} {:b 2 :c 42}]}
+                           [[:a :b] 2]
+                           [:a :c])))))
 
