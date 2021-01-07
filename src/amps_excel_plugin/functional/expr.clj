@@ -1,6 +1,5 @@
 (ns amps-excel-plugin.functional.expr
-  (:require [amps-excel-plugin.functional.eq-expr :as eq-expr]
-            [functional :as functional]))
+  (:require [functional :as functional]))
 
 (defprotocol Expr
   (common-path [this])
