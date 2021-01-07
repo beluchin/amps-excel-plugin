@@ -19,6 +19,10 @@
   (t/is (= nil (sut/common-path (sut/->ConstantExpr 42))))
   (t/is (= 42 (sut/evaluate (sut/->ConstantExpr 42) :whatever))))
 
+(t/deftest parse-test
+  (t/testing "value expr"
+    (t/is (= (sut/->ValueExpr ["a" "b"]) (sut/parse "/a/b")))))
+
 (t/deftest value-expr-test
   (t/is (= [:a] (sut/common-path (sut/->ValueExpr [:a]))))
   (t/are [m ks result] (= result (sut/evaluate (sut/->ValueExpr ks) m))

@@ -25,3 +25,6 @@
   Expr
   (common-path [_] ks)
   (evaluate [_ m] (get-in m ks)))
+
+(defn parse
+  [s])
