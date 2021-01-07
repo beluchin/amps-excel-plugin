@@ -34,7 +34,9 @@
 
 (defn value
   [m context-expr value-expr]
-  )
+  (-> m
+      (first-kite context-expr)
+      (#(expr/evaluate value-expr %))))
 
 (defn- keys-to-first-coll
   [m expr]

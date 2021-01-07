@@ -1,5 +1,6 @@
 (ns amps-excel-plugin.functional-test
   (:require [amps-excel-plugin.functional :as sut]
+            [amps-excel-plugin.functional.expr :as expr]
             [cheshire.core :as cheshire]
             [clojure.test :as t]))
 
@@ -31,6 +32,7 @@
 (t/deftest value-test
   (t/testing "happy path"
     (t/is (= 42 (sut/value {:a [{:b 1} {:b 2 :c 42}]}
-                           [[:a :b] 2]
-                           [:a :c])))))
-
+                           (expr/->BinaryExpr (expr/->ValueExpr [:a :b])
+                                              =
+                                              (expr/->ConstantExpr 2))
+                           (expr/->ValueExpr [:a :c]))))))
