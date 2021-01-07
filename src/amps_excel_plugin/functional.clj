@@ -52,5 +52,5 @@
                 (reduced result)
                 result)))]
     (let [result (reduce take-until-coll [] (expr/common-path expr))]
-      (when(sequential? (get-in m result)) result))))
+      (when (sequential? (get-in m result)) result))))
 
