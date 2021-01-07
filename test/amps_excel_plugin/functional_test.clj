@@ -29,10 +29,17 @@
       ;; more than one sequential value
       {:a [{:b [{:c 1}]}]} [[:a :b :c] 1])))
 
+(declare binary-expr value-expr)
 (t/deftest value-test
   (t/testing "happy path"
     (t/is (= 42 (sut/value {:a [{:b 1} {:b 2 :c 42}]}
-                           (expr/->BinaryExpr (expr/->ValueExpr [:a :b])
-                                              =
-                                              (expr/->ConstantExpr 2))
-                           (expr/->ValueExpr [:a :c]))))))
+                           (binary-expr [:a :b] = 2)
+                           (value-expr [:a :c]))))))
+
+(defn- binary-expr
+  [ks op const]
+  (expr/->BinaryExpr (expr/->ValueExpr ks) op (expr/->ConstantExpr const)))
+
+(defn- value-expr
+  [ks]
+  (expr/->ValueExpr ks))

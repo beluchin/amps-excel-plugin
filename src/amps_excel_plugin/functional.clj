@@ -32,11 +32,16 @@
              m))
     []))
 
+(declare evaluate)
 (defn value
   [m context-expr value-expr]
   (-> m
       (first-kite context-expr)
-      (#(expr/evaluate value-expr %))))
+      (evaluate value-expr)))
+
+(defn- evaluate
+  [m value-expr]
+  (expr/evaluate value-expr m))
 
 (defn- keys-to-first-coll
   [m expr]
