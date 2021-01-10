@@ -26,5 +26,7 @@
   (common-path [_] ks)
   (evaluate [_ m] (get-in m ks)))
 
-(defn parse
-  [s])
+(defn parse-value-expr
+  [s]
+  (when (re-matches #"(/[a-zA-Z][a-zA-Z0-9]*)+" s)
+    (->ValueExpr (rest (clojure.string/split s #"/")))))

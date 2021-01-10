@@ -19,9 +19,15 @@
   (t/is (= nil (sut/common-path (sut/->ConstantExpr 42))))
   (t/is (= 42 (sut/evaluate (sut/->ConstantExpr 42) :whatever))))
 
-(t/deftest parse-test
-  (t/testing "value expr"
-    (t/is (= (sut/->ValueExpr ["a" "b"]) (sut/parse "/a/b")))))
+(t/deftest parse-value-expr-test
+  (t/testing "happy path"
+    (t/is (= (sut/->ValueExpr ["a" "b"]) (sut/parse-value-expr "/a/b"))))
+  
+  (t/testing "invalid"
+    (t/are [s] (nil? (sut/parse-value-expr s))
+      "/"
+      "/ a"
+      "/a = 3")))
 
 (t/deftest value-expr-test
   (t/is (= [:a] (sut/common-path (sut/->ValueExpr [:a]))))
