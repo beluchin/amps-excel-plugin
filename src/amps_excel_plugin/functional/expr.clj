@@ -38,7 +38,7 @@
   [s]
   (let [tokens (string/split s #" ")]
     (->BinaryExpr (parse-value-expr (first tokens))
-                  (symbol (second tokens))
+                  (var-get (resolve (symbol (second tokens))))
                   (parse-constant-expr (last tokens)))))
 
 (defn parse-value-expr
