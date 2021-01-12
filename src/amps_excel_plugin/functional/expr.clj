@@ -1,5 +1,6 @@
 (ns amps-excel-plugin.functional.expr
-  (:require [functional :as functional]))
+  (:require [clojure.string :as string]
+            [functional :as functional]))
 
 (defprotocol Expr
   (common-path [this])
@@ -26,11 +27,21 @@
   (common-path [_] ks)
   (evaluate [_ m] (get-in m ks)))
 
+(defn parse-constant-expr
+  [s]
+  (->ConstantExpr (-> s
+                      (.replaceAll "'" "\"")
+                      clojure.edn/read-string)))
+
+(declare parse-value-expr)
 (defn parse-context-expr
   [s]
-  )
+  (let [tokens (string/split s #" ")]
+    (->BinaryExpr (parse-value-expr (first tokens))
+                  (symbol (second tokens))
+                  (parse-constant-expr (last tokens)))))
 
 (defn parse-value-expr
   [s]
   (when (re-matches #"(/[a-zA-Z][a-zA-Z0-9]*)+" s)
-    (->ValueExpr (rest (clojure.string/split s #"/")))))
+    (->ValueExpr (rest (string/split s #"/")))))
