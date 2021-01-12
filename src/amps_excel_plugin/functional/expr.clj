@@ -26,6 +26,10 @@
   (common-path [_] ks)
   (evaluate [_ m] (get-in m ks)))
 
+(defn parse-context-expr
+  [s]
+  )
+
 (defn parse-value-expr
   [s]
   (when (re-matches #"(/[a-zA-Z][a-zA-Z0-9]*)+" s)
