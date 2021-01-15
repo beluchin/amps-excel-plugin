@@ -31,6 +31,17 @@
       ;; more than one sequential value
       {:a [{:b [{:c 1}]}]} [[:a :b :c] = 1])))
 
+(t/deftest rtd+value-coll-test
+  (t/is (= [[:a-rtd 42]]
+           (sut/rtd+value-coll 
+             {"a" {"b" 1
+                   "c" [{"d" 2
+                         "e" 42}]}}
+             [{:filter-expr (expr/parse-binary-expr "/a/b = 1")
+               :context-expr (expr/parse-binary-expr "/a/c/d = 2")
+               :value-expr (expr/parse-value-expr "/a/c/e")
+               :rtd :a-rtd}]))))
+
 (declare value-expr)
 (t/deftest value-test
   (t/testing "happy path"

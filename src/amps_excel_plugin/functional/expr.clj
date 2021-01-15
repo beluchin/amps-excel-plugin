@@ -34,7 +34,7 @@
                       clojure.edn/read-string)))
 
 (declare parse-value-expr)
-(defn parse-context-expr
+(defn parse-binary-expr
   [s]
   (let [tokens (string/split s #" ")]
     (->BinaryExpr (parse-value-expr (first tokens))

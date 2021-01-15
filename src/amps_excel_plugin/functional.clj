@@ -32,6 +32,18 @@
              m))
     []))
 
+(declare value)
+(defn rtd+value-coll
+  [m getValue-coll]
+  (letfn [(message-matches [getValue] (expr/evaluate (:filter-expr getValue) m))
+          (rtd+value [getValue] [(:rtd getValue)
+                                 (value m
+                                        (:context-expr getValue)
+                                        (:value-expr getValue))])]
+    (->> getValue-coll
+         (filter message-matches)
+         (map rtd+value))))
+
 (declare evaluate)
 (defn value
   [m context-expr value-expr]
