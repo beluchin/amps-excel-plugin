@@ -9,14 +9,18 @@
 
              ;; --
              ^:static
-             [^{com.exceljava.jinx.ExcelFunction {:value "amps.expand"
+             [^{com.exceljava.jinx.ExcelFunction {:value "amps.getValue"}}
+              getValue [java.lang.Object String String String] java.lang.Object]
+
+             ;; --
+             ;;^:static
+             #_ [^{com.exceljava.jinx.ExcelFunction {:value "amps.expand"
                                                   :autoResize true}}
               expand [java.lang.Object] "[[Ljava.lang.Object;"]
 
              ;; --
              ^:static
-             [^{com.exceljava.jinx.ExcelFunction {:value "amps.unsubscribe"
-                                                  :isMacroType true}}
+             [^{com.exceljava.jinx.ExcelFunction {:value "amps.unsubscribe"}}
               unsubscribe [String] String]
              ])
   (:require [amps-excel-plugin.amps :as amps]
@@ -27,16 +31,20 @@
             [cheshire.core :as json])
   (:import com.exceljava.jinx.Rtd))
 
-(declare vector-2d)
-(defn java-expand
-  [s]
+#_(declare vector-2d)
+#_(defn java-expand
+  [rtd]
   ;; no logging because it is high frequency
   (to-array-2d
-    (let [map? (state/try-get s)]
+    (let [subscription (state/try-get rtd)]
       (cond
-        (nil? map?) [["invalid subscription"]]
-        (nil? (:data map?)) [["pending"]]
-        :else (vector-2d (:data map?))))))
+        (nil? subscription) [["invalid subscription"]]
+        (nil? (:data subscription)) [["pending"]]
+        :else (vector-2d (:data subscription))))))
+
+(defn java-getValue
+  [rtd-subscription message-filter-expr context-expr value-expr]
+  42.42)
 
 (declare new-rtd new-subscription-id new-subscription)
 (defn java-subscribe
@@ -102,6 +110,6 @@
   (state/dissoc id)
   (.notify (rtd subscription) (str "**unsubscribed** " id)))
 
-(defn- vector-2d
+#_(defn- vector-2d
   [json]
   (core/rows (json/parse-string json)))

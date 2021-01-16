@@ -1,5 +1,6 @@
 (ns amps-excel-plugin.amps
-  (:import [com.crankuptheamps.client Client Command MessageHandler]))
+  (:require [amps-excel-plugin.logging :as logging])
+  (:import [com.crankuptheamps.client Client Command MessageHandler ClientDisconnectHandler]))
 
 (declare get-new-client get-new-client-name uri->client)
 
@@ -20,6 +21,9 @@
   [uri]
   (doto (Client. (get-new-client-name))
     (.connect uri)
+    (.setDisconnectHandler (reify ClientDisconnectHandler
+                             (invoke [_ client]
+                               (logging/info "client disconnected"))))
     (.logon)))
 
 (defn get-new-client-name
