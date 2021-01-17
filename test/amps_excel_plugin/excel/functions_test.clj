@@ -4,7 +4,7 @@
             [clojure.test :as t]))
 
 (declare array-2d-equals)
-(t/deftest java-expand
+#_(t/deftest java-expand
   (t/testing "existing subscription; no data"
     (with-redefs [state/try-get (constantly {})]
       (t/is (array-2d-equals

@@ -11,11 +11,6 @@
                        (amps/get-client "anything")
                        (amps/get-client "anything")))))))
 
-(t/deftest components
-  (t/is (= {::amps/host-port "localhost:8080"
-            ::amps/message-format "json"}
-           (amps/components "tcp://localhost:8080/amps/json"))))
-
 (defn returning-fn 
   "returns a function that returns the args one at time e.g.:
   (def f (returning-fn 1 2 3))

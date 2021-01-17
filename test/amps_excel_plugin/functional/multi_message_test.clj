@@ -47,7 +47,7 @@
     (t/are [m1 m2 rows] (= rows (multi-message/side-by-side m1 m2))
       {"a" [1]}    {"a" [1]}      [["/a" 1 1]])))
 
-(t/deftest closest-match-test
+#_(t/deftest closest-match-test
 
   ;; supports only maps where the leafs are primitives
   
