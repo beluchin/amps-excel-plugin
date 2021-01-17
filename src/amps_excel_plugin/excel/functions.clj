@@ -10,7 +10,7 @@
              ;; --
              ^:static
              [^{com.exceljava.jinx.ExcelFunction {:value "amps.getValue"}}
-              getValue [java.lang.Object String String String] java.lang.Object]
+              getValue [java.lang.Object String String String] com.exceljava.jinx.Rtd]
 
              ;; --
              ;;^:static
@@ -45,17 +45,20 @@
         (nil? (:data subscription)) [["pending"]]
         :else (vector-2d (:data subscription))))))
 
+(declare new-rtd)
 (defn java-getValue
   "returns an rtd. The subscription does not need to be active"
-  [subscription message-filter-expr context-expr value-expr]
-  42.42)
+  [subscription-alias message-filter-expr context-expr value-expr]
+  (let [rtd (new-rtd)]
+    (.notify rtd 42)
+    rtd))
 
-(declare subscribe-and-get-id)
+(declare subscribe-and-get-alias)
 (defn java-subscribe
-  "returns a string that contains the subscription id"
+  "returns a string that contains a subscription alias"
   [uri topic]
   (logging/info (str "subscribe uri:" uri " topic:" topic))
-  (str "OK: " (subscribe-and-get-id uri topic)))
+  (str "OK: " (subscribe-and-get-alias uri topic)))
 
 (declare unsubscribe)
 (defn java-unsubscribe
@@ -74,8 +77,15 @@
         "invalid subscription"))))
 
 (defn- new-rtd
-  [subscription-id]
+  []
   (proxy [Rtd] []
+    ;; supports deleting the cell where the subscription
+    ;; was created
+    (onDisconnected
+      []
+      (logging/info "rtd disconnected")))
+  #_[subscription-id]
+  #_(proxy [Rtd] []
     ;; supports deleting the cell where the subscription
     ;; was created
     (onDisconnected
@@ -83,10 +93,10 @@
       (logging/info (str "deleted " subscription-id))
       (amps/unsubscribe (state/get-subscription subscription-id)))))
 
-(defn- subscribe-and-get-id
+(defn- subscribe-and-get-alias
   [uri topic]
   (amps/subscribe-and-get uri topic (constantly :no-op))
-  (functional/id (functional/subscription uri topic)))
+  (functional/subscription-alias (functional/subscription uri topic)))
 
 (defn- rtd [subscription] (:rtd subscription))
 

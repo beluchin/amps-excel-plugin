@@ -18,7 +18,7 @@
       (first (filter #(expr/evaluate expr %) kites)))
     (when (expr/evaluate expr m) m)))
 
-(defn id
+(defn subscription-alias
   [subscription]
   (format "%s:%s@%s"
           (:message-type subscription)
