@@ -1,5 +1,5 @@
 (ns amps-excel-plugin.core-test
-  (:require [amps-excel-plugin.core :as core]
+  (:require [amps-excel-plugin.core :as sut]
             [cheshire.core :as json]
             [clojure.test :refer :all]))
 
@@ -7,20 +7,20 @@
 
 (deftest render
   (is (java.util.Arrays/deepEquals
-        (core/render (json/generate-string {"a" 1}))
+        (sut/render (json/generate-string {"a" 1}))
         (replace-longs-with-ints (to-array-2d [["/a" 1]])))))
 
 (deftest json-of-primitives-no-lists
-  (are [m rows] (= (core/rows m) rows)
+  (are [m rows] (= (sut/rows m) rows)
     {"a" 1}              [["/a" 1]]
     {"a" 1, "b" {"c" 2}} [["/a" 1] ["/b/c" 2]]))
 
 (deftest lists
-  (are [m rows] (= (core/rows m) rows)
+  (are [m rows] (= (sut/rows m) rows)
     {"a" [1 2]} [["/a" 1] ["/a" 2]]))
 
 (deftest preserve-the-order
-  (are [m rows] (= (core/rows m) rows)
+  (are [m rows] (= (sut/rows m) rows)
     {"a" 1, "b" 2} [["/a" 1] ["/b" 2]]
     {"b" 2, "a" 1} [["/b" 2] ["/a" 1]]))
 

@@ -100,7 +100,7 @@
       [:a] {:a [{:b 1}]} {:a 2} [["/:a/:b" 1   nil]
                                  ["/:a"    nil 2]]))
 
-  (t/testing "a seq of primitives vs a map"
+  #_(t/testing "a seq of primitives vs a map"
     (t/are [leafpath m1 m2 rows] (= rows (multi-message/rows leafpath m1 m2))
       [:a] {:a [1 2]} {:a {:b 2}} [["/:a"    1   nil]
                                    ["/:a"    2   nil]
