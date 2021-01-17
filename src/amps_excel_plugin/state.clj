@@ -29,14 +29,6 @@
       subscription?
       (throw (IllegalStateException.)))))
 
-(defn new-subscription-id
-  [uri topic]
-  (let [uri-components (amps/components uri)]
-    (format "%s:%s@%s"
-            (::amps/message-format uri-components)
-            topic
-            (::amps/host-port uri-components))))
-
 (defn subscription? [s] (contains? @id->data-subscription s))
 
 (defn try-get [s] (get @id->data-subscription s))

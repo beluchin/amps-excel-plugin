@@ -5,7 +5,7 @@
    :methods [
              ^:static
              [^{com.exceljava.jinx.ExcelFunction {:value "amps.subscribe"}}
-              subscribe [String String] com.exceljava.jinx.Rtd]
+              subscribe [String String] String #_com.exceljava.jinx.Rtd]
 
              ;; --
              ^:static
@@ -24,12 +24,15 @@
               unsubscribe [String] String]
              ])
   (:require [amps-excel-plugin.amps :as amps]
+            [amps-excel-plugin.amps.functional :as amps.functional]
             [amps-excel-plugin.core :as core]
             [amps-excel-plugin.excel :as excel]
+            [amps-excel-plugin.functional :as functional]
             [amps-excel-plugin.logging :as logging]
             [amps-excel-plugin.state :as state]
             [cheshire.core :as json])
   (:import com.exceljava.jinx.Rtd))
+
 
 #_(declare vector-2d)
 #_(defn java-expand
@@ -43,25 +46,16 @@
         :else (vector-2d (:data subscription))))))
 
 (defn java-getValue
-  [rtd-subscription message-filter-expr context-expr value-expr]
+  "returns an rtd. The subscription does not need to be active"
+  [subscription message-filter-expr context-expr value-expr]
   42.42)
 
-(declare new-rtd new-subscription-id new-subscription)
+(declare subscribe-and-get-id)
 (defn java-subscribe
+  "returns a string that contains the subscription id"
   [uri topic]
   (logging/info (str "subscribe uri:" uri " topic:" topic))
-  (let [id           (new-subscription-id uri topic)
-        rtd          (new-rtd id)
-        subscription (new-subscription uri topic rtd id)]
-
-    (state/assoc-subscription id subscription)
-
-    ;; notifying the rtd with the subscription id 
-    ;; makes Excel show the latter on the cell where the 
-    ;; this function was called.
-    (.notify rtd id)
-
-    rtd))
+  (str "OK: " (subscribe-and-get-id uri topic)))
 
 (declare unsubscribe)
 (defn java-unsubscribe
@@ -89,18 +83,10 @@
       (logging/info (str "deleted " subscription-id))
       (amps/unsubscribe (state/get-subscription subscription-id)))))
 
-(defn- new-subscription
-  [uri topic rtd id]
-  (let [json-consumer (fn [json]
-                        (state/assoc-data-if-subscribed id json)
-                        (.notify rtd id))]
-    (-> json-consumer
-        (amps/new-json-subscription uri topic)
-        (assoc :rtd rtd))))
-
-(defn- new-subscription-id
+(defn- subscribe-and-get-id
   [uri topic]
-  (state/new-subscription-id uri topic))
+  (amps/subscribe-and-get uri topic (constantly :no-op))
+  (functional/id (functional/subscription uri topic)))
 
 (defn- rtd [subscription] (:rtd subscription))
 

@@ -1,5 +1,6 @@
 (ns amps-excel-plugin.functional
-  (:require [amps-excel-plugin.functional.expr :as expr]))
+  (:require [amps-excel-plugin.amps.functional :as amps.functional]
+            [amps-excel-plugin.functional.expr :as expr]))
 
 (declare keys-to-first-coll)
 (defn first-kite 
@@ -16,6 +17,13 @@
           kites (map #(assoc-in {} ks %) coll) ]
       (first (filter #(expr/evaluate expr %) kites)))
     (when (expr/evaluate expr m) m)))
+
+(defn id
+  [subscription]
+  (format "%s:%s@%s"
+          (:message-type subscription)
+          (:topic subscription)
+          (:host-port subscription)))
 
 (defn leafpaths
   ;; https://stackoverflow.com/a/21769786/614800
@@ -43,6 +51,10 @@
     (->> getValue-coll
          (filter message-matches)
          (map rtd+value))))
+
+(defn subscription
+  [uri topic]
+  (assoc (amps.functional/components uri) :topic topic))
 
 (declare evaluate)
 (defn value

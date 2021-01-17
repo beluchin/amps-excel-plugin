@@ -4,11 +4,6 @@
 
 (declare get-new-client get-new-client-name uri->client)
 
-(defn components
-  [uri]
-  (zipmap [::host-port ::message-format]
-          (rest (re-find #"tcp://([^/]+)/amps/([^/]+)" uri))))
-
 (defn get-client
   "returns a existing client if possible. Otherwise creates a new client"
   [uri]
@@ -32,9 +27,9 @@
           (System/getProperty "user.name")
           (.toString (java.util.UUID/randomUUID))))
 
-(defn new-json-subscription
+(defn subscribe-and-get
   "assumes the uri is truly json i.e tcp://.../amps/json/..."
-  [json-consumer uri topic]
+  [uri topic json-consumer]
   (let [client     (get-client uri)
         command    (.. (Command. "subscribe") (setTopic topic))
         handler    (reify MessageHandler
