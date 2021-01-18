@@ -10,7 +10,7 @@
              ;; --
              ^:static
              [^{com.exceljava.jinx.ExcelFunction {:value "amps.getValue"}}
-              getValue [String String String String] com.exceljava.jinx.Rtd]
+              getValueSowAndSubscribe [String String String String] com.exceljava.jinx.Rtd]
 
              ;; --
              ;;^:static
@@ -46,12 +46,32 @@
         :else (vector-2d (:data subscription))))))
 
 (declare new-rtd)
-(defn java-getValue
-  "returns an rtd. The subscription does not need to be active"
-  [subscription-alias message-filter-expr context-expr value-expr]
-  (let [rtd (new-rtd)]
-    (.notify rtd 42)
-    rtd))
+(defn java-getValueSowAndSubscribe
+  "unknown subscription - the alias is not associated with a subscription
+  not connected         - the subscription is not active
+  connected; no sow     - the subscription is active; there is no sow
+  nil                   - the value is not present on the message"
+  [s-alias message-filter-expr context-expr value-expr]
+  (let [subscription nil #_(get-subscription s-alias)
+        value-spec nil #_(functional/value-spec message-filter-expr
+                                          context-expr
+                                          value-expr)
+        rtd (new-rtd)]
+    #_(amps/with-sow subscription
+      message-filter-expr
+      (fn [sow]
+
+        ;; the order of the next two is arbitrary as
+        ;; the processing thread for the subscription is blocked
+
+        (if sow
+          (.notify rtd (functional/value sow value-spec))
+          (.notify rtd "connected - no sow"))
+        (state/relate rtd subcription-alias value-spec))
+      #(.notify rtd "not connected")
+      #(.notify rtd "unknown subscription"))
+
+     rtd))
 
 (declare subscribe-and-get-alias)
 (defn java-subscribe
@@ -79,8 +99,6 @@
 (defn- new-rtd
   []
   (proxy [Rtd] []
-    ;; supports deleting the cell where the subscription
-    ;; was created
     (onDisconnected
       []
       (logging/info "rtd disconnected")))
@@ -95,7 +113,7 @@
 
 (defn- subscribe-and-get-alias
   [uri topic]
-  (amps/subscribe-and-get uri topic (constantly :no-op))
+  #_(amps/subscribe-and-get uri topic (constantly :no-op))
   (functional/subscription-alias (functional/subscription uri topic)))
 
 (defn- rtd [subscription] (:rtd subscription))
