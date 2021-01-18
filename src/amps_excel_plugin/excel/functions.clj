@@ -10,7 +10,7 @@
              ;; --
              ^:static
              [^{com.exceljava.jinx.ExcelFunction {:value "amps.getValue"}}
-              getValue [java.lang.Object String String String] com.exceljava.jinx.Rtd]
+              getValue [String String String String] com.exceljava.jinx.Rtd]
 
              ;; --
              ;;^:static
