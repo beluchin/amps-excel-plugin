@@ -9,10 +9,10 @@
 (declare connect)
 (defn ensure-connection-and-get-alias
   "Ensure the subscription is active. Returns the default alias.
-  Supports client side filtering"
+  Supports client side filtering."
   ([uri topic]
    (connect uri topic)
-   (functional/subscription-alias (functional/subscription uri topic)))
+   (functional/default-alias (functional/subscription uri topic)))
 
   ([uri topic s-filter]))
 
