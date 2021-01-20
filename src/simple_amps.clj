@@ -17,9 +17,11 @@
 
   ([uri topic s-filter]))
 
+(declare get-client get-new-client get-new-client-name uri->client)
+
 (defn- connect
   [uri topic]
-  (let [client     (internal/get-client uri)
+  (let [client     (get-client uri)
         command    (.. (Command. "subscribe") (setTopic topic))
         handler    (reify MessageHandler
                      (invoke [_ msg] ((constantly :no-op) (.getData msg))))
