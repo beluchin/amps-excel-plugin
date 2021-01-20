@@ -6,16 +6,18 @@
             ClientDisconnectHandler])  
   (:require [simple-amps.functional :as functional]))
 
-(defn get-value-sow-and-subscribe
-  [s-alias s-msg-filter-expr s-context-expr s-value-expr])
-
 (declare connect)
-(defn subscribe-and-get-alias
+(defn ensure-connection-and-get-alias
+  "Ensure the subscription is active. Returns the default alias.
+  Supports client side filtering"
   ([uri topic]
    (connect uri topic)
    (functional/subscription-alias (functional/subscription uri topic)))
 
   ([uri topic s-filter]))
+
+(defn get-value-sow-and-subscribe
+  [s-alias s-msg-filter-expr s-context-expr s-value-expr])
 
 (declare get-client get-new-client get-new-client-name uri->client)
 

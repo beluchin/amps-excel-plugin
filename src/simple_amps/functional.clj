@@ -6,6 +6,13 @@
   (zipmap [:host-port :message-type]
           (rest (re-find #"tcp://([^/]+)/amps/([^/]+)" uri))))
 
+(defn default-alias
+  [subscription]
+  (format "%s:%s@%s"
+          (:message-type subscription)
+          (:topic subscription)
+          (:host-port subscription)))
+
 (declare keys-to-first-coll)
 (defn first-kite 
   "Returns a map extracted from m based on the expr or nil. 
@@ -21,13 +28,6 @@
           kites (map #(assoc-in {} ks %) coll) ]
       (first (filter #(expr/evaluate expr %) kites)))
     (when (expr/evaluate expr m) m)))
-
-(defn subscription-alias
-  [subscription]
-  (format "%s:%s@%s"
-          (:message-type subscription)
-          (:topic subscription)
-          (:host-port subscription)))
 
 
 (defn leafpaths
