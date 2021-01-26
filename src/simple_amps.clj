@@ -4,22 +4,54 @@
             Command
             MessageHandler
             ClientDisconnectHandler])  
-  (:require [simple-amps.functional :as functional]))
+  (:require [simple-amps.functional :as f])
+  (:refer-clojure :exclude [alias filter name]))
 
-(declare connect)
-(defn ensure-connection-and-get-alias
-  "Ensure the subscription is active. Returns the default alias.
-  Supports client side filtering."
-  ([uri topic]
-   (connect uri topic)
-   (functional/default-alias (functional/subscription uri topic)))
+(declare on-aliased state)
+(defn alias
+  "Returns nil.
 
-  ([uri topic s-filter]))
+  No validation of uri occurs here. If the uri is malformed it will
+  be notified via the query-and-subscribe calls. 
 
-(defn get-value-sow-and-subscribe
-  [s-alias s-msg-filter-expr s-context-expr s-value-expr])
+  The connection to AMPS will take place only after a query-and-subscribe 
+  references the alias"
+  ([name ^String uri ^String topic] (alias name uri topic nil))
 
-(declare get-client get-new-client get-new-client-name uri->client)
+  ([name ^String uri ^String topic ^String filter]
+   (let [stream (f/stream uri topic filter)
+         [old-state] (swap-vals! state f/state-with-alias name stream)]
+     (on-aliased name stream old-state))))
+
+(defprotocol QueryValueAndSubscribeConsumer
+  (on-value [this x])
+  (on-active-no-sow [this])
+
+  ;; reason: invalid uri | cannot connect | connection was closed
+  (on-inactive [this reason])
+
+  (on-unaliased [this]))
+
+(declare on-query-value-and-subscribe)
+(defn query-value-and-subscribe
+  "Returns nil or an error when the args are malformed"
+  [name ^String filter ^String context-expr ^String value-expr consumer]
+  (let [qvns-or-error (f/qvns-or-error
+                        filter context-expr value-expr consumer)]
+    (if (f/error? qvns-or-error)
+      qvns-or-error
+      (let [qvns qvns-or-error
+            [old-state] (swap-vals!
+                          state f/state-with-qvns name qvns)]
+        (on-query-value-and-subscribe
+          name qvns old-state)))))
+
+#_(defn unsubscribe
+  [qns-id]
+  (throw (UnsupportedOperationException.)))
+
+(declare assoc-if-absent get-client get-new-client get-new-client-name new-lock
+         uri->client)
 
 (defn- connect
   [uri topic]
@@ -38,6 +70,10 @@
                                    %))]
     (u->c uri)))
 
+(defn- get-lock
+  [subscription]
+  #_(swap! subscription->lock assoc-if-absent subscription new-lock))
+
 (defn- get-new-client
   [uri]
   (doto (Client. (get-new-client-name))
@@ -53,6 +89,10 @@
           (System/getProperty "user.name")
           (.toString (java.util.UUID/randomUUID))))
 
+(defn- on-aliased
+  [name stream old-state]
+  )
+
 (defn- subscribe-and-get-client+command-id
   [uri topic getData-consumer]
   (let [client     (get-client uri)
@@ -66,6 +106,8 @@
   [subscription]
   (let [{:keys [::client ::command-id]} subscription]
     (.unsubscribe client command-id)))
+
+(def ^:private state (atom f/EmptyState))
 
 (def ^:private uri->client (atom {}))
 

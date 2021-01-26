@@ -1,20 +1,36 @@
 (ns simple-amps.functional
+  (:refer-clojure :exclude [filter name])
   (:require [simple-amps.functional.expr :as expr]))
 
-(defn components
+(def error? keyword?)
+
+(defn qvns-or-error 
+  [filter context-expr value-expr consumer]
+  {:filter (expr/parse-binary-expr filter)
+   :context-expr (expr/parse-binary-expr context-expr)
+   :value-expr (expr/parse-value-expr value-expr)
+   :consumer consumer})
+
+(defn state-with-alias
+  [state name stream]
+  (update state :name->stream assoc name stream))
+
+(defn state-with-qvns
+  [state name qvns]
+  (update state :name->qvns-set update name (fnil conj #{}) qvns))
+
+(defn stream
+  [uri topic filter]
+  (let [s {:uri uri :topic topic}]
+    (if filter (assoc s :filter filter) s)))
+
+#_(defn components
   [uri]
   (zipmap [:host-port :message-type]
           (rest (re-find #"tcp://([^/]+)/amps/([^/]+)" uri))))
 
-(defn default-alias
-  [subscription]
-  (format "%s:%s@%s"
-          (:message-type subscription)
-          (:topic subscription)
-          (:host-port subscription)))
-
 (declare keys-to-first-coll)
-(defn first-kite 
+#_(defn first-kite 
   "Returns a map extracted from m based on the expr or nil. 
 
   When a map is returned, it is either m itself or a series of nested one-key 
@@ -29,8 +45,7 @@
       (first (filter #(expr/evaluate expr %) kites)))
     (when (expr/evaluate expr m) m)))
 
-
-(defn leafpaths
+#_(defn leafpaths
   ;; https://stackoverflow.com/a/21769786/614800
   "a leafpath is a sequence of keys from the top to a value that is not a map"
   [m]
@@ -46,7 +61,7 @@
     []))
 
 (declare value)
-(defn rtd+value-coll
+#_(defn rtd+value-coll
   [m getValue-coll]
   (letfn [(message-matches [getValue] (expr/evaluate (:filter-expr getValue) m))
           (rtd+value [getValue] [(:rtd getValue)
@@ -56,10 +71,6 @@
     (->> getValue-coll
          (filter message-matches)
          (map rtd+value))))
-
-(defn subscription
-  [uri topic]
-  (assoc (components uri) :topic topic))
 
 (declare evaluate)
 (defn value

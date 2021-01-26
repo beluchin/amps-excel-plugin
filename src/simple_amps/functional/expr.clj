@@ -1,6 +1,6 @@
 (ns simple-amps.functional.expr
   (:require [clojure.string :as string]
-            [functional :as functional]))
+            [functional :as f]))
 
 (defprotocol Expr
   (common-path [this])
@@ -14,8 +14,7 @@
 ;; ks is a non-empty sequence of keys
 (defrecord BinaryExpr [lhs-expr op rhs-expr]
   Expr
-  (common-path [_] (functional/common-prefix (common-path lhs-expr)
-                                             (common-path rhs-expr)))
+  (common-path [_] (f/common-prefix (common-path lhs-expr) (common-path rhs-expr)))
   (evaluate [_ m] (op (evaluate lhs-expr m) (evaluate rhs-expr m))))
 
 (defrecord IsNullExpr [x])
