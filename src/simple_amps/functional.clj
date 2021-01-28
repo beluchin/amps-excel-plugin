@@ -2,6 +2,11 @@
   (:refer-clojure :exclude [filter name])
   (:require [simple-amps.functional.expr :as expr]))
 
+#_(defn components
+  [uri]
+  (zipmap [:host-port :message-type]
+          (rest (re-find #"tcp://([^/]+)/amps/([^/]+)" uri))))
+
 (def error? keyword?)
 
 (defn qvns-or-error 
@@ -11,23 +16,22 @@
    :value-expr (expr/parse-value-expr value-expr)
    :consumer consumer})
 
-(defn state-with-alias
-  [state name stream]
-  (update state :name->stream assoc name stream))
+(defn state-after-new-alias
+  [state name sub]
+  (update state :name->sub assoc name sub))
 
-(defn state-with-qvns
+(defn state-after-new-qvns
   [state name qvns]
   (update state :name->qvns-set update name (fnil conj #{}) qvns))
 
-(defn stream
+(defn state-after-new-qvns-filter
+  [state sub filter]
+  )
+
+(defn subscription
   [uri topic filter]
   (let [s {:uri uri :topic topic}]
     (if filter (assoc s :filter filter) s)))
-
-#_(defn components
-  [uri]
-  (zipmap [:host-port :message-type]
-          (rest (re-find #"tcp://([^/]+)/amps/([^/]+)" uri))))
 
 (declare keys-to-first-coll)
 (defn first-kite 
@@ -93,3 +97,4 @@
                 result)))]
     (let [result (reduce take-until-coll [] (expr/common-path expr))]
       (when (sequential? (get-in m result)) result))))
+

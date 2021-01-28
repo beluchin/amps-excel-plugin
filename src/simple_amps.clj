@@ -19,9 +19,9 @@
   ([name ^String uri ^String topic] (alias name uri topic nil))
 
   ([name ^String uri ^String topic ^String filter]
-   (let [stream (f/stream uri topic filter)
-         [old-state] (swap-vals! state f/state-with-alias name stream)]
-     (on-aliased name stream old-state))))
+   (let [sub (f/subscription uri topic filter)
+         [old-state] (swap-vals! state f/state-after-new-alias name sub)]
+     (on-aliased name sub old-state))))
 
 (defprotocol QueryValueAndSubscribeConsumer
   (on-value [this x])
@@ -34,23 +34,21 @@
 
 (declare on-query-value-and-subscribe)
 (defn query-value-and-subscribe
-  "Returns nil or an error when the args are malformed"
+  "returns nil or an error when the args are malformed"
   [name ^String filter ^String context-expr ^String value-expr consumer]
-  (let [qvns-or-error (f/qvns-or-error
-                        filter context-expr value-expr consumer)]
+  (let [qvns-or-error (f/qvns-or-error filter context-expr value-expr consumer)]
     (if (f/error? qvns-or-error)
       qvns-or-error
       (let [qvns qvns-or-error
-            [old-state] (swap-vals!
-                          state f/state-with-qvns name qvns)]
-        (on-query-value-and-subscribe
-          name qvns old-state)))))
+            [old-state] (swap-vals! state f/state-after-new-qvns name qvns)]
+        (on-query-value-and-subscribe name qvns old-state)))))
 
 #_(defn unsubscribe
   [qns-id]
   (throw (UnsupportedOperationException.)))
 
-(declare assoc-if-absent get-client get-new-client get-new-client-name new-lock
+(declare assoc-if-absent async connect-or-replace-filter get-client
+         get-new-client get-new-client-name get-subscription new-lock uri
          uri->client)
 
 (defn- connect
@@ -92,6 +90,14 @@
 (defn- on-aliased
   [name stream old-state]
   )
+
+(defn- on-query-value-and-subscribe
+  [name qvns old-state]
+  (let [sub (get-subscription name)]
+    (swap-vals! state f/state-after-new-qvns-filter sub (:filter qvns))
+
+    ;; no blocking calls on the thread where the excel functions are called.
+    (async (uri sub) connect-or-replace-filter sub)))
 
 (defn- subscribe-and-get-client+command-id
   [uri topic getData-consumer]
