@@ -107,7 +107,7 @@
   (let [{:keys [::client ::command-id]} subscription]
     (.unsubscribe client command-id)))
 
-(def ^:private state (atom f/EmptyState))
+(def ^:private state (atom nil))
 
 (def ^:private uri->client (atom {}))
 

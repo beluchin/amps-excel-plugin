@@ -30,7 +30,7 @@
           (rest (re-find #"tcp://([^/]+)/amps/([^/]+)" uri))))
 
 (declare keys-to-first-coll)
-#_(defn first-kite 
+(defn first-kite 
   "Returns a map extracted from m based on the expr or nil. 
 
   When a map is returned, it is either m itself or a series of nested one-key 
@@ -42,7 +42,7 @@
   (if-let [ks (keys-to-first-coll m expr)]
     (let [coll (get-in m ks)
           kites (map #(assoc-in {} ks %) coll) ]
-      (first (filter #(expr/evaluate expr %) kites)))
+      (first (clojure.core/filter #(expr/evaluate expr %) kites)))
     (when (expr/evaluate expr m) m)))
 
 #_(defn leafpaths

@@ -8,7 +8,9 @@
     {:name->stream {:foo :bar}} :foo :qux {:name->stream {:foo :qux}}))
 
 (t/deftest state-with-qvns-test
-  (throw (UnsupportedOperationException.)))
+  (t/are [state n x state'] (= state' (sut/state-with-qvns state n x))
+    nil :foo :bar {:name->qvns-set {:foo #{:bar}}}
+    {:name->qvns-set {:foo #{:bar}}} :foo :qux {:name->qvns-set {:foo #{:bar :qux}}}))
 
 (t/deftest stream-test
   (t/is (= {:uri :foo :topic :bar} (sut/stream :foo :bar nil)))
