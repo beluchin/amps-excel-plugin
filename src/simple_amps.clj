@@ -7,20 +7,20 @@
   (:require [simple-amps.functional :as f])
   (:refer-clojure :exclude [alias filter name]))
 
-(declare on-aliased state)
+(declare on-aliased save)
 (defn alias
   "Returns nil.
 
-  No validation of uri occurs here. If the uri is malformed it will
-  be notified via the query-and-subscribe calls. 
-
   The connection to AMPS will take place only after a query-and-subscribe 
-  references the alias"
+  references the alias.
+
+  No validation of uri occurs here. If the uri is malformed it will
+  be notified via the query-and-subscribe calls. "
   ([name ^String uri ^String topic] (alias name uri topic nil))
 
   ([name ^String uri ^String topic ^String filter]
    (let [sub (f/subscription uri topic filter)
-         [old-state] (swap-vals! state f/state-after-new-alias name sub)]
+         old-state (save name sub)]
      (on-aliased name sub old-state))))
 
 (defprotocol QueryValueAndSubscribeConsumer
@@ -98,6 +98,10 @@
 
     ;; no blocking calls on the thread where the excel functions are called.
     (async (uri sub) connect-or-replace-filter sub)))
+
+(defn- save
+  [name sub]
+  (first (swap-vals! state f/state-after-new-alias name sub)))
 
 (defn- subscribe-and-get-client+command-id
   [uri topic getData-consumer]
