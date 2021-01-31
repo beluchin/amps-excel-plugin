@@ -20,6 +20,11 @@
    :value-expr (expr/parse-value-expr value-expr)
    :consumer consumer})
 
+(declare subscribe-action+args)
+(defn revisit
+  [name state]
+  (subscribe-action+args name state))
+
 (defn state-after-new-alias
   [state name sub]
   (update state :name->sub assoc name sub))
@@ -32,14 +37,29 @@
   [state sub filter]
   )
 
-(defn revisit
-  [sub state]
-  )
+(defn qvns-coll
+  [state name]
+  (-> state :name->qvns-set (get name)))
+
+(defn sub
+  [state name]
+  (-> state :name->subscription (get name)))
+
+(defn subscribe-action+args 
+  [name state]
+  (let [sub (sub state name)
+        coll (qvns-coll state name)
+        filter (apply combine (:filter sub) (map :filter coll))]
+    [:subscribe [(:uri sub) (:topic sub) filter]]))
 
 (defn subscription
   [uri topic filter]
   (let [s {:uri uri :topic topic}]
     (if filter (assoc s :filter filter) s)))
+
+(defn uniq-id
+  []
+  (str (java.util.UUID/randomUUID)))
 
 (declare keys-to-first-coll)
 (defn first-kite 
