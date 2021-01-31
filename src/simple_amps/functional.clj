@@ -7,6 +7,10 @@
   (zipmap [:host-port :message-type]
           (rest (re-find #"tcp://([^/]+)/amps/([^/]+)" uri))))
 
+(defn combine
+  [filter1 filter2 & filter-coll]
+  )
+
 (def error? keyword?)
 
 (defn qvns-or-error 
@@ -26,6 +30,10 @@
 
 (defn state-after-new-qvns-filter
   [state sub filter]
+  )
+
+(defn revisit
+  [sub state]
   )
 
 (defn subscription
