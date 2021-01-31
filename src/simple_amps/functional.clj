@@ -1,6 +1,7 @@
 (ns simple-amps.functional
   (:refer-clojure :exclude [filter name])
-  (:require [simple-amps.functional.expr :as expr]))
+  (:require [simple-amps.functional.expr :as expr]
+            [simple-amps.functional.state :as s]))
 
 #_(defn components
   [uri]
@@ -9,7 +10,7 @@
 
 (defn combine
   [filter1 filter2 & filter-coll]
-  )
+  (throw (UnsupportedOperationException.)))
 
 (def error? keyword?)
 
@@ -25,30 +26,10 @@
   [name state]
   (subscribe-action+args name state))
 
-(defn state-after-new-alias
-  [state name sub]
-  (update state :name->sub assoc name sub))
-
-(defn state-after-new-qvns
-  [state name qvns]
-  (update state :name->qvns-set update name (fnil conj #{}) qvns))
-
-(defn state-after-new-qvns-filter
-  [state sub filter]
-  )
-
-(defn qvns-coll
-  [state name]
-  (-> state :name->qvns-set (get name)))
-
-(defn sub
-  [state name]
-  (-> state :name->subscription (get name)))
-
 (defn subscribe-action+args 
   [name state]
-  (let [sub (sub state name)
-        coll (qvns-coll state name)
+  (let [sub (s/sub state name)
+        coll (s/qvns-coll state name)
         filter (apply combine (:filter sub) (map :filter coll))]
     [:subscribe [(:uri sub) (:topic sub) filter]]))
 
@@ -56,10 +37,6 @@
   [uri topic filter]
   (let [s {:uri uri :topic topic}]
     (if filter (assoc s :filter filter) s)))
-
-(defn uniq-id
-  []
-  (str (java.util.UUID/randomUUID)))
 
 (declare keys-to-first-coll)
 (defn first-kite 

@@ -1,11 +1,8 @@
 (ns simple-amps
-  (:import [com.crankuptheamps.client
-            Client
-            Command
-            MessageHandler
-            ClientDisconnectHandler])  
-  (:require [simple-amps.functional :as f])
-  (:refer-clojure :exclude [alias filter name]))
+  (:refer-clojure :exclude [alias filter name])
+  (:require [simple-amps.functional :as f]
+            [simple-amps.functional.state :as f-state])
+  (:import [com.crankuptheamps.client Client ClientDisconnectHandler Command MessageHandler]))
 
 (declare on-aliased save-alias)
 (defn alias
@@ -106,11 +103,11 @@
 
 (defn- save-alias
   [name sub]
-  (first (swap-vals! state f/state-after-new-alias name sub)))
+  (first (swap-vals! state f-state/state-after-new-alias name sub)))
 
 (defn- save-qvns
   [name qvns]
-  (first (swap-vals! state f/state-after-new-qvns name qvns)))
+  (first (swap-vals! state f-state/state-after-new-qvns name qvns)))
 
 (defn- subscribe-and-get-client+command-id
   [uri topic getData-consumer]
