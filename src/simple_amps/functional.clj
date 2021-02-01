@@ -10,7 +10,9 @@
 
 (defn combine
   [filter1 filter2 & filter-coll]
-  (throw (UnsupportedOperationException.)))
+  (reduce #(format "%s AND (%s)" %1 %2)
+          (format "(%s)" filter1)
+          (conj filter-coll filter2) ))
 
 (def error? keyword?)
 

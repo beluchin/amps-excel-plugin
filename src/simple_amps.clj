@@ -39,10 +39,6 @@
       (do (save-qvns name qvns-or-error)
           (on-query-value-and-subscribe name)))))
 
-#_(defn unsubscribe
-  [qns-id]
-  (throw (UnsupportedOperationException.)))
-
 (defn function
   [kw]
   (resolve (symbol (clojure.core/name kw))))
