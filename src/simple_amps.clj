@@ -43,9 +43,7 @@
   [qns-id]
   (throw (UnsupportedOperationException.)))
 
-(declare async get-client get-new-client get-new-client-name get-subscription
-         revisit state uri->client)
-
+(declare get-client)
 (defn- connect
   [uri topic]
   (let [client     (get-client uri)
@@ -57,8 +55,9 @@
 
 (defn function
   [kw]
-  (resolve (symbol (name kw))))
+  (resolve (symbol (clojure.core/name kw))))
 
+(declare get-new-client uri->client)
 (defn- get-client
   "returns a existing client if possible. Otherwise creates a new client"
   [uri]
@@ -67,6 +66,7 @@
                                    %))]
     (u->c uri)))
 
+(declare get-new-client-name)
 (defn- get-new-client
   [uri]
   (doto (Client. (get-new-client-name))
@@ -86,13 +86,15 @@
   [name sub]
   )
 
+(declare async get-subscription revisit)
 (defn- on-query-value-and-subscribe
   [name]
   (let [sub (get-subscription name)]
     
     ;; no blocking calls on the thread where the excel functions are called.
-    (async (uri sub) revisit name)))
+    (async (:uri sub) revisit name)))
 
+(declare state)
 (defn- revisit
   "subscribes | replaces filter | unsubscribes - depending on the state
 
@@ -109,10 +111,15 @@
   [name qvns]
   (first (swap-vals! state f-state/state-after-new-qvns name qvns)))
 
-(defn- subscribe-and-get-client+command-id
-  [uri topic getData-consumer]
+(declare getData-consumer uniq-id)
+(defn- subscribe
+  [uri topic filter]
   (let [client     (get-client uri)
-        command    (.. (Command. "subscribe") (setTopic topic))
+        sub-id     (uniq-id)
+        command    (.. (Command. "sow_and_subscribe")
+                       (setTopic topic)
+                       (setSubId sub-id)
+                       (setFilter filter))
         handler    (reify MessageHandler
                      (invoke [_ msg] (getData-consumer (.getData msg))))
         command-id (.executeAsync client command handler)]
