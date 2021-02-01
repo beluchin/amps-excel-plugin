@@ -39,7 +39,7 @@
       (do (save-qvns name qvns-or-error)
           (on-query-value-and-subscribe name)))))
 
-(defn function
+(defn- function
   [kw]
   (resolve (symbol (clojure.core/name kw))))
 
