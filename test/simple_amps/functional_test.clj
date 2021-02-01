@@ -4,7 +4,7 @@
 
 (t/deftest subscribe-action+args-test
   (with-redefs [sut/combine #(when (= [:subf :qvns1f :qvns2f] %&) :f)]
-    (t/is (= [:subscribe [:u :t :f]]
+    (t/is (= [:subscribe [{:uri :u :topic :t :filter :subf} :f]]
              (sut/subscribe-action+args :n {:name->sub
                                             {:n {:uri :u
                                                  :topic :t
@@ -18,10 +18,10 @@
                                             }))))
 
   #_(t/testing "replace-filter"
-    (throw (UnsupportedOperationException.)))
+      (throw (UnsupportedOperationException.)))
 
   #_(t/testing "unsubscribe"
-    (throw (UnsupportedOperationException.))))
+      (throw (UnsupportedOperationException.))))
 
 (t/deftest subscription-test
   (t/is (= {:uri :foo :topic :bar} (sut/subscription :foo :bar nil)))

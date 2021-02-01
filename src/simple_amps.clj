@@ -43,16 +43,6 @@
   [qns-id]
   (throw (UnsupportedOperationException.)))
 
-(declare get-client)
-(defn- connect
-  [uri topic]
-  (let [client     (get-client uri)
-        command    (.. (Command. "subscribe") (setTopic topic))
-        handler    (reify MessageHandler
-                     (invoke [_ msg] ((constantly :no-op) (.getData msg))))
-        command-id (.executeAsync client command handler)]
-    [client command-id]))
-
 (defn function
   [kw]
   (resolve (symbol (clojure.core/name kw))))
@@ -103,27 +93,37 @@
   (let [[action-kw args] (f/revisit name @state)]
     (apply (function action-kw) args)))
 
+(defn- save
+  [x y f]
+  (first (swap-vals! state f x y)))
+
+(defn- save-aci
+  [sub aci]
+  (save sub aci f-state/state-after-new-aci))
+
 (defn- save-alias
   [name sub]
-  (first (swap-vals! state f-state/state-after-new-alias name sub)))
+  (save name sub f-state/state-after-new-alias))
 
 (defn- save-qvns
   [name qvns]
-  (first (swap-vals! state f-state/state-after-new-qvns name qvns)))
+  (save name qvns f-state/state-after-new-qvns))
 
-(declare getData-consumer uniq-id)
+(declare uniq-id)
 (defn- subscribe
-  [uri topic filter]
-  (let [client     (get-client uri)
+  [sub filter]
+  (let [client     (get-client (:uri sub))
         sub-id     (uniq-id)
         command    (.. (Command. "sow_and_subscribe")
-                       (setTopic topic)
+                       (setTopic (:topic sub))
                        (setSubId sub-id)
                        (setFilter filter))
         handler    (reify MessageHandler
-                     (invoke [_ msg] (getData-consumer (.getData msg))))
+                     (invoke [_ msg] (.getData msg)))
         command-id (.executeAsync client command handler)]
-    [client command-id]))
+    (save-aci sub (f/aci client command-id sub-id))))
+
+(defn- uniq-id [] (str (java.util.UUID/randomUUID)))
 
 (defn- unsubscribe
   [subscription]
@@ -132,4 +132,4 @@
 
 (def ^:private state (atom nil))
 
-(def ^:private uri->client (atom {}))
+(def ^:private uri->client (atom nil))

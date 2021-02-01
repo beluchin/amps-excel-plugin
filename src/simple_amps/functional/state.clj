@@ -5,6 +5,10 @@
   [state name]
   (-> state :name->qvns-set (get name)))
 
+(defn state-after-new-aci
+  [state sub aci]
+  (update state :sub->aci assoc sub aci))
+
 (defn state-after-new-alias
   [state name sub]
   (update state :name->sub assoc name sub))

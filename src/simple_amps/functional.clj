@@ -3,10 +3,10 @@
   (:require [simple-amps.functional.expr :as expr]
             [simple-amps.functional.state :as s]))
 
-#_(defn components
-  [uri]
-  (zipmap [:host-port :message-type]
-          (rest (re-find #"tcp://([^/]+)/amps/([^/]+)" uri))))
+(defn aci
+  "amps connectivity info"
+  [client command-id sub-id]
+  {:client client :command-id command-id :sub-id sub-id})
 
 (defn combine
   [filter1 filter2 & filter-coll]
@@ -31,7 +31,7 @@
   (let [sub (s/sub state name)
         coll (s/qvns-coll state name)
         filter (apply combine (:filter sub) (map :filter coll))]
-    [:subscribe [(:uri sub) (:topic sub) filter]]))
+    [:subscribe [sub filter]]))
 
 (defn subscription
   [uri topic filter]
