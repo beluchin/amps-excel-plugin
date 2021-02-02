@@ -1,5 +1,5 @@
 (ns simple-amps.functional
-  (:refer-clojure :exclude [filter name])
+  (:refer-clojure :exclude [alias filter])
   (:require [simple-amps.functional.expr :as expr]
             [simple-amps.functional.state :as s]))
 
@@ -25,13 +25,13 @@
 
 (declare subscribe-action+args)
 (defn revisit
-  [name state]
-  (subscribe-action+args name state))
+  [alias state]
+  (subscribe-action+args alias state))
 
 (defn subscribe-action+args 
-  [name state]
-  (let [sub (s/sub state name)
-        coll (s/qvns-coll state name)
+  [alias state]
+  (let [sub (s/sub state alias)
+        coll (s/qvns-set state alias)
         filter (apply combine (:filter sub) (map :filter coll))]
     [:subscribe [sub filter]]))
 

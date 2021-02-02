@@ -2,10 +2,18 @@
   (:require [simple-amps.functional.state :as sut]
             [clojure.test :as t]))
 
+(t/deftest qvns-set-test
+  (t/testing "from subscription alias"
+    (t/is (= :foo (sut/qvns-set {:alias->qvns-set {:a :foo}} :a))))
+
+  (t/testing "from subscription"
+    (t/are [s sub qvns-set] (= qvns-set (sut/qvns-set s sub))
+      {:alias->qvns-set {:a :foo} :alias->sub {:a :sub}} :sub :foo)))
+
 (t/deftest state-after-new-alias-test
-  (t/are [state n x state'] (= state' (sut/state-after-new-alias state n x))
-    nil :foo :bar {:name->sub {:foo :bar}}
-    {:name->sub {:foo :bar}} :foo :qux {:name->sub {:foo :qux}}))
+  (t/are [state a x state'] (= state' (sut/state-after-new-alias state a x))
+    nil :foo :bar {:alias->sub {:foo :bar}}
+    {:alias->sub {:foo :bar}} :foo :qux {:alias->sub {:foo :qux}}))
 
 (t/deftest state-after-new-ampsies-test
   (t/are [s sub a s'] (= s' (sut/state-after-new-ampsies s sub a))
@@ -18,6 +26,6 @@
     {:uri->executor {:u :e}} :u :e' {:uri->executor {:u :e}}))
 
 (t/deftest state-after-new-qvns-test
-  (t/are [state n x state'] (= state' (sut/state-after-new-qvns state n x))
-    nil :foo :bar {:name->qvns-set {:foo #{:bar}}}
-    {:name->qvns-set {:foo #{:bar}}} :foo :qux {:name->qvns-set {:foo #{:bar :qux}}}))
+  (t/are [state a x state'] (= state' (sut/state-after-new-qvns state a x))
+    nil :foo :bar {:alias->qvns-set {:foo #{:bar}}}
+    {:alias->qvns-set {:foo #{:bar}}} :foo :qux {:alias->qvns-set {:foo #{:bar :qux}}}))

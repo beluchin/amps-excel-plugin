@@ -1,24 +1,25 @@
 (ns simple-amps
-  (:refer-clojure :exclude [alias filter name])
+  (:refer-clojure :exclude [alias filter])
   (:require [simple-amps.functional :as f]
             [simple-amps.functional.state :as f-state])
-  (:import [com.crankuptheamps.client Client ClientDisconnectHandler Command MessageHandler]))
+  (:import [com.crankuptheamps.client Client ClientDisconnectHandler Command
+            Message$Command MessageHandler]))
 
 (declare on-aliased save-alias)
 (defn alias
-  "Returns nil.
+  "Returns any other aliases associated with the same subscription or nil.
 
   The connection to AMPS will take place only after a query-value-and-subscribe 
   references the alias.
 
   No validation of uri occurs here. If the uri is malformed it will
   be notified via the query-value-and-subscribe calls."
-  ([name ^String uri ^String topic] (alias name uri topic nil))
+  ([a ^String uri ^String topic] (alias a uri topic nil))
 
-  ([name ^String uri ^String topic ^String filter]
+  ([a ^String uri ^String topic ^String filter]
    (let [sub (f/subscription uri topic filter)]
-      (save-alias name sub)
-      (on-aliased name sub))))
+      (save-alias a sub)
+      (on-aliased a sub))))
 
 (defprotocol QueryValueAndSubscribeConsumer
   (on-value [this x])
@@ -32,21 +33,21 @@
 (declare on-query-value-and-subscribe save-qvns)
 (defn query-value-and-subscribe
   "returns nil or an error when the args are malformed"
-  [name ^String filter ^String context-expr ^String value-expr consumer]
+  [a ^String filter ^String context-expr ^String value-expr consumer]
   (let [qvns-or-error (f/qvns-or-error filter context-expr value-expr consumer)]
     (if (f/error? qvns-or-error)
       qvns-or-error
-      (do (save-qvns name qvns-or-error)
-          (on-query-value-and-subscribe name)))))
+      (do (save-qvns a qvns-or-error)
+          (on-query-value-and-subscribe a)))))
 
 (declare get-executor)
-(defn- asynch
+(defn- async
   [uri f & args]
   (.submit (get-executor uri) #(apply f args)))
 
 (defn- function
   [kw]
-  (resolve (symbol (clojure.core/name kw))))
+  (resolve (symbol (name kw))))
 
 (declare get-new-client uri->client)
 (defn- get-client
@@ -83,25 +84,35 @@
           (System/getProperty "user.name")
           (.toString (java.util.UUID/randomUUID))))
 
+(defn- new-msg-handler
+  [sub]
+  (reify MessageHandler
+    (invoke [_ msg]
+      (case (.getCommand msg)
+        (Message$Command/SOW Message$Command/Publish)
+        (let [m (.getData msg)]
+          (doseq [qvns (f-state/qvns-set @state sub)]
+            (notify qvns m)))))))
+
 (defn- on-aliased
-  [name sub]
+  [a sub]
   )
 
 (declare async get-subscription revisit)
 (defn- on-query-value-and-subscribe
-  [name]
-  (let [sub (get-subscription name)]
+  [a]
+  (let [sub (get-subscription a)]
     
     ;; no blocking calls on the thread where the excel functions are called.
-    (async (:uri sub) revisit name)))
+    (async (:uri sub) revisit a)))
 
 (declare state)
 (defn- revisit
   "subscribes | replaces filter | unsubscribes - depending on the state
 
   Assumes no concurrency by subscription"
-  [name]
-  (let [[action-kw args] (f/revisit name @state)]
+  [a]
+  (let [[action-kw args] (f/revisit a @state)]
     (apply (function action-kw) args)))
 
 (defn- save-ampsies
@@ -109,16 +120,16 @@
   (swap! state f-state/state-after-new-ampsies sub ampsies))
 
 (defn- save-alias
-  [name sub]
-  (swap! state f-state/state-after-new-alias name sub))
+  [a sub]
+  (swap! state f-state/state-after-new-alias a sub))
 
 (defn- save-executor-if-absent
   [uri executor]
   (swap! state f-state/state-after-new-executor-if-absent uri executor))
 
 (defn- save-qvns
-  [name qvns]
-  (swap! state f-state/state-after-new-qvns name qvns))
+  [a qvns]
+  (swap! state f-state/state-after-new-qvns a qvns))
 
 (declare uniq-id)
 (defn- subscribe
@@ -129,8 +140,7 @@
                        (setTopic (:topic sub))
                        (setSubId sub-id)
                        (setFilter filter))
-        handler    (reify MessageHandler
-                     (invoke [_ msg] (.getData msg)))
+        handler    (new-msg-handler sub)
         command-id (.executeAsync client command handler)]
     (save-ampsies sub (f/ampsies client command-id sub-id))))
 
