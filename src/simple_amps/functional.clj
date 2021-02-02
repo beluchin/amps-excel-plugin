@@ -3,7 +3,7 @@
   (:require [simple-amps.functional.expr :as expr]
             [simple-amps.functional.state :as s]))
 
-(defn aci
+(defn ampsies
   "amps connectivity info"
   [client command-id sub-id]
   {:client client :command-id command-id :sub-id sub-id})

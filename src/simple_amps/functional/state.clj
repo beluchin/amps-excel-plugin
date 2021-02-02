@@ -1,22 +1,29 @@
-(ns simple-amps.functional.state
-  (:refer-clojure :exclude [name]))
+(ns simple-amps.functional.state)
+
+(defn executor
+  [state uri]
+  (get-in state :uri->executor uri))
 
 (defn qvns-coll
-  [state name]
-  (-> state :name->qvns-set (get name)))
+  [state n]
+  (get-in state :name->qvns-set n))
 
-(defn state-after-new-aci
-  [state sub aci]
-  (update state :sub->aci assoc sub aci))
+(defn state-after-new-ampsies
+  [state sub ampsies]
+  (assoc-in state [:sub->ampsies sub] ampsies))
 
 (defn state-after-new-alias
-  [state name sub]
-  (update state :name->sub assoc name sub))
+  [state n sub]
+  (assoc-in state [:name->sub n] sub))
+
+(defn state-after-new-executor-if-absent
+  [state uri executor]
+  (update-in state [:uri->executor uri] #(or % executor)))
 
 (defn state-after-new-qvns
-  [state name qvns]
-  (update state :name->qvns-set update name (fnil conj #{}) qvns))
+  [state n qvns]
+  (update-in state [:name->qvns-set n] (fnil conj #{}) qvns))
 
 (defn sub
-  [state name]
-  (-> state :name->sub (get name)))
+  [state n]
+  (get-in state :name->sub n))

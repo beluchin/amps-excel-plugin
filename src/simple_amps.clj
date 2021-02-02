@@ -39,6 +39,11 @@
       (do (save-qvns name qvns-or-error)
           (on-query-value-and-subscribe name)))))
 
+(declare get-executor)
+(defn- asynch
+  [uri f & args]
+  (.submit (get-executor uri) #(apply f args)))
+
 (defn- function
   [kw]
   (resolve (symbol (clojure.core/name kw))))
@@ -51,6 +56,16 @@
                                    (assoc % uri (get-new-client uri))
                                    %))]
     (u->c uri)))
+
+(declare save-executor-if-absent)
+(defn- get-executor
+  [uri]
+  (let [e (f-state/executor state uri)]
+    (if e
+      e
+      (let [new-e (java.util.concurrent.Executors/newSingleThreadExecutor)]
+        (save-executor-if-absent uri new-e)
+        (f-state/executor state uri)))))
 
 (declare get-new-client-name)
 (defn- get-new-client
@@ -89,21 +104,21 @@
   (let [[action-kw args] (f/revisit name @state)]
     (apply (function action-kw) args)))
 
-(defn- save
-  [x y f]
-  (first (swap-vals! state f x y)))
-
-(defn- save-aci
-  [sub aci]
-  (save sub aci f-state/state-after-new-aci))
+(defn- save-ampsies
+  [sub ampsies]
+  (swap! state f-state/state-after-new-ampsies sub ampsies))
 
 (defn- save-alias
   [name sub]
-  (save name sub f-state/state-after-new-alias))
+  (swap! state f-state/state-after-new-alias name sub))
+
+(defn- save-executor-if-absent
+  [uri executor]
+  (swap! state f-state/state-after-new-executor-if-absent uri executor))
 
 (defn- save-qvns
   [name qvns]
-  (save name qvns f-state/state-after-new-qvns))
+  (swap! state f-state/state-after-new-qvns name qvns))
 
 (declare uniq-id)
 (defn- subscribe
@@ -117,7 +132,7 @@
         handler    (reify MessageHandler
                      (invoke [_ msg] (.getData msg)))
         command-id (.executeAsync client command handler)]
-    (save-aci sub (f/aci client command-id sub-id))))
+    (save-ampsies sub (f/ampsies client command-id sub-id))))
 
 (defn- uniq-id [] (str (java.util.UUID/randomUUID)))
 
