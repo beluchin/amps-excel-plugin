@@ -14,6 +14,10 @@
           (format "(%s)" filter1)
           (conj filter-coll filter2) ))
 
+(defn in-scope?
+  [qvns m]
+  )
+
 (def error? keyword?)
 
 (defn qvns-or-error 

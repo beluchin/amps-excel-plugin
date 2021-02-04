@@ -91,21 +91,30 @@
     (invoke [_ msg]
       (case (.getCommand msg)
         (Message$Command/SOW Message$Command/Publish)
-        (let [m (.getData msg)]
-          (doseq [qvns (f-state/qvns-set @state sub)]
-            (notify qvns m)))))))
+        (let [m (.getData msg)
+              qvns-in-scope-coll (clojure.core/filter
+                                   #(f/in-scope? % m)
+                                   (f-state/qvns-set @state sub))]
+          (doseq [qvns qvns-in-scope-coll]
+            (notify qvns m)))
+
+        ;; pending
+        Message$Command/OOF ,,,))))
+
+(defn- notify
+  [qvns m]
+  )
 
 (defn- on-aliased
   [a sub]
   )
 
-(declare async get-subscription revisit)
+(declare async revisit)
 (defn- on-query-value-and-subscribe
-  [a]
-  (let [sub (get-subscription a)]
-    
+  [alias]
+  (let [sub (f-state/sub alias)]
     ;; no blocking calls on the thread where the excel functions are called.
-    (async (:uri sub) revisit a)))
+    (async (:uri sub) revisit alias)))
 
 (declare state)
 (defn- revisit
