@@ -7,8 +7,14 @@
     (t/is (= :foo (sut/qvns-set {:alias->qvns-set {:a :foo}} :a))))
 
   (t/testing "from subscription"
-    (t/are [s sub qvns-set] (= qvns-set (sut/qvns-set s sub))
-      {:alias->qvns-set {:a :foo} :alias->sub {:a :sub}} :sub :foo)))
+    (t/are [state sub qvns-set] (= qvns-set (sut/qvns-set state sub))
+      {:alias->qvns-set {:a :foo-set} :alias->sub {:a {:bar :qux}}}
+      {:bar :qux}
+      :foo-set
+      
+      ;; a subscription has multiple aliases.
+      ;; https://stackoverflow.com/a/42771807/614800
+      )))
 
 (t/deftest state-after-new-alias-test
   (t/are [state a x state'] (= state' (sut/state-after-new-alias state a x))

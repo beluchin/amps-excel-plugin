@@ -1,14 +1,27 @@
 (ns simple-amps.functional.state)
 
+(comment 
+  ;; this is the shape of the state
+  {;; user defined
+   :alias->sub ...
+   :alias->qvns-set ...
+
+   ;; implementation
+   :uri->executor ...
+   :alias->ampsies ...})
+
 (defn executor
   [state uri]
   (get-in state :uri->executor uri))
 
-(defmulti qvns-set #(map? %2))
-(defmethod qvns-set true
+(defmulti qvns-set #(if (map? %2) :subscription :alias))
+(defmethod qvns-set :subscription
   [state sub]
-  (throw (UnsupportedOperationException.)))
-(defmethod qvns-set false
+  (let [sub->alias (clojure.set/map-invert (:alias->sub state))]
+    (-> sub->alias
+        (get sub)
+        ((:alias->qvns-set state)))))
+(defmethod qvns-set :alias
   [state a]
   (get-in state [:alias->qvns-set a]))
 
