@@ -4,7 +4,9 @@
                  [com.exceljava/jinx "2.1.0"]
                  [com.google.guava/guava "29.0-jre"]
                  [com.crankuptheamps/client "5.3.0.4"]]
-  :repl-options {:init-ns amps-excel-plugin.core}
+
+  ;; this caused ns-refresh to fail
+  ;;:repl-options {:init-ns amps-excel-plugin.core}
 
   ;; flycheck-clojure setup
   :plugins [[lein-environ "1.0.0"]]

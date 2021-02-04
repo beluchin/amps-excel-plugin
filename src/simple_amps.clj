@@ -33,12 +33,12 @@
 (declare on-query-value-and-subscribe save-qvns)
 (defn query-value-and-subscribe
   "returns nil or an error when the args are malformed"
-  [a ^String filter ^String context-expr ^String value-expr consumer]
+  [alias ^String filter ^String context-expr ^String value-expr consumer]
   (let [qvns-or-error (f/qvns-or-error filter context-expr value-expr consumer)]
     (if (f/error? qvns-or-error)
       qvns-or-error
-      (do (save-qvns a qvns-or-error)
-          (on-query-value-and-subscribe a)))))
+      (do (save-qvns alias qvns-or-error)
+          (on-query-value-and-subscribe alias)))))
 
 (declare get-executor)
 (defn- async
@@ -58,7 +58,7 @@
                                    %))]
     (u->c uri)))
 
-(declare save-executor-if-absent)
+(declare save-executor-if-absent state)
 (defn- get-executor
   [uri]
   (let [e (f-state/executor state uri)]
@@ -84,6 +84,7 @@
           (System/getProperty "user.name")
           (.toString (java.util.UUID/randomUUID))))
 
+(declare notify)
 (defn- new-msg-handler
   [sub]
   (reify MessageHandler
