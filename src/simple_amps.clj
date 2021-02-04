@@ -14,12 +14,12 @@
 
   No validation of uri occurs here. If the uri is malformed it will
   be notified via the query-value-and-subscribe calls."
-  ([a ^String uri ^String topic] (alias a uri topic nil))
+  ([^String s ^String uri ^String topic] (alias s uri topic nil))
 
-  ([a ^String uri ^String topic ^String filter]
+  ([^String s ^String uri ^String topic ^String filter]
    (let [sub (f/subscription uri topic filter)]
-      (save-alias a sub)
-      (on-aliased a sub))))
+      (save-alias s sub)
+      (on-aliased s sub))))
 
 (defprotocol QueryValueAndSubscribeConsumer
   (on-value [this x])
@@ -33,7 +33,7 @@
 (declare on-query-value-and-subscribe save-qvns)
 (defn query-value-and-subscribe
   "returns nil or an error when the args are malformed"
-  [alias ^String filter ^String context-expr ^String value-expr consumer]
+  [^String alias ^String filter ^String context-expr ^String value-expr consumer]
   (let [qvns-or-error (f/qvns-or-error filter context-expr value-expr consumer)]
     (if (f/error? qvns-or-error)
       qvns-or-error
