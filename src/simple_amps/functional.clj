@@ -16,6 +16,10 @@
 
 (def error? keyword?)
 
+(defn handle
+  [m sub state]
+  (throw (UnsupportedOperationException.)))
+
 (defn qvns-or-error 
   [filter context-expr value-expr consumer]
   {:filter (expr/parse-binary-expr filter)

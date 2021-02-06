@@ -45,6 +45,10 @@
   [uri f & args]
   (.submit (get-executor uri) #(apply f args)))
 
+(defn- clone
+  [m]
+  (throw (UnsupportedOperationException.)))
+
 (defn- function
   [kw]
   (resolve (symbol (name kw))))
@@ -85,15 +89,23 @@
           (.toString (java.util.UUID/randomUUID))))
 
 (declare notify)
+(defn- handle
+  [m sub]
+  (doseq [[value qvns] (f/handle m sub @state)]
+    (notify qvns value)))
+
 (defn- new-msg-handler
   [sub]
   (reify MessageHandler
     (invoke [_ msg]
       (case (.getCommand msg)
         (Message$Command/SOW Message$Command/Publish)
-        (let [m (.getData msg)]
-          (doseq [qvns (f-state/qvns-set @state sub)]
-            (notify qvns m)))))))
+        (let [m (clone (.getData msg))]
+          (async (:uri sub) handle m sub))))))
+
+(defn notify
+  [qvns x]
+  (on-value (:consumer qvns) x))
 
 (defn- on-aliased
   [a sub]
