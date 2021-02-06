@@ -16,8 +16,16 @@
 
 (def error? keyword?)
 
+(declare in-scope? value)
 (defn handle
+  "returns a collection of value+qvns so that they can be notified"
   [m sub state]
+  (let [qvns-coll (s/qvns-set state sub)
+        qvns-in-scope-coll (filter #(in-scope? m %) qvns-coll)]
+    (map #(vector (value m %) %) qvns-in-scope-coll)))
+
+(defn in-scope?
+  [m qvns]
   (throw (UnsupportedOperationException.)))
 
 (defn qvns-or-error 

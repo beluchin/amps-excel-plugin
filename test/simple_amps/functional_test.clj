@@ -1,9 +1,18 @@
 (ns simple-amps.functional-test
-  (:require [simple-amps.functional :as sut]
-            [clojure.test :as t]))
+  (:require [clojure.test :as t]
+            [functional :as f]
+            [simple-amps.functional :as sut]
+            [simple-amps.functional.state :as f-state]))
 
 (t/deftest combine-test
   (t/is (= "(f1) AND (f2) AND (f3)" (sut/combine "f1" "f2" "f3"))))
+
+(t/deftest handle-test
+  (t/testing "happy path"
+    (with-redefs [sut/value        #(when (= %& [:m :qvns]) :x)
+                  f-state/qvns-set #(when (= %& [:state :sub]) #{:qvns})
+                  sut/in-scope?    #(when (= %& [:m :qvns]) true)]
+      (t/is (= [[:x :qvns]] (sut/handle :m :sub :state))))))
 
 (t/deftest subscribe-action+args-test
   (with-redefs [sut/combine #(when (= [:subf :qvns1f :qvns2f] %&) :f)]
