@@ -94,6 +94,7 @@
   (doseq [[value qvns] (f/handle m sub @state)]
     (notify qvns value)))
 
+(declare async)
 (defn- new-msg-handler
   [sub]
   (reify MessageHandler
@@ -101,7 +102,7 @@
       (case (.getCommand msg)
         (Message$Command/SOW Message$Command/Publish)
         (let [m (clone (.getData msg))]
-          (async (:uri sub) handle m sub))))))
+          (async (:uri sub) handle [m sub]))))))
 
 (defn notify
   [qvns x]
