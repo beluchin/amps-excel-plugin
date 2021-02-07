@@ -26,7 +26,7 @@
 
 (defn in-scope?
   [m qvns]
-  (throw (UnsupportedOperationException.)))
+  (expr/evaluate (:filter qvns) m))
 
 (defn qvns-or-error 
   [filter context-expr value-expr consumer]

@@ -2,6 +2,7 @@
   (:require [clojure.test :as t]
             [functional :as f]
             [simple-amps.functional :as sut]
+            [simple-amps.functional.expr :as expr]
             [simple-amps.functional.state :as f-state]))
 
 (t/deftest combine-test
@@ -13,6 +14,11 @@
                   f-state/qvns-set #(when (= %& [:state :sub]) #{:qvns})
                   sut/in-scope?    #(when (= %& [:m :qvns]) true)]
       (t/is (= [[:x :qvns]] (sut/handle :m :sub :state))))))
+
+(t/deftest in-scope?
+  (t/are [m s r] (= r (sut/in-scope? m {:filter (expr/parse-binary-expr s)}))
+    {"a" 1} "/a = 1" true
+    {"a" 1} "/a = 42" false))
 
 (t/deftest subscribe-action+args-test
   (with-redefs [sut/combine #(when (= [:subf :qvns1f :qvns2f] %&) :f)]
