@@ -35,11 +35,20 @@
       {:a [{:b [{:c 1}]}]} [[:a :b :c] = 1])))
 
 (t/deftest handle-test
-  (t/testing "happy path"
-    (with-redefs [sut/value        #(when (= %& [:m :qvns]) :x)
-                  f-state/qvns-set #(when (= %& [:state :sub]) #{:qvns})
-                  sut/in-scope?    #(when (= %& [:m :qvns]) true)]
-      (t/is (= [[:x :qvns]] (sut/handle :m :sub :state))))))
+  (t/testing "with qvns in scope"
+    (with-redefs [f-state/qvns-set #(when (= %& [:state :sub]) #{:qvns})]
+      (t/testing "happy path"
+        (with-redefs [sut/in-scope? #(when (= %& [:m :qvns]) true)
+                      sut/value      #(when (= %& [:m :qvns]) :x)]
+          (t/is (= [[:x :qvns]] (sut/handle :m :sub :state)))))
+
+      (t/testing "not in scope"
+        (with-redefs [sut/in-scope? #(when (= %& [:m :qvns]) false)]
+          (t/is (empty? (sut/handle :m :sub :state)))))))
+
+  (t/testing "no qvns in scope"
+    (with-redefs [f-state/qvns-set (constantly nil)]
+      (t/is (empty? (sut/handle :m :sub :state))))))
 
 (t/deftest in-scope?
   (t/are [m s r] (= r (sut/in-scope? m {:filter (expr/parse-binary-expr s)}))
