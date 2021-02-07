@@ -14,14 +14,14 @@
   [state uri]
   (get-in state :uri->executor uri))
 
-(defmulti qvns-set #(if (map? %2) :subscription :alias))
+(defmulti qvns-set #(when (map? %2) :subscription))
 (defmethod qvns-set :subscription
   [state sub]
   (let [sub->alias (clojure.set/map-invert (:alias->sub state))]
     (-> sub->alias
         (get sub)
         ((:alias->qvns-set state)))))
-(defmethod qvns-set :alias
+(defmethod qvns-set :default
   [state a]
   (get-in state [:alias->qvns-set a]))
 
@@ -43,4 +43,4 @@
 
 (defn sub
   [state a]
-  (get-in state :alias->sub a))
+  (get-in state [:alias->sub a]))

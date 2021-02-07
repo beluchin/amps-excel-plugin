@@ -1,6 +1,5 @@
 (ns amps-excel-plugin.functional.multi-message
-  (:require [amps-excel-plugin.functional :as functional]
-            [clojure.string :as string]))
+  (:require [clojure.string :as string]))
 
 (declare leaf?)
 (defn leaf [x] (when (leaf? x) x))
@@ -15,7 +14,7 @@
          lps1       leafpaths1
          prior-lp2  nil
          lps2       leafpaths2
-         accum      []]
+        accum      []]
     (if (every? empty? [lps1 lps2])
       accum
       (let [lp1 (first lps1)

@@ -45,6 +45,10 @@
   [uri f & args]
   (.submit (get-executor uri) #(apply f args)))
 
+(defn- clone
+  [m]
+  (throw (UnsupportedOperationException.)))
+
 (defn- function
   [kw]
   (resolve (symbol (name kw))))
@@ -85,36 +89,36 @@
           (.toString (java.util.UUID/randomUUID))))
 
 (declare notify)
+(defn- handle
+  [m sub]
+  (doseq [[value qvns] (f/handle m sub @state)]
+    (notify qvns value)))
+
+(declare async)
 (defn- new-msg-handler
   [sub]
   (reify MessageHandler
     (invoke [_ msg]
       (case (.getCommand msg)
         (Message$Command/SOW Message$Command/Publish)
-        (let [m (.getData msg)
-              qvns-in-scope-coll (clojure.core/filter
-                                   #(f/in-scope? % m)
-                                   (f-state/qvns-set @state sub))]
-          (doseq [qvns qvns-in-scope-coll]
-            (notify qvns m)))
+        (let [m (clone (.getData msg))]
+          (async (:uri sub) handle [m sub]))))))
 
-        ;; pending
-        Message$Command/OOF ,,,))))
-
-(defn- notify
-  [qvns m]
-  )
+(defn notify
+  [qvns x]
+  (on-value (:consumer qvns) x))
 
 (defn- on-aliased
   [a sub]
   )
 
-(declare async revisit)
+(declare async get-subscription revisit)
 (defn- on-query-value-and-subscribe
-  [alias]
-  (let [sub (f-state/sub alias)]
+  [a]
+  (let [sub (get-subscription a)]
+    
     ;; no blocking calls on the thread where the excel functions are called.
-    (async (:uri sub) revisit alias)))
+    (async (:uri sub) revisit a)))
 
 (declare state)
 (defn- revisit

@@ -20,6 +20,34 @@
 
 (def error? keyword?)
 
+(declare keys-to-first-coll)
+(defn first-kite 
+  "Returns a map extracted from m based on the expr or nil. 
+
+  When a map is returned, it is either m itself or a series of nested one-key 
+  maps starting from the root and ending on a complete map value taken from a 
+  map collection value on m.
+
+  Nested collections are not supported."
+  [m expr]
+  (if-let [ks (keys-to-first-coll m expr)]
+    (let [coll (get-in m ks)
+          kites (map #(assoc-in {} ks %) coll) ]
+      (first (clojure.core/filter #(expr/evaluate expr %) kites)))
+    (when (expr/evaluate expr m) m)))
+
+(declare in-scope? value)
+(defn handle
+  "returns a collection of value+qvns so that they can be notified"
+  [m sub state]
+  (let [qvns-coll (s/qvns-set state sub)
+        qvns-in-scope-coll (clojure.core/filter #(in-scope? m %) qvns-coll)]
+    (map #(vector (value m %) %) qvns-in-scope-coll)))
+
+(defn in-scope?
+  [m qvns]
+  (expr/evaluate (:filter qvns) m))
+
 (defn qvns-or-error 
   [filter context-expr value-expr consumer]
   {:filter (expr/parse-binary-expr filter)
@@ -44,55 +72,12 @@
   (let [s {:uri uri :topic topic}]
     (if filter (assoc s :filter filter) s)))
 
-(declare keys-to-first-coll)
-(defn first-kite 
-  "Returns a map extracted from m based on the expr or nil. 
-
-  When a map is returned, it is either m itself or a series of nested one-key 
-  maps starting from the root and ending on a complete map value taken from a 
-  map collection value on m.
-
-  Nested collections are not supported."
-  [m expr]
-  (if-let [ks (keys-to-first-coll m expr)]
-    (let [coll (get-in m ks)
-          kites (map #(assoc-in {} ks %) coll) ]
-      (first (clojure.core/filter #(expr/evaluate expr %) kites)))
-    (when (expr/evaluate expr m) m)))
-
-#_(defn leafpaths
-  ;; https://stackoverflow.com/a/21769786/614800
-  "a leafpath is a sequence of keys from the top to a value that is not a map"
-  [m]
-  (if (map? m)
-    (vec 
-     (mapcat (fn [[k v]]
-               (let [sub (leafpaths v)
-                     nested (map #(into [k] %) (filter (comp not empty?) sub))]
-                 (if (seq nested)
-                   nested
-                   [[k]])))
-             m))
-    []))
-
-(declare value)
-#_(defn rtd+value-coll
-  [m getValue-coll]
-  (letfn [(message-matches [getValue] (expr/evaluate (:filter-expr getValue) m))
-          (rtd+value [getValue] [(:rtd getValue)
-                                 (value m
-                                        (:context-expr getValue)
-                                        (:value-expr getValue))])]
-    (->> getValue-coll
-         (filter message-matches)
-         (map rtd+value))))
-
 (declare evaluate)
 (defn value
-  [m context-expr value-expr]
-  (-> m
-      (first-kite context-expr)
-      (evaluate value-expr)))
+  ([m qvns] (value m (:context-expr qvns) (:value-expr qvns)))
+  ([m context-expr value-expr] (-> m
+                                   (first-kite context-expr)
+                                   (evaluate value-expr))))
 
 (defn- evaluate
   [m value-expr]
