@@ -97,10 +97,10 @@
 
 (declare evaluate)
 (defn value
-  [m context-expr value-expr]
-  (-> m
-      (first-kite context-expr)
-      (evaluate value-expr)))
+  ([m qvns] (value m (:context-expr qvns) (:value-expr qvns)))
+  ([m context-expr value-expr] (-> m
+                                   (first-kite context-expr)
+                                   (evaluate value-expr))))
 
 (defn- evaluate
   [m value-expr]
