@@ -1,7 +1,8 @@
 (ns simple-amps.functional
   (:refer-clojure :exclude [alias filter])
   (:require [simple-amps.functional.expr :as expr]
-            [simple-amps.functional.state :as s]))
+            [simple-amps.functional.state :as s]
+            [cheshire.core :as cheshire]))
 
 (defn ampsies
   "amps connectivity info"
@@ -13,10 +14,6 @@
   (reduce #(format "%s AND (%s)" %1 %2)
           (format "(%s)" filter1)
           (conj filter-coll filter2) ))
-
-(defn in-scope?
-  [qvns m]
-  )
 
 (def error? keyword?)
 
@@ -43,6 +40,10 @@
   (let [qvns-coll (s/qvns-set state sub)
         qvns-in-scope-coll (clojure.core/filter #(in-scope? m %) qvns-coll)]
     (map #(vector (value m %) %) qvns-in-scope-coll)))
+
+(defn handle-json
+  [json sub state]
+  (handle (cheshire/parse-string json) sub state))
 
 (defn in-scope?
   [m qvns]

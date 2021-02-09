@@ -46,8 +46,8 @@
   (.submit (get-executor uri) #(apply f args)))
 
 (defn- clone
-  [m]
-  (throw (UnsupportedOperationException.)))
+  [s]
+  (String. s))
 
 (defn- function
   [kw]
@@ -86,12 +86,12 @@
   []
   (format "%s:amps-excel-plugin:%s"
           (System/getProperty "user.name")
-          (.toString (java.util.UUID/randomUUID))))
+          (str (java.util.UUID/randomUUID))))
 
 (declare notify)
-(defn- handle
-  [m sub]
-  (doseq [[value qvns] (f/handle m sub @state)]
+(defn- handle-json
+  [json sub]
+  (doseq [[value qvns] (f/handle-json json sub @state)]
     (notify qvns value)))
 
 (declare async)
@@ -101,8 +101,11 @@
     (invoke [_ msg]
       (case (.getCommand msg)
         (Message$Command/SOW Message$Command/Publish)
-        (let [m (clone (.getData msg))]
-          (async (:uri sub) handle [m sub]))))))
+        (let [json (clone (.getData msg))]
+          (async (:uri sub) handle-json [json sub]))
+
+        Message$Command/OOF
+        (throw (UnsupportedOperationException.))))))
 
 (defn notify
   [qvns x]
