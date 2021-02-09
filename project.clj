@@ -10,7 +10,7 @@
 
   ;; flycheck-clojure setup
   :plugins [[lein-environ "1.0.0"]]
-  :profiles {:dev {:env {:squiggly {:checkers [:eastwood :typed :kibit]
+  :profiles {:dev {:env {:squiggly {:checkers [:kibit :eastwood]
                                     :eastwood-exclude-linters [:unlimited-use]
                                     :eastwood-options {:add-linters [:unused-fn-args]
                                                        ;; :builtin-config-files ["myconfigfile.clj"]
