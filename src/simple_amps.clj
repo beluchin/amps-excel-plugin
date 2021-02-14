@@ -107,25 +107,24 @@
 (declare notify)
 (defn- handle-json
   [json sub]
-  (println "handle-json")
   (doseq [[value qvns] (f/handle-json json sub @state)]
     (notify qvns value)))
 
 (declare async)
 (defn- new-json-msg-handler
   [sub]
-  (reify MessageHandler
-    (invoke [_ msg]
-      (let [cmd (.getCommand msg)]
-        (cond 
-          (#{Message$Command/SOW Message$Command/Publish} cmd)
-          (do
-            (println "new-json-msg-handler SOW or Publish")
+  (let [uri (:uri sub)
+        sow-or-pub #{Message$Command/SOW Message$Command/Publish}]
+    (reify MessageHandler
+      (invoke [_ msg]
+        (let [cmd (.getCommand msg)]
+          (cond 
+            (sow-or-pub cmd)
             (let [json (clone (.getData msg))]
-              (async (:uri sub) handle-json [json sub])))
+              (async uri handle-json json sub))
 
-          (= Message$Command/OOF cmd)
-          (throw (UnsupportedOperationException.)))))))
+            (= Message$Command/OOF cmd)
+            (throw (UnsupportedOperationException.))))))))
 
 (defn notify
   [qvns x]
@@ -149,12 +148,8 @@
 
   Assumes no concurrency by subscription"
   [a]
-  (let [[action-kw args] (f/revisit a @state)
-        f (function action-kw)]
-    (println "revisit - before apply")
-    (println *ns* action-kw f args)
-    (apply f args)
-    (println "revisit - after apply")))
+  (let [[action-kw args] (f/revisit a @state)]
+    (apply (function action-kw) args)))
 
 (defn- save-ampsies
   [sub ampsies]
