@@ -39,7 +39,7 @@
     (if (f/error? qvns-or-error)
       qvns-or-error
       (do (save-qvns alias qvns-or-error)
-          #_(on-query-value-and-subscribe alias)))))
+          (on-query-value-and-subscribe alias)))))
 
 (declare get-executor)
 (defn- async
@@ -142,11 +142,11 @@
 
   Assumes no concurrency by subscription"
   [a]
-  (println "revisit")
-  (let [[action-kw args] (f/revisit a @state)]
+  (let [[action-kw args] (f/revisit a @state)
+        f (function action-kw)]
     (println "revisit - before apply")
-    (println action-kw args)
-    (apply (function action-kw) args)
+    (println *ns* action-kw f args)
+    (apply f args)
     (println "revisit - after apply")))
 
 (defn- save-ampsies
