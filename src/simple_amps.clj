@@ -20,7 +20,8 @@
   ([^String s ^String uri ^String topic ^String filter]
    (let [sub (f/subscription uri topic filter)]
       (save-alias s sub)
-      (on-aliased s sub))))
+      (on-aliased s sub)
+      nil)))
 
 (defprotocol QueryValueAndSubscribeConsumer
   (on-value [this x])
@@ -39,14 +40,19 @@
     (if (f/error? qvns-or-error)
       qvns-or-error
       (do (save-qvns alias qvns-or-error)
-          (on-query-value-and-subscribe alias)))))
+          (on-query-value-and-subscribe alias)
+          nil))))
 
 (declare get-executor)
 (defn- async
   [uri f & args]
   (.submit (get-executor uri)
-           #(try (binding [*ns* (find-ns 'simple-amps)]
-                   (apply f args))
+           #(try
+
+              ;; otherwise *ns* is clojure.core !!
+              (binding [*ns* (find-ns 'simple-amps)]
+                   
+                (apply f args))
                  (catch Throwable ex
                    (clojure.stacktrace/print-cause-trace ex)))))
 
@@ -152,8 +158,7 @@
 
 (defn- save-ampsies
   [sub ampsies]
-  (swap! state f-state/state-after-new-ampsies sub ampsies)
-  nil)
+  (swap! state f-state/state-after-new-ampsies sub ampsies))
 
 (defn- save-alias
   [a sub]
