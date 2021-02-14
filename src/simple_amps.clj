@@ -1,10 +1,9 @@
 (ns simple-amps
   (:refer-clojure :exclude [alias filter])
-  (:require [simple-amps.functional :as f]
-            [simple-amps.functional.state :as f-state]
-            [clojure.stacktrace])
-  (:import [com.crankuptheamps.client Client ClientDisconnectHandler Command
-            Message$Command MessageHandler]))
+  (:require logging
+            [simple-amps.functional :as f]
+            [simple-amps.functional.state :as f-state])
+  (:import [com.crankuptheamps.client Client ClientDisconnectHandler Command Message$Command MessageHandler]))
 
 (declare on-aliased save-alias)
 (defn alias
@@ -46,15 +45,16 @@
 (declare get-executor)
 (defn- async
   [uri f & args]
-  (.submit (get-executor uri)
-           #(try
+  (.submit
+    (get-executor uri)
+    #(try
 
-              ;; otherwise *ns* is clojure.core !!
-              (binding [*ns* (find-ns 'simple-amps)]
+       ;; otherwise *ns* is clojure.core !!
+       (binding [*ns* (find-ns 'simple-amps)]
                    
-                (apply f args))
-                 (catch Throwable ex
-                   (clojure.stacktrace/print-cause-trace ex)))))
+         (apply f args))
+       (catch Throwable ex
+         (logging/error (with-out-str (clojure.stacktrace/print-cause-trace ex)))))))
 
 (defn- clone
   [s]
