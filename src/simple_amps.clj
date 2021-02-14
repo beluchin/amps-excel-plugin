@@ -39,7 +39,7 @@
     (if (f/error? qvns-or-error)
       qvns-or-error
       (do (save-qvns alias qvns-or-error)
-          (on-query-value-and-subscribe alias)))))
+          #_(on-query-value-and-subscribe alias)))))
 
 (declare get-executor)
 (defn- async
@@ -47,7 +47,7 @@
   (.submit (get-executor uri)
            #(try (apply f args)
                  (catch Throwable ex
-                   (println clojure.stacktrace/root-cause ex)))))
+                   (clojure.stacktrace/print-cause-trace ex)))))
 
 (defn- clone
   [s]
@@ -100,6 +100,7 @@
 (declare notify)
 (defn- handle-json
   [json sub]
+  (println "handle-json")
   (doseq [[value qvns] (f/handle-json json sub @state)]
     (notify qvns value)))
 
@@ -108,14 +109,16 @@
   [sub]
   (reify MessageHandler
     (invoke [_ msg]
-      (println "*********** yahoo")
-      (case (.getCommand msg)
-        (Message$Command/SOW Message$Command/Publish)
-        (let [json (clone (.getData msg))]
-          (async (:uri sub) handle-json [json sub]))
+      (let [cmd (.getCommand msg)]
+        (cond 
+          (#{Message$Command/SOW Message$Command/Publish} cmd)
+          (do
+            (println "new-json-msg-handler SOW or Publish")
+            (let [json (clone (.getData msg))]
+              (async (:uri sub) handle-json [json sub])))
 
-        Message$Command/OOF
-        (throw (UnsupportedOperationException.))))))
+          (= Message$Command/OOF cmd)
+          (throw (UnsupportedOperationException.)))))))
 
 (defn notify
   [qvns x]
@@ -139,13 +142,17 @@
 
   Assumes no concurrency by subscription"
   [a]
-  (println "~~~~ revisiting ...")
+  (println "revisit")
   (let [[action-kw args] (f/revisit a @state)]
-    (apply (function action-kw) args)))
+    (println "revisit - before apply")
+    (println action-kw args)
+    (apply (function action-kw) args)
+    (println "revisit - after apply")))
 
 (defn- save-ampsies
   [sub ampsies]
-  (swap! state f-state/state-after-new-ampsies sub ampsies))
+  (swap! state f-state/state-after-new-ampsies sub ampsies)
+  nil)
 
 (defn- save-alias
   [a sub]
