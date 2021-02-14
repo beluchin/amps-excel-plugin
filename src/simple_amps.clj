@@ -45,7 +45,8 @@
 (defn- async
   [uri f & args]
   (.submit (get-executor uri)
-           #(try (apply f args)
+           #(try (binding [*ns* (find-ns 'simple-amps)]
+                   (apply f args))
                  (catch Throwable ex
                    (clojure.stacktrace/print-cause-trace ex)))))
 
