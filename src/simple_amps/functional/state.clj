@@ -8,11 +8,16 @@
 
    ;; implementation
    :uri->executor ...
-   :alias->ampsies ...})
+   :alias->ampsies ...
+   :uri->client ...})
+
+(defn client
+  [state uri]
+  (get-in state [:uri->client uri]))
 
 (defn executor
   [state uri]
-  (get-in state :uri->executor uri))
+  (get-in state [:uri->executor uri]))
 
 (defmulti qvns-set #(when (map? %2) :subscription))
 (defmethod qvns-set :subscription
@@ -32,6 +37,10 @@
 (defn state-after-new-alias
   [state a sub]
   (assoc-in state [:alias->sub a] sub))
+
+(defn state-after-new-client-if-absent
+  [state uri client]
+  (update-in state [:uri->client uri] #(or % client)))
 
 (defn state-after-new-executor-if-absent
   [state uri executor]

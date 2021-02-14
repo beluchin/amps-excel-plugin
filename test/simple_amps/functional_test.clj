@@ -50,8 +50,10 @@
     (with-redefs [f-state/qvns-set (constantly nil)]
       (t/is (empty? (sut/handle :m :sub :state))))))
 
-(t/deftest in-scope?
-  (t/are [m s r] (= r (sut/in-scope? m {:filter (expr/parse-binary-expr s)}))
+(t/deftest in-scope?-test
+  (t/are [m s r] (= r (sut/in-scope?
+                        m
+                        {:filter+expr [:foo (expr/parse-binary-expr s)]}))
     {"a" 1} "/a = 1" true
     {"a" 1} "/a = 42" false))
 
@@ -64,8 +66,8 @@
                                                  :filter :subf}}
 
                                             :alias->qvns-set
-                                            {:a #{{:filter :qvns1f}
-                                                  {:filter :qvns2f}}}})))))
+                                            {:a #{{:filter+expr [:qvns1f :foo]}
+                                                  {:filter+expr [:qvns2f :foo]}}}})))))
 
 (t/deftest subscription-test
   (t/is (= {:uri :foo :topic :bar} (sut/subscription :foo :bar nil)))

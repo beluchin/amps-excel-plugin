@@ -47,11 +47,11 @@
 
 (defn in-scope?
   [m qvns]
-  (expr/evaluate (:filter qvns) m))
+  (expr/evaluate (second (:filter+expr qvns)) m))
 
 (defn qvns-or-error 
   [filter context-expr value-expr consumer]
-  {:filter (expr/parse-binary-expr filter)
+  {:filter+expr [filter (expr/parse-binary-expr filter)]
    :context-expr (expr/parse-binary-expr context-expr)
    :value-expr (expr/parse-value-expr value-expr)
    :consumer consumer})
@@ -65,7 +65,7 @@
   [alias state]
   (let [sub (s/sub state alias)
         coll (s/qvns-set state alias)
-        filter (apply combine (:filter sub) (map :filter coll))]
+        filter (apply combine (:filter sub) (map (comp first :filter+expr) coll))]
     [:subscribe [sub filter]]))
 
 (defn subscription

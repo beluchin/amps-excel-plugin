@@ -1,7 +1,8 @@
 (ns simple-amps
   (:refer-clojure :exclude [alias filter])
   (:require [simple-amps.functional :as f]
-            [simple-amps.functional.state :as f-state])
+            [simple-amps.functional.state :as f-state]
+            [clojure.stacktrace])
   (:import [com.crankuptheamps.client Client ClientDisconnectHandler Command
             Message$Command MessageHandler]))
 
@@ -43,7 +44,10 @@
 (declare get-executor)
 (defn- async
   [uri f & args]
-  (.submit (get-executor uri) #(apply f args)))
+  (.submit (get-executor uri)
+           #(try (apply f args)
+                 (catch Throwable ex
+                   (println clojure.stacktrace/root-cause ex)))))
 
 (defn- clone
   [s]
@@ -53,24 +57,29 @@
   [kw]
   (resolve (symbol (name kw))))
 
-(declare get-new-client uri->client)
+(declare get-new-client save-client-if-absent state)
 (defn- get-client
   "returns a existing client if possible. Otherwise creates a new client"
   [uri]
-  (let [u->c (swap! uri->client #(if-not (% uri)
-                                   (assoc % uri (get-new-client uri))
-                                   %))]
-    (u->c uri)))
+  (let [c (f-state/client @state uri)]
+    (if c
+      c
+      (let [new-c (get-new-client uri)
+            _     (save-client-if-absent uri new-c)
+            r     (f-state/client @state uri)]
+        (when (not= r new-c)
+          (.close new-c))
+        r))))
 
 (declare save-executor-if-absent state)
 (defn- get-executor
   [uri]
-  (let [e (f-state/executor state uri)]
+  (let [e (f-state/executor @state uri)]
     (if e
       e
       (let [new-e (java.util.concurrent.Executors/newSingleThreadExecutor)]
         (save-executor-if-absent uri new-e)
-        (f-state/executor state uri)))))
+        (f-state/executor @state uri)))))
 
 (declare get-new-client-name)
 (defn- get-new-client
@@ -95,10 +104,11 @@
     (notify qvns value)))
 
 (declare async)
-(defn- new-msg-handler
+(defn- new-json-msg-handler
   [sub]
   (reify MessageHandler
     (invoke [_ msg]
+      (println "*********** yahoo")
       (case (.getCommand msg)
         (Message$Command/SOW Message$Command/Publish)
         (let [json (clone (.getData msg))]
@@ -115,10 +125,10 @@
   [a sub]
   )
 
-(declare async get-subscription revisit)
+(declare async revisit)
 (defn- on-query-value-and-subscribe
   [a]
-  (let [sub (get-subscription a)]
+  (let [sub (f-state/sub @state a)]
     
     ;; no blocking calls on the thread where the excel functions are called.
     (async (:uri sub) revisit a)))
@@ -129,6 +139,7 @@
 
   Assumes no concurrency by subscription"
   [a]
+  (println "~~~~ revisiting ...")
   (let [[action-kw args] (f/revisit a @state)]
     (apply (function action-kw) args)))
 
@@ -139,6 +150,10 @@
 (defn- save-alias
   [a sub]
   (swap! state f-state/state-after-new-alias a sub))
+
+(defn- save-client-if-absent
+  [uri client]
+  (swap! state f-state/state-after-new-client-if-absent uri client))
 
 (defn- save-executor-if-absent
   [uri executor]
@@ -157,7 +172,7 @@
                        (setTopic (:topic sub))
                        (setSubId sub-id)
                        (setFilter filter))
-        handler    (new-msg-handler sub)
+        handler    (new-json-msg-handler sub)
         command-id (.executeAsync client command handler)]
     (save-ampsies sub (f/ampsies client command-id sub-id))))
 
@@ -169,5 +184,3 @@
     (.unsubscribe client command-id)))
 
 (def ^:private state (atom nil))
-
-(def ^:private uri->client (atom nil))
