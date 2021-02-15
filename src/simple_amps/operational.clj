@@ -5,8 +5,7 @@
             [simple-amps.consumer :as c]
             [simple-amps.functional :as f]
             [simple-amps.functional.state :as f-state])
-  (:import [com.crankuptheamps.client Client ClientDisconnectHandler Command
-            Message$Command MessageHandler]
+  (:import [com.crankuptheamps.client Client ClientDisconnectHandler Command Message$Command MessageHandler]
            com.crankuptheamps.client.exception.ConnectionException))
 
 (declare get-new-client save-client-if-absent state)
@@ -58,6 +57,14 @@
          command-id (.executeAsync client command handler)]
      (save-ampsies sub (f/ampsies client command-id sub-id)))))
 
+(declare notify)
+(def client-disconnect-handler 
+  (reify ClientDisconnectHandler
+    (invoke [_ client]
+      (logging/info (str "client disconnected: " (.getURI client)))
+      (doseq [qvns (f-state/qvns-set @state client)]
+        (notify c/on-inactive (:consumer qvns) "client disconnected")))))
+
 (declare get-executor)
 (defn- async
   [uri f & args]
@@ -80,11 +87,12 @@
   [kw]
   (resolve (symbol (name kw))))
 
+(declare notify)
 (defn- get-client-or-notify-qvns
   [sub]
   (letfn [(notify-all-qvns [reason]
             (doseq [c (map :consumer (f-state/qvns-set @state sub))]
-              (c/on-inactive c reason)))]
+              (notify c/on-inactive c reason)))]
     (try (get-client (:uri sub))
          (catch ConnectionException ex
            (notify-all-qvns (str "cannot connect: " (.getMessage ex)))
@@ -105,9 +113,7 @@
   [uri]
   (doto (Client. (get-new-client-name))
     (.connect uri)
-    (.setDisconnectHandler (reify ClientDisconnectHandler
-                             (invoke [_ client]
-                               (logging/info "client disconnected"))))
+    (.setDisconnectHandler client-disconnect-handler)
     (.logon)))
 
 (defn- get-new-client-name
@@ -120,7 +126,7 @@
 (defn- handle-json
   [json sub]
   (doseq [[value qvns] (f/handle-json json sub @state)]
-    (notify qvns value)))
+    (notify c/on-value (:consumer qvns) value)))
 
 (declare async)
 (defn- new-json-msg-handler
@@ -139,8 +145,10 @@
             (throw (UnsupportedOperationException.))))))))
 
 (defn notify
-  [qvns x]
-  (c/on-value (:consumer qvns) x))
+  [f & args]
+  (try (apply f args)
+       (catch Throwable ex
+         (logging/error (with-out-str (clojure.stacktrace/print-cause-trace ex))))))
 
 (declare state)
 (defn- revisit
@@ -171,3 +179,4 @@
     (.unsubscribe client command-id)))
 
 (def ^:private state (atom nil))
+

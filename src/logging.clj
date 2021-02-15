@@ -22,6 +22,3 @@
   (java.util.logging.Logger/getLogger s))
 
 (def ^:constant default-logger (new-logger "amps_excel_plugin"))
-
-
-

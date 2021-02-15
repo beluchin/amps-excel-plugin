@@ -3,14 +3,19 @@
             [clojure.test :as t]))
 
 (t/deftest qvns-set-test
+  (t/testing "from AMPS client"
+    (t/is (= #{:qvns} (sut/qvns-set {:uri->client {:u :c}
+                                     :alias->sub {:a {:uri :u}}
+                                     :alias->qvns-set {:a #{:qvns}}}
+                                    :c))))
+
   (t/testing "from subscription alias"
-    (t/is (= :foo (sut/qvns-set {:alias->qvns-set {:a :foo}} :a))))
+    (t/is (= :foo-set (sut/qvns-set {:alias->qvns-set {"a" :foo-set}} "a"))))
 
   (t/testing "from subscription"
     (t/are [state sub qvns-set] (= qvns-set (sut/qvns-set state sub))
-      {:alias->qvns-set {:a :foo-set} :alias->sub {:a {:bar :qux}}}
-      {:bar :qux}
-      :foo-set
+      {:alias->qvns-set {:a :foo-set}
+       :alias->sub {:a {:bar :qux}}} {:bar :qux} :foo-set
       
       ;; a subscription has multiple aliases.
       ;; https://stackoverflow.com/a/42771807/614800

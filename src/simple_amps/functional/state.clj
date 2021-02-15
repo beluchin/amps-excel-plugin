@@ -1,4 +1,5 @@
-(ns simple-amps.functional.state)
+(ns simple-amps.functional.state
+  (:require [clojure.set :as set]))
 
 (comment 
   ;; this is the shape of the state
@@ -19,16 +20,25 @@
   [state uri]
   (get-in state [:uri->executor uri]))
 
-(defmulti qvns-set #(when (map? %2) :subscription))
+(defmulti qvns-set #(cond (map? %2) :subscription
+                          (string? %2) :alias
+                          :else :amps-client))
 (defmethod qvns-set :subscription
   [state sub]
-  (let [sub->alias (clojure.set/map-invert (:alias->sub state))]
+  (let [sub->alias (set/map-invert (:alias->sub state))]
     (-> sub->alias
         (get sub)
         ((:alias->qvns-set state)))))
-(defmethod qvns-set :default
+(defmethod qvns-set :alias
   [state a]
   (get-in state [:alias->qvns-set a]))
+(defmethod qvns-set :amps-client
+  [state amps-client]
+  (let [client->uri (set/map-invert (:uri->client state))
+        uri (get client->uri amps-client)
+        sub-coll (filter #(= uri (:uri %)) (vals (:alias->sub state)))
+        qvns-set--coll (map #(qvns-set state %) sub-coll)]
+    (reduce set/join qvns-set--coll)))
 
 (defn state-after-new-ampsies
   [state sub ampsies]
