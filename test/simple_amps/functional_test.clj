@@ -11,7 +11,11 @@
              (cheshire/parse-string "{\"a\": [{\"b\": 2},{\"c\": 3}]}")))))
 
 (t/deftest combine-test
-  (t/is (= "(f1) AND (f2) AND (f3)" (sut/combine "f1" "f2" "f3"))))
+  (t/are [args r] (= r (apply sut/combine args))
+    ["f1" "f2" "f3"] "(f1) AND (f2) AND (f3)"
+    [nil "f1" "f2"] "(f1) AND (f2)"
+    [nil] nil
+    ["f1"] "(f1)"))
 
 (declare binary-expr)
 (t/deftest first-kite-test

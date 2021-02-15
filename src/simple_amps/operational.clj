@@ -1,10 +1,13 @@
 (ns simple-amps.operational
-  (:require logging
+  (:refer-clojure :exclude [filter])
+  (:require clojure.stacktrace
+            logging
             [simple-amps.consumer :as c]
             [simple-amps.functional :as f]
             [simple-amps.functional.state :as f-state])
   (:import [com.crankuptheamps.client Client ClientDisconnectHandler Command
-            Message$Command MessageHandler]))
+            Message$Command MessageHandler]
+           com.crankuptheamps.client.exception.ConnectionException))
 
 (declare get-new-client save-client-if-absent state)
 (defn get-client
@@ -40,18 +43,20 @@
   [a qvns]
   (swap! state f-state/state-after-new-qvns a qvns))
 
-(declare new-json-msg-handler save-ampsies uniq-id)
+(declare get-client-or-notify-qvns new-json-msg-handler save-ampsies uniq-id)
 (defn subscribe
-  [sub filter]
-  (let [client     (get-client (:uri sub))
-        sub-id     (uniq-id)
-        command    (.. (Command. "sow_and_subscribe")
-                       (setTopic (:topic sub))
-                       (setSubId sub-id)
-                       (setFilter filter))
-        handler    (new-json-msg-handler sub)
-        command-id (.executeAsync client command handler)]
-    (save-ampsies sub (f/ampsies client command-id sub-id))))
+  ([sub filter]
+   (when-let [c (get-client-or-notify-qvns sub)]
+     (subscribe sub filter c)))
+  ([sub filter client]
+   (let [sub-id     (uniq-id)
+         command    (.. (Command. "sow_and_subscribe")
+                        (setTopic (:topic sub))
+                        (setSubId sub-id)
+                        (setFilter filter))
+         handler    (new-json-msg-handler sub)
+         command-id (.executeAsync client command handler)]
+     (save-ampsies sub (f/ampsies client command-id sub-id)))))
 
 (declare get-executor)
 (defn- async
@@ -74,6 +79,16 @@
 (defn- function
   [kw]
   (resolve (symbol (name kw))))
+
+(defn- get-client-or-notify-qvns
+  [sub]
+  (letfn [(notify-all-qvns [reason]
+            (doseq [c (map :consumer (f-state/qvns-set @state sub))]
+              (c/on-inactive c reason)))]
+    (try (get-client (:uri sub))
+         (catch ConnectionException ex
+           (notify-all-qvns (str "cannot connect: " (.getMessage ex)))
+           nil))))
 
 (declare save-executor-if-absent state)
 (defn- get-executor

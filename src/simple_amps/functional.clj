@@ -10,10 +10,13 @@
   {:client client :command-id command-id :sub-id sub-id})
 
 (defn combine
-  [filter1 filter2 & filter-coll]
-  (reduce #(format "%s AND (%s)" %1 %2)
-          (format "(%s)" filter1)
-          (conj filter-coll filter2) ))
+  [& filter-coll]
+  (let [nil-less (remove nil? filter-coll)
+        f1 (first nil-less)]
+    (when f1
+      (reduce #(format "%s AND (%s)" %1 %2)
+              (format "(%s)" f1)
+              (rest nil-less)))))
 
 (def error? keyword?)
 
