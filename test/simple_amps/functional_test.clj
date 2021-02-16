@@ -64,13 +64,13 @@
 (t/deftest subscribe-action+args-test
   (with-redefs [sut/combine #(when (= [:subf :qvns1f :qvns2f] %&) :f)]
     (t/is (= [:subscribe [{:uri :u :topic :t :filter :subf} :f]]
-             (sut/subscribe-action+args :a {:alias->sub
-                                            {:a {:uri :u
+             (sut/subscribe-action+args "a" {:alias->sub
+                                            {"a" {:uri :u
                                                  :topic :t
                                                  :filter :subf}}
 
                                             :alias->qvns-set
-                                            {:a #{{:filter+expr [:qvns1f :foo]}
+                                            {"a" #{{:filter+expr [:qvns1f :foo]}
                                                   {:filter+expr [:qvns2f :foo]}}}})))))
 
 (t/deftest subscription-test
