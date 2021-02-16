@@ -8,7 +8,7 @@
   (:import [com.crankuptheamps.client Client ClientDisconnectHandler Command Message$Command MessageHandler]
            com.crankuptheamps.client.exception.ConnectionException))
 
-(declare get-new-client save-client-if-absent state)
+(declare get-new-client state state-save-client-if-absent)
 (defn get-client
   "returns a existing client if possible. Otherwise creates a new client"
   [uri]
@@ -16,7 +16,7 @@
     (if c
       c
       (let [new-c (get-new-client uri)
-            _     (save-client-if-absent uri new-c)
+            _     (state-save-client-if-absent uri new-c)
             r     (f-state/client @state uri)]
         (when (not= r new-c)
           (.close new-c))
@@ -42,7 +42,7 @@
   [a qvns]
   (swap! state f-state/state-after-new-qvns a qvns))
 
-(declare get-client-or-notify-qvns new-json-msg-handler save-ampsies uniq-id)
+(declare get-client-or-notify-qvns new-json-msg-handler state-save-ampsies uniq-id)
 (defn subscribe
   ([sub filter]
    (when-let [c (get-client-or-notify-qvns sub)]
@@ -55,15 +55,16 @@
                         (setFilter filter))
          handler    (new-json-msg-handler sub)
          command-id (.executeAsync client command handler)]
-     (save-ampsies sub (f/ampsies client command-id sub-id)))))
+     (state-save-ampsies sub (f/ampsies client command-id sub-id)))))
 
-(declare notify)
+(declare notify state-delete)
 (def client-disconnect-handler 
   (reify ClientDisconnectHandler
     (invoke [_ client]
       (logging/info (str "client disconnected: " (.getURI client)))
       (doseq [qvns (f-state/qvns-set @state client)]
-        (notify c/on-inactive (:consumer qvns) "client disconnected")))))
+        (notify c/on-inactive (:consumer qvns) "client disconnected"))
+      (state-delete client))))
 
 (declare get-executor)
 (defn- async
@@ -98,14 +99,14 @@
            (notify-all-qvns (str "cannot connect: " (.getMessage ex)))
            nil))))
 
-(declare save-executor-if-absent state)
+(declare state state-save-executor-if-absent)
 (defn- get-executor
   [uri]
   (let [e (f-state/executor @state uri)]
     (if e
       e
       (let [new-e (java.util.concurrent.Executors/newSingleThreadExecutor)]
-        (save-executor-if-absent uri new-e)
+        (state-save-executor-if-absent uri new-e)
         (f-state/executor @state uri)))))
 
 (declare get-new-client-name)
@@ -159,15 +160,19 @@
   (let [[action-kw args] (f/revisit a @state)]
     (apply (function action-kw) args)))
 
-(defn- save-ampsies
+(defn- state-delete
+  [x]
+  (swap! state f/state-after-delete x))
+
+(defn- state-save-ampsies
   [sub ampsies]
   (swap! state f-state/state-after-new-ampsies sub ampsies))
 
-(defn- save-client-if-absent
+(defn- state-save-client-if-absent
   [uri client]
   (swap! state f-state/state-after-new-client-if-absent uri client))
 
-(defn- save-executor-if-absent
+(defn- state-save-executor-if-absent
   [uri executor]
   (swap! state f-state/state-after-new-executor-if-absent uri executor))
 

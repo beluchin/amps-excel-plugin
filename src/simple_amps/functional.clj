@@ -64,6 +64,20 @@
   [alias state]
   (subscribe-action+args alias state))
 
+(defmulti state-after-delete #(cond (map? %2) :subscription
+                                    (string? %2) :alias
+                                    :else :amps-client))
+(defmethod state-after-delete :amps-client
+  [state client]
+  (let [s (->> state
+               s/uri->client 
+               (filter (comp #{client} second))
+               (s/state-after-delete-many state))]
+    (->> s
+         s/sub->ampsies
+         (filter (comp #{client} :client second))
+         (s/state-after-delete-many s))))
+
 (defn subscribe-action+args 
   [alias state]
   (let [sub (s/sub state alias)

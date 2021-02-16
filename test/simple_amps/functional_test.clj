@@ -61,6 +61,10 @@
     {"a" 1} "/a = 1" true
     {"a" 1} "/a = 42" false))
 
+(t/deftest state-after-delete-test
+  (t/testing "deleting client"
+    ))
+
 (t/deftest subscribe-action+args-test
   (with-redefs [sut/combine #(when (= [:subf :qvns1f :qvns2f] %&) :f)]
     (t/is (= [:subscribe [{:uri :u :topic :t :filter :subf} :f]]

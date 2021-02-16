@@ -9,7 +9,7 @@
 
    ;; implementation
    :uri->executor ...
-   :alias->ampsies ...
+   :sub->ampsies ...
    :uri->client ...})
 
 (defn client
@@ -40,6 +40,17 @@
         qvns-set--coll (map #(qvns-set state %) sub-coll)]
     (reduce set/join qvns-set--coll)))
 
+(defmulti state-after-delete-many
+  #(cond (map? (ffirst %2))    :sub+ampsies
+         (string? (ffirst %2)) :uri+client
+         :else                 (throw (UnsupportedOperationException.))))
+(defmethod state-after-delete-many :sub+ampsies
+  [state sub+ampsies--coll]
+  (throw (UnsupportedOperationException.)))
+(defmethod state-after-delete-many :uri+client
+  [state uri+client--coll]
+  (throw (UnsupportedOperationException.)))
+
 (defn state-after-new-ampsies
   [state sub ampsies]
   (assoc-in state [:sub->ampsies sub] ampsies))
@@ -63,3 +74,11 @@
 (defn sub
   [state a]
   (get-in state [:alias->sub a]))
+
+(defn sub->ampsies
+  [state]
+  (:sub->ampsies state))
+
+(defn uri->client
+  [state]
+  (:uri->client state))
