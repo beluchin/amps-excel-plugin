@@ -63,7 +63,11 @@
 
 (t/deftest state-after-delete-test
   (t/testing "deleting client"
-    ))
+    (t/is (= {:uri->client {"u2" :c2}, :sub->ampsies {{:k :v2} {:client :c2}}}
+             (sut/state-after-delete {:uri->client {"u1" :c1, "u2" :c2}
+                                      :sub->ampsies {{:k :v1} {:client :c1}
+                                                     {:k :v2} {:client :c2}}}
+                                     :c1)))))
 
 (t/deftest subscribe-action+args-test
   (with-redefs [sut/combine #(when (= [:subf :qvns1f :qvns2f] %&) :f)]

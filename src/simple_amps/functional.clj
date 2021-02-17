@@ -71,11 +71,11 @@
   [state client]
   (let [s (->> state
                s/uri->client 
-               (filter (comp #{client} second))
+               (clojure.core/filter (comp #{client} second))
                (s/state-after-delete-many state))]
     (->> s
          s/sub->ampsies
-         (filter (comp #{client} :client second))
+         (clojure.core/filter (comp #{client} :client second))
          (s/state-after-delete-many s))))
 
 (defn subscribe-action+args 
