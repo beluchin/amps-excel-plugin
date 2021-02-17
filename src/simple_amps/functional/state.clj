@@ -45,11 +45,11 @@
          (string? (ffirst %2)) :uri+client
          :else                 (throw (UnsupportedOperationException.))))
 (defmethod state-after-delete-many :sub+ampsies
-  [state sub+ampsies--coll]
-  (throw (UnsupportedOperationException.)))
+  [state coll]
+  (reduce #(update %1 :sub->ampsies dissoc (first %2)) state coll))
 (defmethod state-after-delete-many :uri+client
-  [state uri+client--coll]
-  (throw (UnsupportedOperationException.)))
+  [state coll]
+  (reduce #(update %1 :uri->client dissoc (first %2)) state coll))
 
 (defn state-after-new-ampsies
   [state sub ampsies]

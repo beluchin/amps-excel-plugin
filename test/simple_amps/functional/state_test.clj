@@ -21,6 +21,19 @@
       ;; https://stackoverflow.com/a/42771807/614800
       )))
 
+(t/deftest state-after-delete-many-test
+  (t/testing "uri->client"
+    (t/is (= {:uri->client {"u1" :c}} (sut/state-after-delete-many
+                                        {:uri->client {"u1" :c, "u2" :c}}
+                                        [["u2" :c]]))))
+
+  (t/testing "sub->ampsies"
+    (t/is (= {:sub->ampsies {{:k :v1} :ampsies}}
+             (sut/state-after-delete-many
+               {:sub->ampsies {{:k :v1} :ampsies
+                               {:k :v2} :ampsies}}
+               [[{:k :v2} :ampsies]])))))
+
 (t/deftest state-after-new-alias-test
   (t/are [state a x state'] (= state' (sut/state-after-new-alias state a x))
     nil :foo :bar {:alias->sub {:foo :bar}}
