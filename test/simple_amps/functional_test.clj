@@ -61,6 +61,21 @@
     {"a" 1} "/a = 1" true
     {"a" 1} "/a = 42" false))
 
+(t/deftest revisit-test
+  (t/testing "subscription and qvns in place; subscription is inactive"
+    (with-redefs [sut/subscribe-action+args (fn [alias _] (when (= alias "a")
+                                                            [:action :args]))]
+      (t/is (= [:action :args] (sut/revisit "a" {:alias->sub {"a" :sub}
+                                                 :alias->qvns-set {"a" :qvns-set}
+                                                 :sub->ampsies {}})))))
+
+  (t/testing "subscription in place; no qvns"
+    (t/is (nil? (sut/revisit "a" {:alias->sub {"a" :sub}
+                                  :alias->qvns-set {}}))))
+
+  (t/testing "no subscription in place"
+    (t/is (nil? (sut/revisit "a" {:alias->sub {}})))))
+
 (t/deftest state-after-delete-test
   (t/testing "deleting client"
     (t/is (= {:uri->client {"u2" :c2}, :sub->ampsies {{:k :v2} {:client :c2}}}

@@ -22,17 +22,18 @@
           (.close new-c))
         r))))
 
-(defn on-aliased
-  [a sub]
-  )
-
 (declare async revisit)
 (defn on-query-value-and-subscribe
   [a]
-  (let [sub (f-state/sub @state a)]
+  (when-let [sub (f-state/sub @state a)]
 
     ;; no blocking calls on the thread where the excel functions are called.
     (async (:uri sub) revisit a)))
+
+(defn on-register
+  [a sub]
+  ;; no blocking calls on the thread where the excel functions are called.
+  (async (:uri sub) revisit a))
 
 (defn save-alias
   [a sub]

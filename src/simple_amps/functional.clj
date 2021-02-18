@@ -2,7 +2,8 @@
   (:refer-clojure :exclude [alias filter])
   (:require [simple-amps.functional.expr :as expr]
             [simple-amps.functional.state :as s]
-            [cheshire.core :as cheshire]))
+            [cheshire.core :as cheshire]
+            [simple-amps.functional.state :as f-state]))
 
 (defn ampsies
   "amps connectivity info"
@@ -62,7 +63,10 @@
 (declare subscribe-action+args)
 (defn revisit
   [alias state]
-  (subscribe-action+args alias state))
+  (cond
+    (not (f-state/sub state alias)) nil
+    (not (f-state/qvns-set state alias)) nil
+    :else (subscribe-action+args alias state)))
 
 (defmulti state-after-delete #(cond (map? %2) :subscription
                                     (string? %2) :alias
