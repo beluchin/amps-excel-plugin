@@ -8,19 +8,14 @@
   (:import [com.crankuptheamps.client Client ClientDisconnectHandler Command Message$Command MessageHandler]
            com.crankuptheamps.client.exception.ConnectionException))
 
-(declare get-new-client state state-save-client-if-absent)
+(declare get-new-client state state-save-client)
 (defn get-client
   "returns a existing client if possible. Otherwise creates a new client"
   [uri]
-  (let [c (f-state/client @state uri)]
-    (if c
-      c
-      (let [new-c (get-new-client uri)
-            _     (state-save-client-if-absent uri new-c)
-            r     (f-state/client @state uri)]
-        (when (not= r new-c)
-          (.close new-c))
-        r))))
+  (or (f-state/client @state uri) 
+      (let [new-c (get-new-client uri)]
+        (state-save-client uri new-c)
+        new-c)))
 
 (declare async revisit)
 (defn on-query-value-and-subscribe
@@ -169,9 +164,9 @@
   [sub ampsies]
   (swap! state f-state/state-after-new-ampsies sub ampsies))
 
-(defn- state-save-client-if-absent
+(defn- state-save-client
   [uri client]
-  (swap! state f-state/state-after-new-client-if-absent uri client))
+  (swap! state f-state/state-after-new-client uri client))
 
 (defn- state-save-executor-if-absent
   [uri executor]

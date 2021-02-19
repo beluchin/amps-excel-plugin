@@ -59,9 +59,9 @@
   [state a sub]
   (assoc-in state [:alias->sub a] sub))
 
-(defn state-after-new-client-if-absent
+(defn state-after-new-client
   [state uri client]
-  (update-in state [:uri->client uri] #(or % client)))
+  (update-in state [:uri->client uri] client))
 
 (defn state-after-new-executor-if-absent
   [state uri executor]
