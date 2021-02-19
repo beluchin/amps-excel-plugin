@@ -27,5 +27,5 @@
   ([^String s ^String uri ^String topic ^String filter]
    (let [sub (f/subscription uri topic filter)]
       (o/save-alias s sub)
-      (o/on-register s sub)
+      (o/on-require s sub)
       nil)))

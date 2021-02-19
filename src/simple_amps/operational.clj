@@ -25,7 +25,7 @@
     ;; no blocking calls on the thread where the excel functions are called.
     (async (:uri sub) revisit a)))
 
-(defn on-register
+(defn on-require
   [a sub]
   ;; no blocking calls on the thread where the excel functions are called.
   (async (:uri sub) revisit a))

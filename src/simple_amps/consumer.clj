@@ -2,7 +2,9 @@
 
 (defprotocol QueryValueAndSubscribeConsumer
   (on-value [this x])
+
   (on-activating [this])
   (on-activated [this])
-  (on-inactive [this reason]) ;; reason: cannot connect | connection was closed
-  (on-unaliased [this]))
+
+  ;; reason: cannot connect | connection was closed | undefined alias
+  (on-inactive [this reason]))
