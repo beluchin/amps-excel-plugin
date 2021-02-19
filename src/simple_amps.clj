@@ -1,5 +1,5 @@
 (ns simple-amps
-  (:refer-clojure :exclude [alias filter])
+  (:refer-clojure :exclude [alias filter require])
   (:require [simple-amps.functional :as f]
             [simple-amps.operational :as o]))
 
@@ -14,7 +14,7 @@
           nil))))
 
 (declare on-aliased save-alias)
-(defn register
+(defn require
   "Returns any other aliases associated with the same subscription or nil.
 
   It may result in trying to connect to AMPS - as long as a related 
