@@ -153,7 +153,7 @@
 
   Assumes no concurrency by subscription"
   [a]
-  (let [[action-kw args] (f/revisit a @state)]
+  (when-let [[action-kw args] (f/revisit a @state)]
     (apply (function action-kw) args)))
 
 (defn- state-delete

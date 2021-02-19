@@ -61,7 +61,7 @@
 
 (defn state-after-new-client
   [state uri client]
-  (update-in state [:uri->client uri] client))
+  (assoc-in state [:uri->client uri] client))
 
 (defn state-after-new-executor-if-absent
   [state uri executor]
