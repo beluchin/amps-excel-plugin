@@ -10,7 +10,7 @@
     (if (f/error? qvns-or-error)
       qvns-or-error
       (do (o/save-qvns alias qvns-or-error)
-          (o/on-query-value-and-subscribe alias)
+          (o/on-query-value-and-subscribe alias qvns-or-error)
           nil))))
 
 (declare on-aliased save-alias)

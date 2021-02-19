@@ -19,11 +19,13 @@
 
 (declare async revisit)
 (defn on-query-value-and-subscribe
-  [a]
-  (when-let [sub (f-state/sub @state a)]
+  [a qvns]
+  (if-let [sub (f-state/sub @state a)]
 
     ;; no blocking calls on the thread where the excel functions are called.
-    (async (:uri sub) revisit a)))
+    (async (:uri sub) revisit a)
+
+    (c/on-inactive (:consumer qvns) "undefined alias")))
 
 (defn on-require
   [a sub]
