@@ -8,12 +8,12 @@
   (:import [com.crankuptheamps.client Client ClientDisconnectHandler Command Message$Command MessageHandler]
            com.crankuptheamps.client.exception.ConnectionException))
 
-(declare get-new-client state state-save-client)
+(declare get-new-client-notify-qvns state state-save-client)
 (defn get-client
   "returns a existing client if possible. Otherwise creates a new client"
   [uri]
   (or (f-state/client @state uri) 
-      (let [new-c (get-new-client uri)]
+      (let [new-c (get-new-client-notify-qvns uri)]
         (state-save-client uri new-c)
         new-c)))
 
@@ -40,11 +40,10 @@
   [a qvns]
   (swap! state f-state/state-after-new-qvns a qvns))
 
-(declare get-client-or-notify-qvns new-json-msg-handler state-save-ampsies uniq-id)
+(declare new-json-msg-handler state-save-ampsies uniq-id)
 (defn subscribe
   ([sub filter]
-   (when-let [c (get-client-or-notify-qvns sub)]
-     (subscribe sub filter c)))
+   (when-let [c (get-client sub)] (subscribe sub filter c)))
   ([sub filter client]
    (let [sub-id     (uniq-id)
          command    (.. (Command. "sow_and_subscribe")
@@ -59,10 +58,11 @@
 (def client-disconnect-handler 
   (reify ClientDisconnectHandler
     (invoke [_ client]
-      (logging/info (str "client disconnected: " (.getURI client)))
-      (doseq [qvns (f-state/qvns-set @state client)]
-        (notify c/on-inactive (:consumer qvns) "client disconnected"))
-      (state-delete client))))
+      (let [uri (.getURI client)
+            consumer-coll (map :consumer (f/qvns-coll @state uri))]
+        (logging/info (str "client disconnected: " (.getURI client)))
+        (notify-many consumer-coll c/on-inactive "client disconnected")
+        (state-delete client)))))
 
 (declare get-executor)
 (defn- async
@@ -86,17 +86,6 @@
   [kw]
   (resolve (symbol (name kw))))
 
-(declare notify)
-(defn- get-client-or-notify-qvns
-  [sub]
-  (letfn [(notify-all-qvns [reason]
-            (doseq [c (map :consumer (f-state/qvns-set @state sub))]
-              (notify c/on-inactive c reason)))]
-    (try (get-client (:uri sub))
-         (catch ConnectionException ex
-           (notify-all-qvns (str "cannot connect: " (.getMessage ex)))
-           nil))))
-
 (declare state state-save-executor-if-absent)
 (defn- get-executor
   [uri]
@@ -114,6 +103,18 @@
     (.connect uri)
     (.setDisconnectHandler client-disconnect-handler)
     (.logon)))
+
+(declare notify-many)
+(defn- get-new-client-notify-qvns
+  [uri]
+  (let [consumer-coll (map :consumer (f/qvns-coll @state uri))]
+    (notify-many consumer-coll c/on-activating)
+    (try (get-new-client uri)
+    (catch ConnectionException ex
+      (notify-many consumer-coll
+                   c/on-inactive
+                   (str "cannot connect: " (.getMessage ex)))
+      nil))))
 
 (defn- get-new-client-name
   []
@@ -143,11 +144,17 @@
             (= Message$Command/OOF cmd)
             (throw (UnsupportedOperationException.))))))))
 
-(defn notify
-  [f & args]
-  (try (apply f args)
+(defn- notify
+  "a call to one consumer - protected against exceptions"
+  [f c & args]
+  (try (apply f c args)
        (catch Throwable ex
          (logging/error (with-out-str (clojure.stacktrace/print-cause-trace ex))))))
+
+(defn- notify-many
+  "eagerly notify each of the consumers on the collection"
+  [coll f & args]
+  (doseq [c coll] (apply notify f c args)))
 
 (declare state)
 (defn- revisit

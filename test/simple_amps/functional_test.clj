@@ -61,6 +61,13 @@
     {"a" 1} "/a = 1" true
     {"a" 1} "/a = 42" false))
 
+(t/deftest qvns-coll-test
+  (t/is (= [:qvns1 :qvns2] (sut/qvns-coll {:alias->sub {:a1 {:uri :u}
+                                                        :a2 {:uri :u}}
+                                           :alias->qvns-set {:a1 #{:qvns1}
+                                                             :a2 #{:qvns2}}}
+                                          :u))))
+
 (t/deftest revisit-test
   (t/testing "subscription and qvns in place; subscription is inactive"
     (with-redefs [sut/subscribe-action+args (fn [alias _] (when (= alias "a")

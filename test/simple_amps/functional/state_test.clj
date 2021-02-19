@@ -3,7 +3,7 @@
             [clojure.test :as t]))
 
 (t/deftest qvns-set-test
-  (t/testing "from AMPS client"
+  #_(t/testing "from AMPS client"
     (t/is (= #{:qvns} (sut/qvns-set {:uri->client {:u :c}
                                      :alias->sub {:a {:uri :u}}
                                      :alias->qvns-set {:a #{:qvns}}}

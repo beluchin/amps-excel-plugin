@@ -12,6 +12,14 @@
    :sub->ampsies ...
    :uri->client ...})
 
+(defn alias->qvns-set
+  [state]
+  (:alias->qvns-set state))
+
+(defn alias->sub
+  [state]
+  (:alias->sub state))
+
 (defn client
   [state uri]
   (get-in state [:uri->client uri]))
@@ -22,7 +30,8 @@
 
 (defmulti qvns-set #(cond (map? %2) :subscription
                           (string? %2) :alias
-                          :else :amps-client))
+                          ;;:else :amps-client
+                          ))
 (defmethod qvns-set :subscription
   [state sub]
   (let [sub->alias (set/map-invert (:alias->sub state))]
@@ -32,7 +41,7 @@
 (defmethod qvns-set :alias
   [state a]
   (get-in state [:alias->qvns-set a]))
-(defmethod qvns-set :amps-client
+#_(defmethod qvns-set :amps-client
   [state amps-client]
   (let [client->uri (set/map-invert (:uri->client state))
         uri (get client->uri amps-client)

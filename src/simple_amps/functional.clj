@@ -53,6 +53,15 @@
   [m qvns]
   (expr/evaluate (second (:filter+expr qvns)) m))
 
+(defn qvns-coll
+  [state uri]
+  (let [alias-coll (->> (f-state/alias->sub state)
+                        (filter (comp #{uri} :uri second))
+                        (map first))
+        qvns-set-coll (filter (comp (set alias-coll) first)
+                              f-state/alias->qvns-set)]
+    (flatten qvns-set-coll)))
+
 (defn qvns-or-error 
   [filter context-expr value-expr consumer]
   {:filter+expr [filter (expr/parse-binary-expr filter)]
