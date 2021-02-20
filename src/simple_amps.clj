@@ -22,7 +22,7 @@
 
   If the uri is malformed, this will be notified via the 
   query-value-and-subscribe calls."
-  ([^String s ^String uri ^String topic] (register s uri topic nil))
+  ([^String s ^String uri ^String topic] (require s uri topic nil))
 
   ([^String s ^String uri ^String topic ^String filter]
    (let [sub (f/subscription uri topic filter)]

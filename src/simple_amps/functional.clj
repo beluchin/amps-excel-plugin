@@ -54,7 +54,21 @@
   [m qvns]
   (expr/evaluate (second (:filter+expr qvns)) m))
 
-(defn qvns-coll
+(defn qvns-or-error 
+  [fi context-expr value-expr consumer]
+  {:filter+expr [fi (expr/parse-binary-expr fi)]
+   :context-expr (expr/parse-binary-expr context-expr)
+   :value-expr (expr/parse-value-expr value-expr)
+   :consumer consumer})
+
+(defmulti qvns-set #(cond (map? %2) :subscription :else :uri))
+(defmethod qvns-set :subscription
+  [state sub]
+  (let [sub->alias (set/map-invert (s/alias->sub state))]
+    (-> sub->alias
+        (get sub)
+        ((s/alias->qvns-set state)))))
+(defmethod qvns-set :uri
   [state uri]
   (let [alias-coll (->> (s/alias->sub state)
                         (filter (comp #{uri} :uri second))
@@ -63,20 +77,6 @@
                            (select-keys (s/alias->qvns-set state))
                            (map (comp vec second)))]
     (flatten qvns-set-coll)))
-
-(defn qvns-or-error 
-  [fi context-expr value-expr consumer]
-  {:filter+expr [fi (expr/parse-binary-expr fi)]
-   :context-expr (expr/parse-binary-expr context-expr)
-   :value-expr (expr/parse-value-expr value-expr)
-   :consumer consumer})
-
-(defn qvns-set
-  [state sub]
-  (let [sub->alias (set/map-invert (s/alias->sub state))]
-    (-> sub->alias
-        (get sub)
-        ((s/alias->qvns-set state)))))
 
 (declare subscribe-action+args)
 (defn revisit

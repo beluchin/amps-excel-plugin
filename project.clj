@@ -6,7 +6,7 @@
                  [com.crankuptheamps/client "5.3.0.4"]]
 
   ;; this caused ns-refresh to fail
-  ;;:repl-options {:init-ns amps-excel-plugin.core}
+  :repl-options {:init-ns simple-amps.operational}
 
   ;; flycheck-clojure setup
   :plugins [[lein-environ "1.0.0"]]
@@ -16,4 +16,5 @@
                                                        ;; :builtin-config-files ["myconfigfile.clj"]
                                                        }}}}}
 
-  :aot [amps-excel-plugin.excel.functions])
+  ;;:aot [amps-excel-plugin.excel.functions]
+  )

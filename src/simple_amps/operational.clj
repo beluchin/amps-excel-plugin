@@ -68,11 +68,11 @@
        (catch Throwable ex
          (logging/error (with-out-str (clojure.stacktrace/print-cause-trace ex)))))))
 
-(declare state-delete)
+(declare notify-many state-delete)
 (defn on-disconnected
   [client]
   (let [uri (.getURI client)
-        consumer-coll (map :consumer (f/qvns-coll @state uri))]
+        consumer-coll (map :consumer (f/qvns-set @state uri))]
     (logging/info (str "client disconnected: " uri))
     (notify-many consumer-coll c/on-inactive "client disconnected")
     (state-delete client)))
@@ -95,7 +95,7 @@
         (state-save-executor-if-absent uri new-e)
         (f-state/executor @state uri)))))
 
-(declare get-new-client-name)
+(declare client-disconnect-handler get-new-client-name)
 (defn- get-new-client
   [uri]
   (doto (Client. (get-new-client-name))
@@ -106,7 +106,7 @@
 (declare notify-many)
 (defn- get-new-client-notify-qvns
   [uri]
-  (let [consumer-coll (map :consumer (f/qvns-coll @state uri))]
+  (let [consumer-coll (map :consumer (f/qvns-set @state uri))]
     (notify-many consumer-coll c/on-activating)
     (try (get-new-client uri)
     (catch ConnectionException ex
