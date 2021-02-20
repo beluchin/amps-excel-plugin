@@ -54,7 +54,7 @@
          command-id (.executeAsync client command handler)]
      (state-save-ampsies sub (f/ampsies client command-id sub-id)))))
 
-(declare notify state-delete)
+(declare notify-many state-delete)
 (def client-disconnect-handler 
   (reify ClientDisconnectHandler
     (invoke [_ client]

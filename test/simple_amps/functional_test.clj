@@ -40,7 +40,7 @@
 
 (t/deftest handle-test
   (t/testing "with qvns in scope"
-    (with-redefs [f-state/qvns-set #(when (= %& [:state :sub]) #{:qvns})]
+    (with-redefs [sut/qvns-set #(when (= %& [:state :sub]) #{:qvns})]
       (t/testing "happy path"
         (with-redefs [sut/in-scope? #(when (= %& [:m :qvns]) true)
                       sut/value      #(when (= %& [:m :qvns]) :x)]
@@ -51,7 +51,7 @@
           (t/is (empty? (sut/handle :m :sub :state)))))))
 
   (t/testing "no qvns in scope"
-    (with-redefs [f-state/qvns-set (constantly nil)]
+    (with-redefs [sut/qvns-set (constantly nil)]
       (t/is (empty? (sut/handle :m :sub :state))))))
 
 (t/deftest in-scope?-test
@@ -67,6 +67,19 @@
                                            :alias->qvns-set {:a1 #{:qvns1}
                                                              :a2 #{:qvns2}}}
                                           :u))))
+
+(t/deftest qvns-set-test
+  #_(t/testing "from subscription alias"
+    (t/is (= :foo-set (sut/qvns-set {:alias->qvns-set {"a" :foo-set}} "a"))))
+
+  (t/testing "from subscription"
+    (t/are [state sub qvns-set] (= qvns-set (sut/qvns-set state sub))
+      {:alias->qvns-set {:a :foo-set}
+       :alias->sub {:a {:bar :qux}}} {:bar :qux} :foo-set
+      
+      ;; a subscription has multiple aliases.
+      ;; https://stackoverflow.com/a/42771807/614800
+      )))
 
 (t/deftest revisit-test
   (t/testing "subscription and qvns in place; subscription is inactive"

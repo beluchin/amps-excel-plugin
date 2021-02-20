@@ -1,9 +1,10 @@
 (ns simple-amps.functional
-  (:refer-clojure :exclude [alias filter])
-  (:require [simple-amps.functional.expr :as expr]
-            [simple-amps.functional.state :as s]
-            [cheshire.core :as cheshire]
-            [simple-amps.functional.state :as f-state]))
+  (:refer-clojure :exclude [alias])
+  (:require [cheshire.core :as cheshire]
+            [clojure.set :as set]
+            [simple-amps.functional
+             [expr  :as expr]
+             [state :as s]]))
 
 (defn ampsies
   "amps connectivity info"
@@ -34,15 +35,15 @@
   (if-let [ks (keys-to-first-coll m expr)]
     (let [coll (get-in m ks)
           kites (map #(assoc-in {} ks %) coll) ]
-      (first (clojure.core/filter #(expr/evaluate expr %) kites)))
+      (first (filter #(expr/evaluate expr %) kites)))
     (when (expr/evaluate expr m) m)))
 
-(declare in-scope? value)
+(declare in-scope? qvns-set value)
 (defn handle
   "returns a collection of value+qvns so that they can be notified"
   [m sub state]
-  (let [qvns-coll (s/qvns-set state sub)
-        qvns-in-scope-coll (clojure.core/filter #(in-scope? m %) qvns-coll)]
+  (let [qvns-coll (qvns-set state sub)
+        qvns-in-scope-coll (filter #(in-scope? m %) qvns-coll)]
     (map #(vector (value m %) %) qvns-in-scope-coll)))
 
 (defn handle-json
@@ -55,27 +56,34 @@
 
 (defn qvns-coll
   [state uri]
-  (let [alias-coll (->> (f-state/alias->sub state)
+  (let [alias-coll (->> (s/alias->sub state)
                         (filter (comp #{uri} :uri second))
                         (map first))
         qvns-set-coll (->> alias-coll
-                           (select-keys (f-state/alias->qvns-set state))
+                           (select-keys (s/alias->qvns-set state))
                            (map (comp vec second)))]
     (flatten qvns-set-coll)))
 
 (defn qvns-or-error 
-  [filter context-expr value-expr consumer]
-  {:filter+expr [filter (expr/parse-binary-expr filter)]
+  [fi context-expr value-expr consumer]
+  {:filter+expr [fi (expr/parse-binary-expr fi)]
    :context-expr (expr/parse-binary-expr context-expr)
    :value-expr (expr/parse-value-expr value-expr)
    :consumer consumer})
+
+(defn qvns-set
+  [state sub]
+  (let [sub->alias (set/map-invert (s/alias->sub state))]
+    (-> sub->alias
+        (get sub)
+        ((s/alias->qvns-set state)))))
 
 (declare subscribe-action+args)
 (defn revisit
   [alias state]
   (cond
-    (not (f-state/sub state alias)) nil
-    (not (f-state/qvns-set state alias)) nil
+    (not (s/sub state alias)) nil
+    (not (s/qvns-set state alias)) nil
     :else (subscribe-action+args alias state)))
 
 (defmulti state-after-delete #(cond (map? %2) :subscription
@@ -85,24 +93,24 @@
   [state client]
   (let [s (->> state
                s/uri->client 
-               (clojure.core/filter (comp #{client} second))
+               (filter (comp #{client} second))
                (s/state-after-delete-many state))]
     (->> s
          s/sub->ampsies
-         (clojure.core/filter (comp #{client} :client second))
+         (filter (comp #{client} :client second))
          (s/state-after-delete-many s))))
 
 (defn subscribe-action+args 
   [alias state]
   (let [sub (s/sub state alias)
         coll (s/qvns-set state alias)
-        filter (apply combine (:filter sub) (map (comp first :filter+expr) coll))]
-    [:subscribe [sub filter]]))
+        fi (apply combine (:filter sub) (map (comp first :filter+expr) coll))]
+    [:subscribe [sub fi]]))
 
 (defn subscription
-  [uri topic filter]
+  [uri topic fi]
   (let [s {:uri uri :topic topic}]
-    (if filter (assoc s :filter filter) s)))
+    (if fi (assoc s :filter fi) s)))
 
 (declare evaluate)
 (defn value
