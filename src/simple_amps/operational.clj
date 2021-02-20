@@ -43,7 +43,7 @@
 (declare new-json-msg-handler state-save-ampsies uniq-id)
 (defn subscribe
   ([sub filter]
-   (when-let [c (get-client sub)] (subscribe sub filter c)))
+   (when-let [c (get-client (:uri sub))] (subscribe sub filter c)))
   ([sub filter client]
    (let [sub-id     (uniq-id)
          command    (.. (Command. "sow_and_subscribe")
