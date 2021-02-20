@@ -58,8 +58,9 @@
   (let [alias-coll (->> (f-state/alias->sub state)
                         (filter (comp #{uri} :uri second))
                         (map first))
-        qvns-set-coll (filter (comp (set alias-coll) first)
-                              f-state/alias->qvns-set)]
+        qvns-set-coll (->> alias-coll
+                           (select-keys (f-state/alias->qvns-set state))
+                           (map (comp vec second)))]
     (flatten qvns-set-coll)))
 
 (defn qvns-or-error 
