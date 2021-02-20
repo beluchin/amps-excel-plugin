@@ -54,16 +54,6 @@
          command-id (.executeAsync client command handler)]
      (state-save-ampsies sub (f/ampsies client command-id sub-id)))))
 
-(declare notify-many state-delete)
-(def client-disconnect-handler 
-  (reify ClientDisconnectHandler
-    (invoke [_ client]
-      (let [uri (.getURI client)
-            consumer-coll (map :consumer (f/qvns-coll @state uri))]
-        (logging/info (str "client disconnected: " (.getURI client)))
-        (notify-many consumer-coll c/on-inactive "client disconnected")
-        (state-delete client)))))
-
 (declare get-executor)
 (defn- async
   [uri f & args]
@@ -77,6 +67,15 @@
          (apply f args))
        (catch Throwable ex
          (logging/error (with-out-str (clojure.stacktrace/print-cause-trace ex)))))))
+
+(declare state-delete)
+(defn on-disconnected
+  [client]
+  (let [uri (.getURI client)
+        consumer-coll (map :consumer (f/qvns-coll @state uri))]
+    (logging/info (str "client disconnected: " uri))
+    (notify-many consumer-coll c/on-inactive "client disconnected")
+    (state-delete client)))
 
 (defn- clone
   [s]
@@ -190,3 +189,7 @@
 
 (def ^:private state (atom nil))
 
+(def ^:private client-disconnect-handler 
+  (reify ClientDisconnectHandler
+    (invoke [_ client]
+      (async (.getURI client) on-disconnected client))))
