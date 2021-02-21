@@ -158,12 +158,9 @@
 
 (declare state)
 (defn- revisit
-  "subscribes | replaces filter | unsubscribes - depending on the state
-
-  Assumes no concurrency by subscription"
   [a]
-  (when-let [[action-kw args] (f/revisit a @state)]
-    (apply (function action-kw) args)))
+  (when-let [args (f/subscribe-args a @state)]
+    (apply subscribe args)))
 
 (defn- state-delete
   [x]

@@ -83,18 +83,17 @@
 
 (t/deftest revisit-test
   (t/testing "subscription and qvns in place; subscription is inactive"
-    (with-redefs [sut/subscribe-action+args (fn [alias _] (when (= alias "a")
-                                                            [:action :args]))]
-      (t/is (= [:action :args] (sut/revisit "a" {:alias->sub {"a" :sub}
-                                                 :alias->qvns-set {"a" :qvns-set}
-                                                 :sub->ampsies {}})))))
+    (with-redefs [sut/subscribe-args (fn [alias _] (when (= alias "a") :args))]
+      (t/is (= :args (sut/subscribe-args "a" {:alias->sub {"a" :sub}
+                                              :alias->qvns-set {"a" :qvns-set}
+                                              :sub->ampsies {}})))))
 
   (t/testing "subscription in place; no qvns"
-    (t/is (nil? (sut/revisit "a" {:alias->sub {"a" :sub}
-                                  :alias->qvns-set {}}))))
+    (t/is (nil? (sut/subscribe-args "a" {:alias->sub {"a" :sub}
+                                         :alias->qvns-set {}}))))
 
   (t/testing "no subscription in place"
-    (t/is (nil? (sut/revisit "a" {:alias->sub {}})))))
+    (t/is (nil? (sut/subscribe-args "a" {:alias->sub {}})))))
 
 (t/deftest state-after-delete-test
   (t/testing "deleting client"
@@ -104,13 +103,13 @@
                                                      {:k :v2} {:client :c2}}}
                                      :c1)))))
 
-(t/deftest subscribe-action+args-test
+(t/deftest subscribe-args-test
   (with-redefs [sut/combine #(when (= [:subf :qvns1f :qvns2f] %&) :f)]
-    (t/is (= [:subscribe [{:uri :u :topic :t :filter :subf}
-                          :f
-                          #{{:filter+expr [:qvns1f :foo]}
-                            {:filter+expr [:qvns2f :foo]}}]]
-             (sut/subscribe-action+args
+    (t/is (= [{:uri :u :topic :t :filter :subf}
+              :f
+              #{{:filter+expr [:qvns1f :foo]}
+                {:filter+expr [:qvns2f :foo]}}]
+             (sut/subscribe-args
                "a"
                {:alias->sub
                 {"a" {:uri :u

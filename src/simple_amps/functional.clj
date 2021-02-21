@@ -78,14 +78,6 @@
                            (map (comp vec second)))]
     (flatten qvns-set-coll)))
 
-(declare subscribe-action+args)
-(defn revisit
-  [alias state]
-  (cond
-    (not (s/sub state alias)) nil
-    (not (s/qvns-set state alias)) nil
-    :else (subscribe-action+args alias state)))
-
 (defmulti state-after-delete #(cond (map? %2) :subscription
                                     (string? %2) :alias
                                     :else :amps-client))
@@ -100,12 +92,15 @@
          (filter (comp #{client} :client second))
          (s/state-after-delete-many s))))
 
-(defn subscribe-action+args 
+(defn subscribe-args 
   [alias state]
-  (let [sub (s/sub state alias)
-        qvns-set (s/qvns-set state alias)
-        fi (apply combine (:filter sub) (map (comp first :filter+expr) qvns-set))]
-    [:subscribe [sub fi qvns-set]]))
+  (cond
+    (not (s/sub state alias)) nil
+    (not (s/qvns-set state alias)) nil
+    :else (let [sub (s/sub state alias)
+                qvns-set (s/qvns-set state alias)
+                fi (apply combine (:filter sub) (map (comp first :filter+expr) qvns-set))]
+            [sub fi qvns-set])))
 
 (defn subscription
   [uri topic fi]
