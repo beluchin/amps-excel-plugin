@@ -1,5 +1,4 @@
 (ns simple-amps.operational
-  (:refer-clojure :exclude [filter])
   (:require clojure.stacktrace
             logging
             [simple-amps.consumer :as c]
@@ -40,21 +39,6 @@
   [a qvns]
   (swap! state f-state/state-after-new-qvns a qvns))
 
-(declare new-json-msg-handler notify-many state-save-ampsies uniq-id)
-(defn subscribe
-  ([sub filter qvns-set]
-   (when-let [c (get-client (:uri sub))] (subscribe sub filter qvns-set c)))
-  ([sub filter qvns-set client]
-   (let [sub-id     (uniq-id)
-         command    (.. (Command. "sow_and_subscribe")
-                        (setTopic (:topic sub))
-                        (setSubId sub-id)
-                        (setFilter filter))
-         handler    (new-json-msg-handler sub)
-         command-id (.executeAsync client command handler)]
-     (state-save-ampsies sub (f/ampsies client command-id sub-id))
-     (notify-many (map :consumer qvns-set) c/on-activated))))
-
 (declare get-executor)
 (defn- async
   [uri f & args]
@@ -68,6 +52,15 @@
          (apply f args))
        (catch Throwable ex
          (logging/error (with-out-str (clojure.stacktrace/print-cause-trace ex)))))))
+
+(defn- executeAsync-n-get-command-id
+  [client topic sub-id fi handler]
+  (.executeAsync client
+                 (.. (Command. "sow_and_subscribe")
+                     (setTopic topic )
+                     (setSubId sub-id)
+                     (setFilter fi))
+                 handler))
 
 (declare notify-many state-delete)
 (defn on-disconnected
@@ -156,11 +149,37 @@
   [coll f & args]
   (doseq [c coll] (apply notify f c args)))
 
+(declare state-save-ampsies uniq-id)
+(defn- subscribe
+  ([sub fi qvns-set]
+   (when-let [c (get-client (:uri sub))] (subscribe sub fi qvns-set c)))
+  ([sub fi qvns-set client]
+   (let [sub-id     (uniq-id)
+         command-id (executeAsync-n-get-command-id 
+                      client
+                      (:topic sub)
+                      sub-id
+                      fi
+                      (new-json-msg-handler sub))]
+     (state-save-ampsies sub (f/ampsies client command-id sub-id))
+     (notify-many (map :consumer qvns-set) c/on-activated))))
+
+(declare state-save-ampsies)
+(defn- resubscribe
+  [sub fi qvns-set ampsies]
+  (let [command-id (executeAsync-n-get-command-id (:client ampsies)
+                                                  (:topic sub)
+                                                  (:sub-id ampsies)
+                                                  fi
+                                                  (new-json-msg-handler sub))]
+    (state-save-ampsies sub (assoc ampsies :command-id command-id))
+    (notify-many (map :consumer qvns-set) c/on-activated)))
+
 (declare state)
 (defn- revisit
   [a]
-  (when-let [args (f/subscribe-args a @state)]
-    (apply subscribe args)))
+  (when-let [[action args] (f/subscription-action+args a @state)]
+    (apply (function action) args)))
 
 (defn- state-delete
   [x]

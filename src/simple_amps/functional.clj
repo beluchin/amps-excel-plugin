@@ -1,5 +1,4 @@
 (ns simple-amps.functional
-  (:refer-clojure :exclude [alias])
   (:require [cheshire.core :as cheshire]
             [clojure.set :as set]
             [simple-amps.functional
@@ -93,20 +92,17 @@
          (s/state-after-delete-many s))))
 
 (defn subscribe-args 
-  [alias state]
-  (let [sub (s/sub state alias)
-        qvns-set (s/qvns-set state alias)]
+  [sub qvns-set]
+  [sub
+   (apply combine (:filter sub) (map (comp first :filter+expr) qvns-set))
+   qvns-set])
+
+(defn subscription-action+args
+  [a state]
+  (let [sub (s/sub state a)
+        qvns-set (s/qvns-set state a)]
     (when (and sub qvns-set)
-      (let [fi (apply combine (:filter sub) (map (comp first :filter+expr)
-                                                 qvns-set))]
-        [sub fi qvns-set])))
-  #_(cond
-    (not (s/sub state alias)) nil
-    (not (s/qvns-set state alias)) nil
-    :else (let [sub (s/sub state alias)
-                qvns-set (s/qvns-set state alias)
-                fi (apply combine (:filter sub) (map (comp first :filter+expr) qvns-set))]
-            [sub fi qvns-set])))
+      [:subscribe (subscribe-args sub qvns-set)])))
 
 (defn subscription
   [uri topic fi]
