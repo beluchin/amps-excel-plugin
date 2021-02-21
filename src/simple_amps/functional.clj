@@ -94,7 +94,13 @@
 
 (defn subscribe-args 
   [alias state]
-  (cond
+  (let [sub (s/sub state alias)
+        qvns-set (s/qvns-set state alias)]
+    (when (and sub qvns-set)
+      (let [fi (apply combine (:filter sub) (map (comp first :filter+expr)
+                                                 qvns-set))]
+        [sub fi qvns-set])))
+  #_(cond
     (not (s/sub state alias)) nil
     (not (s/qvns-set state alias)) nil
     :else (let [sub (s/sub state alias)
