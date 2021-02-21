@@ -40,11 +40,11 @@
   [a qvns]
   (swap! state f-state/state-after-new-qvns a qvns))
 
-(declare new-json-msg-handler state-save-ampsies uniq-id)
+(declare new-json-msg-handler notify-many state-save-ampsies uniq-id)
 (defn subscribe
-  ([sub filter]
-   (when-let [c (get-client (:uri sub))] (subscribe sub filter c)))
-  ([sub filter client]
+  ([sub filter qvns-set]
+   (when-let [c (get-client (:uri sub))] (subscribe sub filter qvns-set c)))
+  ([sub filter qvns-set client]
    (let [sub-id     (uniq-id)
          command    (.. (Command. "sow_and_subscribe")
                         (setTopic (:topic sub))
@@ -52,7 +52,8 @@
                         (setFilter filter))
          handler    (new-json-msg-handler sub)
          command-id (.executeAsync client command handler)]
-     (state-save-ampsies sub (f/ampsies client command-id sub-id)))))
+     (state-save-ampsies sub (f/ampsies client command-id sub-id))
+     (notify-many (map :consumer qvns-set) c/on-activated))))
 
 (declare get-executor)
 (defn- async

@@ -103,9 +103,9 @@
 (defn subscribe-action+args 
   [alias state]
   (let [sub (s/sub state alias)
-        coll (s/qvns-set state alias)
-        fi (apply combine (:filter sub) (map (comp first :filter+expr) coll))]
-    [:subscribe [sub fi]]))
+        qvns-set (s/qvns-set state alias)
+        fi (apply combine (:filter sub) (map (comp first :filter+expr) qvns-set))]
+    [:subscribe [sub fi qvns-set]]))
 
 (defn subscription
   [uri topic fi]
