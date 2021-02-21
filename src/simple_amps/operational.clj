@@ -71,10 +71,10 @@
 (declare notify-many state-delete)
 (defn on-disconnected
   [client]
-  (let [uri (.getURI client)
+  (let [uri (str (.getURI client))
         consumer-coll (map :consumer (f/qvns-set @state uri))]
-    (logging/info (str "client disconnected: " uri))
     (notify-many consumer-coll c/on-inactive "client disconnected")
+    (logging/info (str "client disconnected: " uri))
     (state-delete client)))
 
 (defn- clone
