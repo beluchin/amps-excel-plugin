@@ -81,19 +81,24 @@
       ;; https://stackoverflow.com/a/42771807/614800
       )))
 
-(t/deftest revisit-test
+(t/deftest subscription-action+args-test
   (t/testing "subscription and qvns in place; subscription is inactive"
-    (with-redefs [sut/subscribe-args (fn [alias _] (when (= alias "a") :args))]
-      (t/is (= :args (sut/subscribe-args "a" {:alias->sub {"a" :sub}
-                                              :alias->qvns-set {"a" :qvns-set}
-                                              :sub->ampsies {}})))))
+    (with-redefs [sut/subscribe-args #(when (= [:sub :qvns-set] %&) :args)]
+      (t/is (= [:subscribe :args] (sut/subscription-action+args
+                                    "a"
+                                    {:alias->sub {"a" :sub}
+                                     :alias->qvns-set {"a" :qvns-set}
+                                     :sub->ampsies {}})))))
 
   (t/testing "subscription in place; no qvns"
-    (t/is (nil? (sut/subscribe-args "a" {:alias->sub {"a" :sub}
-                                         :alias->qvns-set {}}))))
+    (t/is (nil? (sut/subscription-action+args "a" {:alias->sub {"a" :sub}
+                                                   :alias->qvns-set {}}))))
 
   (t/testing "no subscription in place"
-    (t/is (nil? (sut/subscribe-args "a" {:alias->sub {}})))))
+    (t/is (nil? (sut/subscription-action+args "a" {:alias->sub {}}))))
+
+  (t/testing "no ampsies for sub"
+    (t/is (= [:subscribe] (sut/subscription-action+args :a :sub :qvns {:})))))
 
 (t/deftest state-after-delete-test
   (t/testing "deleting client"

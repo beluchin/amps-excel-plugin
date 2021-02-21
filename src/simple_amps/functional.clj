@@ -98,11 +98,14 @@
    qvns-set])
 
 (defn subscription-action+args
-  [a state]
-  (let [sub (s/sub state a)
-        qvns-set (s/qvns-set state a)]
-    (when (and sub qvns-set)
-      [:subscribe (subscribe-args sub qvns-set)])))
+  ([a state]
+   (let [sub (s/sub state a)
+         qvns-set (s/qvns-set state a)]
+     (when (and sub qvns-set)
+       [:subscribe (subscribe-args sub qvns-set)])))
+
+  ([a sub qvns state]
+   ))
 
 (defn subscription
   [uri topic fi]

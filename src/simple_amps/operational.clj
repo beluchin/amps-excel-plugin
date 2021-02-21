@@ -22,7 +22,7 @@
   (if-let [sub (f-state/sub @state a)]
 
     ;; no blocking calls on the thread where the excel functions are called.
-    (async (:uri sub) revisit a)
+    (async (:uri sub) revisit a sub qvns)
 
     (c/on-inactive (:consumer qvns) "undefined alias")))
 
@@ -177,9 +177,12 @@
 
 (declare state)
 (defn- revisit
-  [a]
-  (when-let [[action args] (f/subscription-action+args a @state)]
-    (apply (function action) args)))
+  ([a]    
+   (when-let [[action args] (f/subscription-action+args a @state)]
+     (apply (function action) args)))
+  ([a sub qvns]
+   (when-let [[action args] (f/subscription-action+args a sub qvns @state)]
+     (apply (function action) args))))
 
 (defn- state-delete
   [x]
