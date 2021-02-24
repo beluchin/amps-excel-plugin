@@ -77,7 +77,14 @@
                            (map (comp vec second)))]
     (flatten qvns-set-coll)))
 
-(defmulti state-after-delete #(cond (map? %2) :subscription
+(defn resubscribe-args
+  [sub qvns-super-set activated-qvns-set ampsies]
+  [sub
+   (apply combine (:filter sub) (map (comp first :filter+expr) qvns-super-set))
+   (set/difference qvns-super-set activated-qvns-set)
+   ampsies])
+
+(defmulti state-after-delete #(cond (vector? %2) :alias+qvns
                                     (string? %2) :alias
                                     :else :amps-client))
 (defmethod state-after-delete :amps-client
@@ -107,7 +114,10 @@
         qvns-set (s/qvns-set state a)]
     (when (and sub qvns-set)
       (if-let [ampsies (s/ampsies state sub)]
-        [:resubscribe (resubscribe-args a sub qvns-set ampsies)]
+        [:resubscribe (resubscribe-args sub
+                                        qvns-set
+                                        (s/activated-qvns-set state sub)
+                                        ampsies)]
         [:subscribe (subscribe-args sub qvns-set)]))))
 
 (defn subscription
@@ -136,11 +146,4 @@
                 result)))]
     (let [result (reduce take-until-coll [] (expr/common-path expr))]
       (when (sequential? (get-in m result)) result))))
-
-(defn- resubscribe-args
-  [sub qvns-set qvns ampsies]
-  #_[sub
-   (apply combine (:filter sub) (map (comp first :filter+expr) qvns-set))
-   qvns-set
-   ampsies])
 

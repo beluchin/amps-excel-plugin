@@ -81,6 +81,20 @@
       ;; https://stackoverflow.com/a/42771807/614800
       )))
 
+(t/deftest resubscribe-args-test
+  (with-redefs [sut/combine #(when (= [:subf :qvns1f :qvns2f] %&) :f)]
+    (t/is (= [{:uri :u :topic :t :filter :subf}
+              :f
+              #{{:filter+expr [:qvns2f :foo]}}
+              :ampsies]
+
+             (sut/resubscribe-args
+               {:uri :u :topic :t :filter :subf}
+               #{{:filter+expr [:qvns1f :foo]}
+                 {:filter+expr [:qvns2f :foo]}}
+               #{{:filter+expr [:qvns1f :foo]}}
+               :ampsies)))))
+
 (t/deftest subscription-action+args-test
   (t/testing "while not connected to amps"
     (with-redefs [sut/subscribe-args #(when (= [:sub :qvns-set] %&) :args)]
@@ -91,11 +105,19 @@
                                      :sub->ampsies {}})))))
 
   (t/testing "while connected to amps"
-    (t/is (= :resubscribe (first (sut/subscription-action+args
-                                   :a
-                                   {:alias->sub {:a :sub}
-                                    :alias->qvns-set {:a :qvns-set}
-                                    :sub->ampsies {:sub :ampsies}})))))
+    (with-redefs [sut/resubscribe-args #(when (= [:sub
+                                                  :qvns-set
+                                                  :activated-qvns-set
+                                                  :ampsies]
+                                                 %&)
+                                          :args)]
+      (t/is (= [:resubscribe :args]
+               (sut/subscription-action+args
+                 :a
+                 {:alias->sub {:a :sub}
+                  :alias->qvns-set {:a :qvns-set}
+                  :sub->ampsies {:sub :ampsies}
+                  :sub->activated-qvns-set {:sub :activated-qvns-set}})))))
 
   (t/testing "subscription in place; no qvns"
     (t/is (nil? (sut/subscription-action+args "a" {:alias->sub {"a" :sub}
@@ -105,10 +127,14 @@
 
 (t/deftest state-after-delete-test
   (t/testing "deleting client"
-    (t/is (= {:uri->client {"u2" :c2}, :sub->ampsies {{:k :v2} {:client :c2}}}
-             (sut/state-after-delete {:uri->client {"u1" :c1, "u2" :c2}
-                                      :sub->ampsies {{:k :v1} {:client :c1}
-                                                     {:k :v2} {:client :c2}}}
+    (t/is (= {:uri->client {:u2 :c2}
+              :sub->ampsies {:sub2 {:client :c2}}
+              :sub->activated-qvns-set {:sub2 :qvns-set2}}
+             (sut/state-after-delete {:uri->client {:u1 :c1, :u2 :c2}
+                                      :sub->ampsies {:sub1 {:client :c1}
+                                                     :sub2 {:client :c2}}
+                                      :sub->activated-qvns-set {:sub1 :qvns-set1
+                                                                :sub2 :qvns-set2}}
                                      :c1)))))
 
 (t/deftest subscribe-args-test

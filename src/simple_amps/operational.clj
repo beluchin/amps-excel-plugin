@@ -62,6 +62,16 @@
                      (setFilter fi))
                  handler))
 
+(defn- executeAsync-replacing-n-get-command-id
+  [client topic sub-id fi handler]
+  (.executeAsync client
+                 (.. (Command. "sow_and_subscribe")
+                     (setTopic topic )
+                     (setSubId sub-id)
+                     (setFilter fi)
+                     (setOptions "replace"))
+                 handler))
+
 (declare notify-many state-delete)
 (defn on-disconnected
   [client]
@@ -166,14 +176,15 @@
 
 (declare state-save-ampsies)
 (defn- resubscribe
-  [sub fi qvns ampsies]
-  (let [command-id (executeAsync-n-get-command-id (:client ampsies)
-                                                  (:topic sub)
-                                                  (:sub-id ampsies)
-                                                  fi
-                                                  (new-json-msg-handler sub))]
+  [sub fi qvns-set-to-activate ampsies]
+  (let [command-id (executeAsync-replacing-n-get-command-id
+                     (:client ampsies)
+                     (:topic sub)
+                     (:sub-id ampsies)
+                     fi
+                     (new-json-msg-handler sub))]
     (state-save-ampsies sub (assoc ampsies :command-id command-id))
-    (notify (:consumer qvns) c/on-activated)))
+    (notify-many (:consumer qvns-set-to-activate) c/on-activated)))
 
 (declare state)
 (defn- revisit

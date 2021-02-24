@@ -13,6 +13,10 @@
    :uri->executor ...
    :uri->client ...})
 
+(defn activated-qvns-set
+  [state sub]
+  (get-in state [:sub->activated-qvns-set sub]))
+
 (defn after
   [state sub ampsies activated-qvns-set]
   (-> state
