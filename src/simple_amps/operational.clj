@@ -22,7 +22,7 @@
   (if-let [sub (f-state/sub @state a)]
 
     ;; no blocking calls on the thread where the excel functions are called.
-    (async (:uri sub) revisit a sub qvns)
+    (async (:uri sub) revisit a)
 
     (c/on-inactive (:consumer qvns) "undefined alias")))
 
@@ -41,7 +41,7 @@
 
 (declare get-executor)
 (defn- async
-  [uri f & args]
+  [^String uri f & args]
   (.submit
     (get-executor uri)
     #(try
@@ -149,7 +149,7 @@
   [coll f & args]
   (doseq [c coll] (apply notify f c args)))
 
-(declare state-save-ampsies uniq-id)
+(declare state-save uniq-id)
 (defn- subscribe
   ([sub fi qvns-set]
    (when-let [c (get-client (:uri sub))] (subscribe sub fi qvns-set c)))
@@ -161,36 +161,33 @@
                       sub-id
                       fi
                       (new-json-msg-handler sub))]
-     (state-save-ampsies sub (f/ampsies client command-id sub-id))
+     (state-save sub (f/ampsies client command-id sub-id) qvns-set)
      (notify-many (map :consumer qvns-set) c/on-activated))))
 
 (declare state-save-ampsies)
 (defn- resubscribe
-  [sub fi qvns-set ampsies]
+  [sub fi qvns ampsies]
   (let [command-id (executeAsync-n-get-command-id (:client ampsies)
                                                   (:topic sub)
                                                   (:sub-id ampsies)
                                                   fi
                                                   (new-json-msg-handler sub))]
     (state-save-ampsies sub (assoc ampsies :command-id command-id))
-    (notify-many (map :consumer qvns-set) c/on-activated)))
+    (notify (:consumer qvns) c/on-activated)))
 
 (declare state)
 (defn- revisit
-  ([a]    
-   (when-let [[action args] (f/subscription-action+args a @state)]
-     (apply (function action) args)))
-  ([a sub qvns]
-   (when-let [[action args] (f/subscription-action+args a sub qvns @state)]
-     (apply (function action) args))))
+  [a]
+  (when-let [[action args] (f/subscription-action+args a @state)]
+    (apply (function action) args)))
 
 (defn- state-delete
   [x]
   (swap! state f/state-after-delete x))
 
-(defn- state-save-ampsies
-  [sub ampsies]
-  (swap! state f-state/state-after-new-ampsies sub ampsies))
+(defn- state-save
+  [sub ampsies activated-qvns-set]
+  (swap! state f-state/after sub ampsies activated-qvns-set))
 
 (defn- state-save-client
   [uri client]
@@ -212,4 +209,4 @@
 (def ^:private client-disconnect-handler 
   (reify ClientDisconnectHandler
     (invoke [_ client]
-      (async (.getURI client) on-disconnected client))))
+      (async (str (.getURI client)) on-disconnected client))))

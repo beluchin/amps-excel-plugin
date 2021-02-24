@@ -82,23 +82,26 @@
       )))
 
 (t/deftest subscription-action+args-test
-  (t/testing "subscription and qvns in place; subscription is inactive"
+  (t/testing "while not connected to amps"
     (with-redefs [sut/subscribe-args #(when (= [:sub :qvns-set] %&) :args)]
       (t/is (= [:subscribe :args] (sut/subscription-action+args
-                                    "a"
-                                    {:alias->sub {"a" :sub}
-                                     :alias->qvns-set {"a" :qvns-set}
+                                    :a
+                                    {:alias->sub {:a :sub}
+                                     :alias->qvns-set {:a :qvns-set}
                                      :sub->ampsies {}})))))
+
+  (t/testing "while connected to amps"
+    (t/is (= :resubscribe (first (sut/subscription-action+args
+                                   :a
+                                   {:alias->sub {:a :sub}
+                                    :alias->qvns-set {:a :qvns-set}
+                                    :sub->ampsies {:sub :ampsies}})))))
 
   (t/testing "subscription in place; no qvns"
     (t/is (nil? (sut/subscription-action+args "a" {:alias->sub {"a" :sub}
                                                    :alias->qvns-set {}}))))
-
   (t/testing "no subscription in place"
-    (t/is (nil? (sut/subscription-action+args "a" {:alias->sub {}}))))
-
-  (t/testing "no ampsies for sub"
-    (t/is (= [:subscribe] (sut/subscription-action+args :a :sub :qvns {:})))))
+    (t/is (nil? (sut/subscription-action+args "a" {:alias->sub {}})))))
 
 (t/deftest state-after-delete-test
   (t/testing "deleting client"

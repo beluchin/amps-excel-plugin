@@ -8,9 +8,31 @@
    :alias->qvns-set ...
 
    ;; implementation
-   :uri->executor ...
+   :sub->activated-qvns-set ...
    :sub->ampsies ...
+   :uri->executor ...
    :uri->client ...})
+
+(defn after
+  [state sub ampsies activated-qvns-set]
+  (-> state
+      (assoc-in [:sub->ampsies sub] ampsies)
+      (assoc-in [:sub->activated-qvns-set sub] activated-qvns-set)))
+
+(declare after-delete)
+(defn after-delete-sub->ampsies
+  [state coll]
+  (after-delete state :sub->ampsies coll))
+
+(declare after-delete)
+(defn after-delete-sub->activated-qvns-set
+  [state coll]
+  (after-delete state :sub->activated-qvns-set coll))
+
+(declare after-delete)
+(defn after-delete-uri->client
+  [state coll]
+  (after-delete state :uri->client coll))
 
 (defn alias->qvns-set
   [state]
@@ -19,6 +41,10 @@
 (defn alias->sub
   [state]
   (:alias->sub state))
+
+(defn ampsies 
+  [state sub]
+  (get-in state [:sub->ampsies sub]))
 
 (defn client
   [state uri]
@@ -31,17 +57,6 @@
 (defn qvns-set
   [state a]
   (get-in state [:alias->qvns-set a]))
-
-(defmulti state-after-delete-many
-  #(cond (map? (ffirst %2))    :sub+ampsies
-         (string? (ffirst %2)) :uri+client
-         :else                 (throw (UnsupportedOperationException.))))
-(defmethod state-after-delete-many :sub+ampsies
-  [state coll]
-  (reduce #(update %1 :sub->ampsies dissoc (first %2)) state coll))
-(defmethod state-after-delete-many :uri+client
-  [state coll]
-  (reduce #(update %1 :uri->client dissoc (first %2)) state coll))
 
 (defn state-after-new-ampsies
   [state sub ampsies]
@@ -74,3 +89,7 @@
 (defn uri->client
   [state]
   (:uri->client state))
+
+(defn- after-delete
+  [state k coll]
+  (update state k #(apply dissoc % coll)))

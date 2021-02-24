@@ -82,14 +82,18 @@
                                     :else :amps-client))
 (defmethod state-after-delete :amps-client
   [state client]
-  (let [s (->> state
-               s/uri->client 
-               (filter (comp #{client} second))
-               (s/state-after-delete-many state))]
-    (->> s
-         s/sub->ampsies
-         (filter (comp #{client} :client second))
-         (s/state-after-delete-many s))))
+  (let [uri-coll (->> state
+                      s/uri->client 
+                      (filter (comp #{client} second))
+                      (map first))
+        sub-coll (->> state
+                      s/sub->ampsies
+                      (filter (comp #{client} :client second))
+                      (map first))]
+    (-> state 
+        (s/after-delete-uri->client uri-coll)
+        (s/after-delete-sub->ampsies sub-coll)
+        (s/after-delete-sub->activated-qvns-set sub-coll))))
 
 (defn subscribe-args 
   [sub qvns-set]
@@ -98,14 +102,13 @@
    qvns-set])
 
 (defn subscription-action+args
-  ([a state]
-   (let [sub (s/sub state a)
-         qvns-set (s/qvns-set state a)]
-     (when (and sub qvns-set)
-       [:subscribe (subscribe-args sub qvns-set)])))
-
-  ([a sub qvns state]
-   ))
+  [a state]
+  (let [sub (s/sub state a)
+        qvns-set (s/qvns-set state a)]
+    (when (and sub qvns-set)
+      (if-let [ampsies (s/ampsies state sub)]
+        [:resubscribe (resubscribe-args a sub qvns-set ampsies)]
+        [:subscribe (subscribe-args sub qvns-set)]))))
 
 (defn subscription
   [uri topic fi]
@@ -133,4 +136,11 @@
                 result)))]
     (let [result (reduce take-until-coll [] (expr/common-path expr))]
       (when (sequential? (get-in m result)) result))))
+
+(defn- resubscribe-args
+  [sub qvns-set qvns ampsies]
+  #_[sub
+   (apply combine (:filter sub) (map (comp first :filter+expr) qvns-set))
+   qvns-set
+   ampsies])
 
