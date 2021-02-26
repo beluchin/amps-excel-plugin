@@ -12,8 +12,8 @@
 
 (t/deftest combine-test
   (t/are [args r] (= r (apply sut/combine args))
-    ["f1" "f2" "f3"] "(f1) AND (f2) AND (f3)"
-    [nil "f1" "f2"] "(f1) AND (f2)"
+    ["f1" "f2" "f3"] "(f1) OR (f2) OR (f3)"
+    [nil "f1" "f2"] "(f1) OR (f2)"
     [nil] nil
     ["f1"] "(f1)"))
 
@@ -85,6 +85,8 @@
   (with-redefs [sut/combine #(when (= [:subf :qvns1f :qvns2f] %&) :f)]
     (t/is (= [{:uri :u :topic :t :filter :subf}
               :f
+              #{{:filter+expr [:qvns1f :foo]}
+                 {:filter+expr [:qvns2f :foo]}}
               #{{:filter+expr [:qvns2f :foo]}}
               :ampsies]
 

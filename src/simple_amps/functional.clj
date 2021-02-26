@@ -15,7 +15,7 @@
   (let [nil-less (remove nil? filter-coll)
         f1 (first nil-less)]
     (when f1
-      (reduce #(format "%s AND (%s)" %1 %2)
+      (reduce #(format "%s OR (%s)" %1 %2)
               (format "(%s)" f1)
               (rest nil-less)))))
 
