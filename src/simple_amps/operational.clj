@@ -184,9 +184,10 @@
      (state-save sub (f/ampsies client command-id sub-id) qvns-set)
      (notify-many (map :consumer qvns-set) c/on-activated))))
 
-(declare state-save-ampsies)
+(declare state-save)
 (defn- resubscribe
-  [sub fi qvns-set-to-activate ampsies]
+  [sub fi qvns-super-set qvns-set-to-activate ampsies]
+  (notify-many (map :consumer qvns-set-to-activate) c/on-activating)
   (let [command-id (executeAsync-try-replacing-n-get-command-id
                      (:client ampsies)
                      (:topic sub)
@@ -194,8 +195,8 @@
                      (:command-id ampsies)
                      fi
                      (new-json-msg-handler sub))]
-    (state-save-ampsies sub (assoc ampsies :command-id command-id))
-    (notify-many (:consumer qvns-set-to-activate) c/on-activated)))
+    (state-save sub (assoc ampsies :command-id command-id) qvns-super-set)
+    (notify-many (map :consumer qvns-set-to-activate) c/on-activated)))
 
 (declare state)
 (defn- revisit

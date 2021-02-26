@@ -81,6 +81,7 @@
   [sub qvns-super-set activated-qvns-set ampsies]
   [sub
    (apply combine (:filter sub) (map (comp first :filter+expr) qvns-super-set))
+   qvns-super-set
    (set/difference qvns-super-set activated-qvns-set)
    ampsies])
 
