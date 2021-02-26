@@ -2,6 +2,7 @@
 
 (defprotocol QueryValueAndSubscribeConsumer
   (on-value [this x])
+  (on-oof [this x])
 
   (on-activating [this])
   (on-activated [this])
