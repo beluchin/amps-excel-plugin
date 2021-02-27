@@ -62,7 +62,8 @@
                  (.. (Command. "sow_and_subscribe")
                      (setTopic topic )
                      (setSubId sub-id)
-                     (setFilter fi))
+                     (setFilter fi)
+                     (setOptions "oof"))
                  handler))
 
 (defn- executeAsync-replacing-n-get-command-id
@@ -72,7 +73,7 @@
                      (setTopic topic )
                      (setSubId sub-id)
                      (setFilter fi)
-                     (setOptions "replace"))
+                     (setOptions "oof,replace"))
                  handler))
 
 (defn- executeAsync-try-replacing-n-get-command-id
@@ -141,6 +142,12 @@
   (doseq [[value qvns] (f/handle-json json sub @state)]
     (notify c/on-value (:consumer qvns) value)))
 
+(declare notify)
+(defn- handle-json-oof
+  [json sub]
+  (doseq [[value qvns] (f/handle-json json sub @state)]
+    (notify c/on-oof (:consumer qvns) value)))
+
 (declare async)
 (defn- new-json-msg-handler
   [sub]
@@ -155,7 +162,8 @@
               (async uri handle-json json sub))
 
             (= Message$Command/OOF cmd)
-            (throw (UnsupportedOperationException.))))))))
+            (let [json (clone (.getData msg))]
+              (async uri handle-json-oof json sub))))))))
 
 (defn- notify
   "a call to one consumer - protected against exceptions"
