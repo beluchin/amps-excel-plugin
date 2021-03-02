@@ -22,6 +22,8 @@
 (declare new-rtd)
 (defn java-queryValueAndSubscribe
   [^String alias ^String message-filter ^String context-expr ^String value-expr]
+  (logging/info (str "qvns alias:" alias " message-filter:" message-filter
+                     " context-expr:" context-expr " value-expr:" value-expr))
   (let [rtd (new-rtd)
         consumer (reify consumer/QueryValueAndSubscribeConsumer
                    (on-value [_ x] (.notify rtd x))
@@ -34,7 +36,8 @@
         error (simple-amps/query-value-and-subscribe alias
                                                      message-filter
                                                      context-expr
-                                                     value-expr)]
+                                                     value-expr
+                                                     consumer)]
     (when error (.notify rtd error))
     rtd))
 
@@ -42,7 +45,7 @@
   "all args are required except the filter"
   [^String alias ^String uri ^String topic ^String filter]
   (logging/info (str "require alias:" alias " uri:" uri
-                     " topic:" topic "filter:" filter))
+                     " topic:" topic " filter:" filter))
   (simple-amps/require alias uri topic filter)
   "OK")
 

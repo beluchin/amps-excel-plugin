@@ -24,7 +24,7 @@
     (t/is (= (sut/->BinaryExpr (sut/->ValueExpr ["a" "b"])
                                =
                                (sut/->ConstantExpr 42))
-             (sut/parse-binary-expr "/a/b = 42")))))
+             (sut/parse-binary-expr "/a/b  = 42")))))
 
 (t/deftest parse-constant-expr-test
   (t/are [s value] (= (sut/->ConstantExpr value) (sut/parse-constant-expr s))

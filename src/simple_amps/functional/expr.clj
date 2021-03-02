@@ -35,7 +35,11 @@
 (declare parse-value-expr)
 (defn parse-binary-expr
   [s]
-  (let [tokens (string/split s #" ")]
+  (let [tokens (->> s
+                    string/trim
+                    (re-matches #"([/a-zA-Z0-9]+)([^/a-zA-Z0-9]+)([0-9]+)")
+                    rest
+                    (map string/trim))]
     (->BinaryExpr (parse-value-expr (first tokens))
                   (var-get (resolve (symbol (second tokens))))
                   (parse-constant-expr (last tokens)))))
