@@ -1,5 +1,14 @@
 (ns functional)
 
+(defn assoc-if
+  "Same as assoc, but skip the assoc if v is nil"
+  [m & kvs]
+  (->> kvs
+    (partition 2)
+    (filter second)
+    (map vec)
+    (into m)))
+
 (defn common-prefix
   "(... [:a :b] [:a :c]) => [:a]"
   [coll1 coll2]

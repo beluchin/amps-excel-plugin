@@ -3,21 +3,23 @@
             [clojure.set :as set]
             [simple-amps.functional
              [expr  :as expr]
-             [state :as s]]))
+             [state :as s]]
+            [functional :as f]))
 
 (defn ampsies
   "amps connectivity info"
   [client command-id sub-id]
   {:client client :command-id command-id :sub-id sub-id})
 
+(declare combine-or)
 (defn combine
-  [& filter-coll]
-  (let [nil-less (remove nil? filter-coll)
-        f1 (first nil-less)]
-    (when f1
-      (reduce #(format "%s OR (%s)" %1 %2)
-              (format "(%s)" f1)
-              (rest nil-less)))))
+  [fi1 fi2 & filter-coll]
+  (let [to-or (apply combine-or fi2 filter-coll)]
+    (if fi1
+      (if to-or
+        (format "(%s) AND (%s)" fi1 to-or)
+        fi1)
+      to-or)))
 
 (def error? keyword?)
 
@@ -51,14 +53,21 @@
 
 (defn in-scope?
   [m qvns]
-  (expr/evaluate (second (:filter+expr qvns)) m))
+  (let [expr (second (:filter+expr qvns))]
+    (or (not expr) (expr/evaluate expr m))))
 
 (defn qvns-or-error 
-  [fi context-expr value-expr consumer]
-  {:filter+expr [fi (expr/parse-binary-expr fi)]
-   :context-expr (expr/parse-binary-expr context-expr)
-   :value-expr (expr/parse-value-expr value-expr)
-   :consumer consumer})
+  [fi nested-context-expr value-expr consumer]
+  (-> {:value-expr (expr/parse-value-expr value-expr)
+       :consumer consumer}
+      (#(if fi
+          (assoc % :filter+expr [fi (expr/parse-binary-expr fi)])
+          %))
+      (#(if nested-context-expr
+          (assoc %
+                 :nested-context-expr
+                 (expr/parse-binary-expr nested-context-expr))
+          %))))
 
 (defmulti qvns-set #(cond (map? %2) :subscription :else :uri))
 (defmethod qvns-set :subscription
@@ -128,10 +137,24 @@
 
 (declare evaluate)
 (defn value
-  ([m qvns] (value m (:context-expr qvns) (:value-expr qvns)))
-  ([m context-expr value-expr] (-> m
-                                   (first-kite context-expr)
-                                   (evaluate value-expr))))
+  ([m qvns] (value m (:nested-context-expr qvns) (:value-expr qvns)))
+  ([m nested-context-expr value-expr]
+   (if nested-context-expr
+     (-> m
+         (first-kite nested-context-expr)
+         (evaluate value-expr))
+     (evaluate m value-expr))))
+
+(defn combine-or
+  [& filter-coll]
+  (let [nil-less (remove nil? filter-coll)
+        fi1 (first nil-less)]
+    (when fi1
+      (if (< 1 (count nil-less))
+        (reduce #(format "%s OR (%s)" %1 %2)
+                (format "(%s)" fi1)
+                (rest nil-less))
+        fi1))))
 
 (defn- evaluate
   [m value-expr]

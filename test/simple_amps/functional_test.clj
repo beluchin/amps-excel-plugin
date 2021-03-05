@@ -12,10 +12,12 @@
 
 (t/deftest combine-test
   (t/are [args r] (= r (apply sut/combine args))
-    ["f1" "f2" "f3"] "(f1) OR (f2) OR (f3)"
-    [nil "f1" "f2"] "(f1) OR (f2)"
-    [nil] nil
-    ["f1"] "(f1)"))
+    ["f1" "f2" "f3"] "(f1) AND ((f2) OR (f3))"
+    ["f1" "f2"] "(f1) AND (f2)"
+    [nil "f2"] "f2"
+    [nil "f2" "f3"] "(f2) OR (f3)"
+    ["f1" nil] "f1"
+    ["f1" nil "f2"] "(f1) AND (f2)"))
 
 (declare binary-expr)
 (t/deftest first-kite-test
@@ -59,7 +61,11 @@
                         m
                         {:filter+expr [:foo (expr/parse-binary-expr s)]}))
     {"a" 1} "/a = 1" true
-    {"a" 1} "/a = 42" false))
+    {"a" 1} "/a = 42" false
+    {"a" "hello"} "/a = 'hello'" true)
+
+  (t/testing "missing filter"
+    (t/is (sut/in-scope? :m {}))))
 
 (t/deftest qvns-coll-test
   (t/is (= [:qvns1 :qvns2] (sut/qvns-set {:alias->sub {:a1 {:uri :u}
@@ -67,6 +73,22 @@
                                            :alias->qvns-set {:a1 #{:qvns1}
                                                              :a2 #{:qvns2}}}
                                           :u))))
+
+(t/deftest qvns-or-error-test
+  (with-redefs [expr/parse-binary-expr (constantly :parsed)
+                expr/parse-value-expr (constantly :parsed)]
+    (t/are [fi nested-context-expr value-expr consumer qvns] (= qvns
+                                                                (sut/qvns-or-error
+                                                                  fi
+                                                                  nested-context-expr
+                                                                  value-expr
+                                                                  consumer))
+      :fi :nested-e :value-e :c {:filter+expr [:fi :parsed]
+                                 :nested-context-expr :parsed
+                                 :value-expr :parsed
+                                 :consumer :c}
+      nil nil :value-e :c {:value-expr :parsed, :consumer :c}
+      )))
 
 (t/deftest qvns-set-test
   #_(t/testing "from subscription alias"
@@ -156,10 +178,13 @@
 
 (declare value-expr)
 (t/deftest value-test
-  (t/testing "happy path"
-    (t/is (= 42 (sut/value {:a [{:b 1} {:b 2 :c 42}]}
-                           (binary-expr [:a :b] = 2)
-                           (value-expr [:a :c]))))))
+  (t/is (= 42 (sut/value {:a [{:b 1} {:b 2 :c 42}]}
+                         (binary-expr [:a :b] = 2)
+                         (value-expr [:a :c]))))
+  (t/testing "missing nested context expr"
+    (t/is (= 42 (sut/value {:a {:b 42}}
+                           nil
+                           (value-expr [:a :b]))))))
 
 (defn- binary-expr
   [ks op const]

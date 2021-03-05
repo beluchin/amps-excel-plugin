@@ -37,7 +37,7 @@
   [s]
   (let [tokens (->> s
                     string/trim
-                    (re-matches #"([/a-zA-Z0-9]+)([^/a-zA-Z0-9]+)([0-9]+)")
+                    (re-matches #"([/a-zA-Z0-9]+)[ ]*(=)[ ]*(['0-9a-zA-Z]+)")
                     rest
                     (map string/trim))]
     (->BinaryExpr (parse-value-expr (first tokens))
