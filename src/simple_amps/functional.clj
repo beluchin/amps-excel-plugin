@@ -11,14 +11,19 @@
   [client command-id sub-id]
   {:client client :command-id command-id :sub-id sub-id})
 
+(defn dedup
+  [and-filter or-filter-coll]
+  (let [dedupped-or (set or-filter-coll)]
+    (apply vector and-filter (remove #{and-filter} dedupped-or))))
+
 (declare combine-or)
 (defn combine
-  [fi1 fi2 & filter-coll]
-  (let [to-or (apply combine-or fi2 filter-coll)]
-    (if fi1
+  [and-filter or-filter & or-filter-coll]
+  (let [to-or (apply combine-or or-filter or-filter-coll)]
+    (if and-filter
       (if to-or
-        (format "(%s) AND (%s)" fi1 to-or)
-        fi1)
+        (format "(%s) AND (%s)" and-filter to-or)
+        and-filter)
       to-or)))
 
 (def error? keyword?)
@@ -89,7 +94,7 @@
 (defn resubscribe-args
   [sub qvns-super-set activated-qvns-set ampsies]
   [sub
-   (apply combine (:filter sub) (map (comp first :filter+expr) qvns-super-set))
+   (apply combine (dedup (:filter sub) (map (comp first :filter+expr) qvns-super-set)))
    qvns-super-set
    (set/difference qvns-super-set activated-qvns-set)
    ampsies])
@@ -115,7 +120,7 @@
 (defn subscribe-args 
   [sub qvns-set]
   [sub
-   (apply combine (:filter sub) (map (comp first :filter+expr) qvns-set))
+   (apply combine (dedup (:filter sub) (map (comp first :filter+expr) qvns-set)))
    qvns-set])
 
 (defn subscription-action+args

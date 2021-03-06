@@ -19,6 +19,14 @@
     ["f1" nil] "f1"
     ["f1" nil "f2"] "(f1) AND (f2)"))
 
+(t/deftest dedup-test
+  (t/are [and-filter or-filter-coll r] (= r (sut/dedup and-filter or-filter-coll))
+    :andf [:orf1 :orf1] [:andf :orf1]
+    :f    [:f]          [:f]
+    nil   [:orf1 :orf1] [nil :orf1]
+    :f    nil           [:f]
+    nil   nil           [nil]))
+
 (declare binary-expr)
 (t/deftest first-kite-test
   (t/testing "happy path"
