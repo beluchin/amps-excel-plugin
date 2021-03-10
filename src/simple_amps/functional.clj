@@ -17,7 +17,7 @@
 
 (declare combine-or)
 (defn combine [and-filter or-filter-coll]
-  (let [to-or (apply combine-or or-filter-coll)]
+  (let [to-or (combine-or or-filter-coll)]
     (if and-filter
       (if to-or
         (format "(%s) AND (%s)" and-filter to-or)
@@ -42,7 +42,7 @@
       (first (filter #(expr/evaluate expr %) kites)))
     (when (expr/evaluate expr m) m)))
 
-(declare in-scope? qvns-set value)
+(declare in-scope? qvns-set valuede)
 (defn handle
   "returns a collection of value+qvns so that they can be notified"
   [m sub state]
@@ -148,15 +148,14 @@
          (evaluate value-expr))
      (evaluate m value-expr))))
 
-(defn combine-or [& filter-coll]
-  (let [nil-less (remove nil? filter-coll)
-        fi1 (first nil-less)]
-    (when fi1
-      (if (< 1 (count nil-less))
+(defn combine-or [filter-coll]
+  (when (every? (comp not nil?) filter-coll)
+    (let [ff (first filter-coll)]
+      (if (< 1 (count filter-coll))
         (reduce #(format "%s OR (%s)" %1 %2)
-                (format "(%s)" fi1)
-                (rest nil-less))
-        fi1))))
+                (format "(%s)" ff)
+                (rest filter-coll))
+        ff))))
 
 (defn- evaluate
   [m value-expr]

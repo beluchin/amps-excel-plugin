@@ -16,8 +16,10 @@
     ["f1" ["f2"]]      "(f1) AND (f2)"
     [nil  ["f2"]]      "f2"
     [nil  ["f2" "f3"]] "(f2) OR (f3)"
-    ["f1" nil]         "f1"
-    ["f1" [nil "f2"]]  "(f1) AND (f2)"))
+    ["f1" nil]         "f1")
+
+  (t/testing "one qvns without filter removes the filter on the subscription"
+    (t/is (= "f1" (sut/combine "f1" [nil "f2"])))))
 
 (t/deftest dedup-test
   (t/are [and-filter or-filter-coll r] (= r (sut/dedup and-filter or-filter-coll))
