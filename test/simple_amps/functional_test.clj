@@ -12,20 +12,20 @@
 
 (t/deftest combine-test
   (t/are [args r] (= r (apply sut/combine args))
-    ["f1" "f2" "f3"] "(f1) AND ((f2) OR (f3))"
-    ["f1" "f2"] "(f1) AND (f2)"
-    [nil "f2"] "f2"
-    [nil "f2" "f3"] "(f2) OR (f3)"
-    ["f1" nil] "f1"
-    ["f1" nil "f2"] "(f1) AND (f2)"))
+    ["f1" ["f2" "f3"]] "(f1) AND ((f2) OR (f3))"
+    ["f1" ["f2"]]      "(f1) AND (f2)"
+    [nil  ["f2"]]      "f2"
+    [nil  ["f2" "f3"]] "(f2) OR (f3)"
+    ["f1" nil]         "f1"
+    ["f1" [nil "f2"]]  "(f1) AND (f2)"))
 
 (t/deftest dedup-test
   (t/are [and-filter or-filter-coll r] (= r (sut/dedup and-filter or-filter-coll))
-    :andf [:orf1 :orf1] [:andf :orf1]
-    :f    [:f]          [:f]
-    nil   [:orf1 :orf1] [nil :orf1]
-    :f    nil           [:f]
-    nil   nil           [nil]))
+    :andf [:orf1 :orf1] [:andf [:orf1]]
+    :f    [:f]          [:f    []]
+    nil   [:orf1 :orf1] [nil   [:orf1]]
+    :f    nil           [:f    []]
+    nil   nil           [nil   []]))
 
 (declare binary-expr)
 (t/deftest first-kite-test

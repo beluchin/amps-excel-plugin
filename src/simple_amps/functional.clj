@@ -11,15 +11,13 @@
   [client command-id sub-id]
   {:client client :command-id command-id :sub-id sub-id})
 
-(defn dedup
-  [and-filter or-filter-coll]
+(defn dedup [and-filter or-filter-coll]
   (let [dedupped-or (set or-filter-coll)]
-    (apply vector and-filter (remove #{and-filter} dedupped-or))))
+    [and-filter (remove #{and-filter} dedupped-or)]))
 
 (declare combine-or)
-(defn combine
-  [and-filter or-filter & or-filter-coll]
-  (let [to-or (apply combine-or or-filter or-filter-coll)]
+(defn combine [and-filter or-filter-coll]
+  (let [to-or (apply combine-or or-filter-coll)]
     (if and-filter
       (if to-or
         (format "(%s) AND (%s)" and-filter to-or)
@@ -150,8 +148,7 @@
          (evaluate value-expr))
      (evaluate m value-expr))))
 
-(defn combine-or
-  [& filter-coll]
+(defn combine-or [& filter-coll]
   (let [nil-less (remove nil? filter-coll)
         fi1 (first nil-less)]
     (when fi1
