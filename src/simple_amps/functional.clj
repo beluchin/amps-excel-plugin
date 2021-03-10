@@ -12,8 +12,7 @@
   {:client client :command-id command-id :sub-id sub-id})
 
 (defn dedup [and-filter or-filter-coll]
-  (let [dedupped-or (set or-filter-coll)]
-    [and-filter (remove #{and-filter} dedupped-or)]))
+  [and-filter (set (remove #{and-filter} or-filter-coll))])
 
 (declare combine-or)
 (defn combine [and-filter or-filter-coll]
@@ -27,7 +26,7 @@
 (def error? keyword?)
 
 (declare keys-to-first-coll)
-(defn first-kite 
+(defn first-nested-map 
   "Returns a map extracted from m based on the expr or nil. 
 
   When a map is returned, it is either m itself or a series of nested one-key 
@@ -38,11 +37,11 @@
   [m expr]
   (if-let [ks (keys-to-first-coll m expr)]
     (let [coll (get-in m ks)
-          kites (map #(assoc-in {} ks %) coll) ]
-      (first (filter #(expr/evaluate expr %) kites)))
+          nested-map-coll (map #(assoc-in {} ks %) coll) ]
+      (first (filter #(expr/evaluate expr %) nested-map-coll)))
     (when (expr/evaluate expr m) m)))
 
-(declare in-scope? qvns-set valuede)
+(declare in-scope? qvns-set value)
 (defn handle
   "returns a collection of value+qvns so that they can be notified"
   [m sub state]
@@ -60,16 +59,16 @@
     (or (not expr) (expr/evaluate expr m))))
 
 (defn qvns-or-error 
-  [fi nested-context-expr value-expr consumer]
+  [fi nested-map-expr value-expr consumer]
   (-> {:value-expr (expr/parse-value-expr value-expr)
        :consumer consumer}
       (#(if fi
           (assoc % :filter+expr [fi (expr/parse-binary-expr fi)])
           %))
-      (#(if nested-context-expr
+      (#(if nested-map-expr
           (assoc %
-                 :nested-context-expr
-                 (expr/parse-binary-expr nested-context-expr))
+                 :nested-map-expr
+                 (expr/parse-binary-expr nested-map-expr))
           %))))
 
 (defmulti qvns-set #(cond (map? %2) :subscription :else :uri))
@@ -140,11 +139,11 @@
 
 (declare evaluate)
 (defn value
-  ([m qvns] (value m (:nested-context-expr qvns) (:value-expr qvns)))
-  ([m nested-context-expr value-expr]
-   (if nested-context-expr
+  ([m qvns] (value m (:nested-map-expr qvns) (:value-expr qvns)))
+  ([m nested-map-expr value-expr]
+   (if nested-map-expr
      (-> m
-         (first-kite nested-context-expr)
+         (first-nested-map nested-map-expr)
          (evaluate value-expr))
      (evaluate m value-expr))))
 

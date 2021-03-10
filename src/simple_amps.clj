@@ -5,8 +5,8 @@
 
 (defn query-value-and-subscribe
   "returns nil or an error when the args are malformed"
-  [^String alias ^String filter ^String context-expr ^String value-expr consumer]
-  (let [qvns-or-error (f/qvns-or-error filter context-expr value-expr consumer)]
+  [^String alias ^String filter ^String nested-map-expr ^String value-expr consumer]
+  (let [qvns-or-error (f/qvns-or-error filter nested-map-expr value-expr consumer)]
     (if (f/error? qvns-or-error)
       qvns-or-error
       (do (o/save-qvns alias qvns-or-error)
