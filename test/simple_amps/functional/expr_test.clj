@@ -25,8 +25,9 @@
                                                 =
                                                 (sut/->ConstantExpr const))
                               (sut/parse-binary-expr s))
-      "    /a/b  =    42    " ["a" "b"] 42
-      "/a/b  = 'hello'" ["a" "b"] "hello")))
+      "    /a/b  =    42    "  ["a" "b"] 42
+      "/a/b  = 'hello'"        ["a" "b"] "hello"
+      "/_with_underscores = 1" ["_with_underscores"] 1 )))
 
 (t/deftest parse-constant-expr-test
   (t/are [s value] (= (sut/->ConstantExpr value) (sut/parse-constant-expr s))
@@ -36,7 +37,9 @@
 
 (t/deftest parse-value-expr-test
   (t/testing "happy path"
-    (t/is (= (sut/->ValueExpr ["a" "b"]) (sut/parse-value-expr "/a/b"))))
+    (t/are [s token-coll] (= (sut/->ValueExpr token-coll) (sut/parse-value-expr s))
+      "/a/b" ["a" "b"]
+      "/_with_underscores" ["_with_underscores"]))
   
   (t/testing "invalid"
     (t/are [s] (nil? (sut/parse-value-expr s))
