@@ -23,27 +23,27 @@
 
 (t/deftest dedup-test
   (t/are [and-filter or-filter-coll r] (= r (sut/dedup and-filter or-filter-coll))
-    :andf [:orf1 :orf1] [:andf [:orf1]]
-    :f    [:f]          [:f    []]
-    nil   [:orf1 :orf1] [nil   [:orf1]]
-    :f    nil           [:f    []]
-    nil   nil           [nil   []]))
+    :andf [:orf1 :orf1] [:andf #{:orf1}]
+    :f    [:f]          [:f    #{}]
+    nil   [:orf1 :orf1] [nil   #{:orf1}]
+    :f    nil           [:f    #{}]
+    nil   nil           [nil   #{}]))
 
 (declare binary-expr)
 (t/deftest first-kite-test
   (t/testing "happy path"
     (t/is (= {:a {:b 1 :c 2}}
-             (sut/first-kite {:a [{:b 1 :c 2} {:b 3}]
+             (sut/first-nested-map {:a [{:b 1 :c 2} {:b 3}]
                               :d 4}
 
                              ;; /a/b = 1
                              (binary-expr [:a :b] = 1)))))
 
   (t/testing "no sequential value - expr is true - the entire map is the kite"
-    (t/is (= {:a 1} (sut/first-kite {:a 1} (binary-expr [:a] = 1)))))
+    (t/is (= {:a 1} (sut/first-nested-map {:a 1} (binary-expr [:a] = 1)))))
 
   (t/testing "nil"
-    (t/are [m expr] (nil? (sut/first-kite m (apply binary-expr expr)))
+    (t/are [m expr] (nil? (sut/first-nested-map m (apply binary-expr expr)))
       ;; no sequential value - expr is not true
       {:a 1} [[:a] = 42]
 
@@ -87,14 +87,14 @@
 (t/deftest qvns-or-error-test
   (with-redefs [expr/parse-binary-expr (constantly :parsed)
                 expr/parse-value-expr (constantly :parsed)]
-    (t/are [fi nested-context-expr value-expr consumer qvns] (= qvns
-                                                                (sut/qvns-or-error
-                                                                  fi
-                                                                  nested-context-expr
-                                                                  value-expr
-                                                                  consumer))
+    (t/are [fi nested-map-expr value-expr consumer qvns] (= qvns
+                                                            (sut/qvns-or-error
+                                                              fi
+                                                              nested-map-expr
+                                                              value-expr
+                                                              consumer))
       :fi :nested-e :value-e :c {:filter+expr [:fi :parsed]
-                                 :nested-context-expr :parsed
+                                 :nested-map-expr :parsed
                                  :value-expr :parsed
                                  :consumer :c}
       nil nil :value-e :c {:value-expr :parsed, :consumer :c}
@@ -114,7 +114,7 @@
       )))
 
 (t/deftest resubscribe-args-test
-  (with-redefs [sut/combine #(when (= [:subf :qvns1f :qvns2f] %&) :f)]
+  (with-redefs [sut/combine #(when (= [:subf #{:qvns2f :qvns1f}] %&) :f)]
     (t/is (= [{:uri :u :topic :t :filter :subf}
               :f
               #{{:filter+expr [:qvns1f :foo]}
@@ -172,7 +172,7 @@
                                      :c1)))))
 
 (t/deftest subscribe-args-test
-  (with-redefs [sut/combine #(when (= [:subf :qvns1f :qvns2f] %&) :f)]
+  (with-redefs [sut/combine #(when (= [:subf #{:qvns2f :qvns1f}] %&) :f)]
     (t/is (= [{:uri :u :topic :t :filter :subf}
               :f
               #{{:filter+expr [:qvns1f :foo]}
