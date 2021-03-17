@@ -14,7 +14,7 @@
   (let [qvns-or-error (f/qvns-or-error filter nested-map-expr value-expr consumer)]
     (if (f/error? qvns-or-error)
       qvns-or-error
-      (do (o/save-qvns alias qvns-or-error)
+      (do (o/put-qvns alias qvns-or-error)
           (o/on-query-value-and-subscribe alias qvns-or-error)
           nil))))
 
@@ -31,9 +31,13 @@
 
   ([^String s ^String uri ^String topic ^String filter]
    (let [sub (f/subscription uri topic filter)]
-      (o/save-alias s sub)
+      (o/put-alias s sub)
       (o/on-require s sub)
       nil)))
 
-(def unsubscribe [id]
-  (throw (UnsupportedOperationException.)))
+(defn unsubscribe
+  "returns [alias qvns] that was unsubscribed or nil if there was none"
+  [id]
+  (let [alias+qvns (o/remove id)]
+    (when alias+qvns (o/on-removed alias+qvns))
+    alias+qvns))

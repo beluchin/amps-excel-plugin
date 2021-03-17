@@ -34,11 +34,11 @@
   ;; no blocking calls on the thread where the excel functions are called.
   (async (:uri sub) revisit a))
 
-(defn save-alias
+(defn put-alias
   [a sub]
   (swap! state f-state/state-after-new-alias a sub))
 
-(defn save-qvns
+(defn put-qvns
   [a qvns]
   (swap! state f-state/state-after-new-qvns a qvns))
 
