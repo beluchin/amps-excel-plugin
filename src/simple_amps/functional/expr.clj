@@ -37,7 +37,7 @@
   [s]
   (let [tokens (->> s
                     string/trim
-                    (re-matches #"([/a-zA-Z0-9]+)[ ]*(=)[ ]*(['0-9a-zA-Z]+)")
+                    (re-matches #"([/_a-zA-Z0-9]+)[ ]*(=)[ ]*(['0-9a-zA-Z]+)")
                     rest
                     (map string/trim))]
     (->BinaryExpr (parse-value-expr (first tokens))
@@ -46,5 +46,5 @@
 
 (defn parse-value-expr
   [s]
-  (when (re-matches #"(/[a-zA-Z][a-zA-Z0-9]*)+" s)
+  (when (re-matches #"(/[_a-zA-Z0-9]+)+" s)
     (->ValueExpr (rest (string/split s #"/")))))
