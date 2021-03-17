@@ -37,7 +37,8 @@
                                                      message-filter
                                                      context-expr
                                                      value-expr
-                                                     consumer)]
+                                                     consumer
+                                                     rtd)]
     (when error (.notify rtd error))
     rtd))
 
@@ -52,4 +53,6 @@
 (defn- new-rtd
   []
   (proxy [Rtd] []
-    (onDisconnected [] (logging/info "rtd disconnected"))))
+    (onDisconnected []
+      (logging/info "rtd disconnected")
+      (simple-amps/unsubscribe this))))
