@@ -96,11 +96,7 @@
    (set/difference qvns-super-set activated-qvns-set)
    ampsies])
 
-(defmulti state-after-delete #(cond (vector? %2) :alias+qvns
-                                    (string? %2) :alias
-                                    :else :amps-client))
-(defmethod state-after-delete :amps-client
-  [state client]
+(defn state-after-remove-client [state client]
   (let [uri-coll (->> state
                       s/uri->client 
                       (filter (comp #{client} second))
@@ -110,9 +106,11 @@
                       (filter (comp #{client} :client second))
                       (map first))]
     (-> state 
-        (s/after-delete-uri->client uri-coll)
-        (s/after-delete-sub->ampsies sub-coll)
-        (s/after-delete-sub->activated-qvns-set sub-coll))))
+        (s/after-remove-uri->client uri-coll)
+        (s/after-remove-sub->ampsies sub-coll)
+        (s/after-remove-sub->activated-qvns-set sub-coll))))
+
+(defn state-after-remove-qvns-call-id [state id] )
 
 (defn subscribe-args 
   [sub qvns-set]

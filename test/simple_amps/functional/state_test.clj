@@ -7,13 +7,13 @@
 
 (t/deftest state-after-delete-many-test
   (t/testing "uri->client"
-    (t/is (= {:uri->client {:u1 :c}} (sut/after-delete-uri->client
+    (t/is (= {:uri->client {:u1 :c}} (sut/after-remove-uri->client
                                        {:uri->client {:u1 :c, :u2 :c}}
                                        [:u2]))))
 
   (t/testing "sub->ampsies"
     (t/is (= {:sub->ampsies {{:k :v1} :ampsies}}
-             (sut/after-delete-sub->ampsies
+             (sut/after-remove-sub->ampsies
                {:sub->ampsies {{:k :v1} :ampsies
                                {:k :v2} :ampsies}}
                [{:k :v2}])))))
@@ -33,7 +33,3 @@
     nil :u :e {:uri->executor {:u :e}}
     {:uri->executor {:u :e}} :u :e' {:uri->executor {:u :e}}))
 
-(t/deftest state-after-new-qvns-test
-  (t/are [state a x state'] (= state' (sut/state-after-new-qvns state a x))
-    nil :foo :bar {:alias->qvns-set {:foo #{:bar}}}
-    {:alias->qvns-set {:foo #{:bar}}} :foo :qux {:alias->qvns-set {:foo #{:bar :qux}}}))

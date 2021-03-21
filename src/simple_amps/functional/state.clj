@@ -1,11 +1,16 @@
 (ns simple-amps.functional.state
   (:require [clojure.set :as set]))
 
+;; this module represents a heterogeneous map 
+;; with no relationships among the keys - the semantics among
+;; keys are established elsewhere. 
+
 (comment 
   ;; this is the shape of the state
   {;; user defined
    :alias->sub ...
    :alias->qvns-set ...
+   :id->alias+qvns ...
 
    ;; implementation
    :sub->activated-qvns-set ...
@@ -17,26 +22,32 @@
   [state sub]
   (get-in state [:sub->activated-qvns-set sub]))
 
-(defn after
-  [state sub ampsies activated-qvns-set]
-  (-> state
-      (assoc-in [:sub->ampsies sub] ampsies)
-      (assoc-in [:sub->activated-qvns-set sub] activated-qvns-set)))
+(defn after-new-alias-qvns [state a qvns]
+  (update-in state[:alias->qvns-set a] (fnil conj #{}) qvns))
 
-(declare after-delete)
-(defn after-delete-sub->ampsies
-  [state coll]
-  (after-delete state :sub->ampsies coll))
+(defn after-new-id-alias+qvns [state id alias+qvns]
+  (assoc-in state [:id->alias+qvns id] alias+qvns))
 
-(declare after-delete)
-(defn after-delete-sub->activated-qvns-set
-  [state coll]
-  (after-delete state :sub->activated-qvns-set coll))
+(defn after-new-sub-activated-qvns-set [state sub qvns-set]
+  (assoc-in state [:sub->activated-qvns-set sub] qvns-set))
 
-(declare after-delete)
-(defn after-delete-uri->client
+(defn after-new-sub-ampsies [state sub ampsies]
+  (assoc-in state [:sub->ampsies sub] ampsies))
+
+(declare after-remove)
+(defn after-remove-sub->ampsies
   [state coll]
-  (after-delete state :uri->client coll))
+  (after-remove state :sub->ampsies coll))
+
+(declare after-remove)
+(defn after-remove-sub->activated-qvns-set
+  [state coll]
+  (after-remove state :sub->activated-qvns-set coll))
+
+(declare after-remove)
+(defn after-remove-uri->client
+  [state coll]
+  (after-remove state :uri->client coll))
 
 (defn alias->qvns-set
   [state]
@@ -78,10 +89,6 @@
   [state uri executor]
   (update-in state [:uri->executor uri] #(or % executor)))
 
-(defn state-after-new-qvns
-  [state a qvns]
-  (update-in state [:alias->qvns-set a] (fnil conj #{}) qvns))
-
 (defn sub
   [state a]
   (get-in state [:alias->sub a]))
@@ -94,6 +101,6 @@
   [state]
   (:uri->client state))
 
-(defn- after-delete
+(defn- after-remove
   [state k coll]
   (update state k #(apply dissoc % coll)))

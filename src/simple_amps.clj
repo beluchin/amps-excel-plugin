@@ -10,11 +10,11 @@
    ^String nested-map-expr
    ^String value-expr
    consumer
-   id]
+   qvns-call-id]
   (let [qvns-or-error (f/qvns-or-error filter nested-map-expr value-expr consumer)]
     (if (f/error? qvns-or-error)
       qvns-or-error
-      (do (o/put-qvns alias qvns-or-error)
+      (do (o/put-qvns alias qvns-or-error qvns-call-id)
           (o/on-query-value-and-subscribe alias qvns-or-error)
           nil))))
 
@@ -37,7 +37,7 @@
 
 (defn unsubscribe
   "returns [alias qvns] that was unsubscribed or nil if there was none"
-  [id]
-  (let [alias+qvns (o/remove id)]
+  [x]
+  (let [alias+qvns (o/remove-qvns-call-id x)]
     (when alias+qvns (o/on-removed alias+qvns))
     alias+qvns))

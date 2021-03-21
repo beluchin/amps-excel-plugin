@@ -3,7 +3,7 @@
             logging
             [simple-amps.consumer :as c]
             [simple-amps.functional :as f]
-            [simple-amps.functional.state :as f-state])
+            [simple-amps.functional.state :as s])
   (:import [com.crankuptheamps.client
             Client ClientDisconnectHandler Command Message$Command MessageHandler]
            [com.crankuptheamps.client.exception
@@ -14,7 +14,7 @@
 (defn get-client
   "returns a existing client if possible. Otherwise creates a new client"
   [uri]
-  (or (f-state/client @state uri) 
+  (or (s/client @state uri) 
       (let [new-c (get-new-client-notify-qvns uri)]
         (state-save-client uri new-c)
         new-c)))
@@ -22,12 +22,14 @@
 (declare async revisit)
 (defn on-query-value-and-subscribe
   [a qvns]
-  (if-let [sub (f-state/sub @state a)]
+  (if-let [sub (s/sub @state a)]
 
     ;; no blocking calls on the thread where the excel functions are called.
     (async (:uri sub) revisit a)
 
     (c/on-inactive (:consumer qvns) "undefined alias")))
+
+(defn on-removed [[a qvns]])
 
 (defn on-require
   [a sub]
@@ -36,11 +38,16 @@
 
 (defn put-alias
   [a sub]
-  (swap! state f-state/state-after-new-alias a sub))
+  (swap! state s/state-after-new-alias a sub))
 
 (defn put-qvns
-  [a qvns]
-  (swap! state f-state/state-after-new-qvns a qvns))
+  [a qvns id]
+  (swap! state #(-> %
+                    (s/after-new-alias-qvns a qvns)
+                    (s/after-new-id-alias+qvns id [a qvns]))))
+
+(defn remove-qvns-call-id [id]
+  (swap! state f/state-after-remove-qvns-call-id id))
 
 (declare get-executor)
 (defn- async
@@ -83,14 +90,14 @@
          (.unsubscribe client command-id)
          (executeAsync-n-get-command-id client topic sub-id fi handler))))
 
-(declare notify-many state-delete)
+(declare notify-many remove-client)
 (defn on-disconnected
   [client]
   (let [uri (str (.getURI client))
         consumer-coll (map :consumer (f/qvns-set @state uri))]
     (notify-many consumer-coll c/on-inactive "client disconnected")
     (logging/info (str "client disconnected: " uri))
-    (state-delete client)))
+    (remove-client client)))
 
 (defn- clone
   [s]
@@ -103,12 +110,12 @@
 (declare state state-save-executor-if-absent)
 (defn- get-executor
   [uri]
-  (let [e (f-state/executor @state uri)]
+  (let [e (s/executor @state uri)]
     (if e
       e
       (let [new-e (java.util.concurrent.Executors/newSingleThreadExecutor)]
         (state-save-executor-if-absent uri new-e)
-        (f-state/executor @state uri)))))
+        (s/executor @state uri)))))
 
 (declare client-disconnect-handler get-new-client-name)
 (defn- get-new-client
@@ -177,6 +184,9 @@
   [coll f & args]
   (doseq [c coll] (apply notify f c args)))
 
+(defn- remove-client [c]
+  (swap! state f/state-after-remove-client c))
+
 (declare state-save uniq-id)
 (defn- subscribe
   ([sub fi qvns-set]
@@ -212,21 +222,19 @@
   (when-let [[action args] (f/subscription-action+args a @state)]
     (apply (function action) args)))
 
-(defn- state-delete
-  [x]
-  (swap! state f/state-after-delete x))
-
 (defn- state-save
   [sub ampsies activated-qvns-set]
-  (swap! state f-state/after sub ampsies activated-qvns-set))
+  (swap! state #(-> %
+                    (s/after-new-sub-ampsies sub ampsies)
+                    (s/after-new-sub-activated-qvns-set sub activated-qvns-set))))
 
 (defn- state-save-client
   [uri client]
-  (swap! state f-state/state-after-new-client uri client))
+  (swap! state s/state-after-new-client uri client))
 
 (defn- state-save-executor-if-absent
   [uri executor]
-  (swap! state f-state/state-after-new-executor-if-absent uri executor))
+  (swap! state s/state-after-new-executor-if-absent uri executor))
 
 (defn- uniq-id [] (str (java.util.UUID/randomUUID)))
 
