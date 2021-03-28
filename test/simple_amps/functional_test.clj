@@ -171,6 +171,15 @@
                                                                 :sub2 :qvns-set2}}
                                      :c1)))))
 
+(t/deftest state-after-remove-qvns-call-id-test
+  (t/testing "removes id->alias+qvns"
+    (t/is (= {:id->alias+qvns {}}
+             (sut/state-after-remove-qvns-call-id {:id->alias+qvns {:id :alias+qvns}}
+                                                  :id))))
+
+  (t/testing "removes sub->activated-qvns-set")
+  (t/testing "removes alias->qvns"))
+
 (t/deftest subscribe-args-test
   (with-redefs [sut/combine #(when (= [:subf #{:qvns2f :qvns1f}] %&) :f)]
     (t/is (= [{:uri :u :topic :t :filter :subf}
