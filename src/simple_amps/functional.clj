@@ -1,4 +1,5 @@
 (ns simple-amps.functional
+  (:refer-clojure :exclude [alias])
   (:require [cheshire.core :as cheshire]
             [clojure.set :as set]
             [simple-amps.functional
@@ -110,13 +111,14 @@
         (s/after-remove-sub->ampsies sub-coll)
         (s/after-remove-sub->activated-qvns-set sub-coll))))
 
-(declare state-after-remove-activated-qvns)
+(declare state-after-remove-activated-qvns state-after-remove-qvns)
 (defn state-after-remove-qvns-call-id [state id]
   (let [[a qvns] (s/alias+qvns state id)
         sub (s/sub state a)]
     (-> state
         (s/after-remove-id id)
-        (state-after-remove-activated-qvns sub qvns))))
+        (state-after-remove-activated-qvns sub qvns)
+        (state-after-remove-qvns a qvns))))
 
 (defn subscribe-args 
   [sub qvns-set]
@@ -180,5 +182,13 @@
     (let [activated-qvns-set (disj qvns-set qvns)]
       (if (empty? activated-qvns-set)
         (s/after-remove-sub->activated-qvns-set state [sub])
-        (s/after-new-sub-activated-qvns-set state activated-qvns-set)))
+        (s/after-new-sub-activated-qvns-set state sub activated-qvns-set)))
+    state))
+
+(defn- state-after-remove-qvns [state alias qvns]
+  (if-let [qvns-set (s/qvns-set state alias)]
+    (let [new-qvns-set (disj qvns-set qvns)]
+      (if (empty? new-qvns-set)
+        (s/after-remove-alias->qvns state alias)
+        (s/after-new-alias-qvns state alias new-qvns-set)))
     state))

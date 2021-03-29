@@ -175,6 +175,7 @@
                   :alias->sub {:a :sub}
                   :sub->activated-qvns-set {:sub #{:qvns}}}
                  :id))))
+
     (t/testing "other activated qvns left"
       (t/is (= {:id->alias+qvns {}
                 :alias->sub {:a :sub}
@@ -186,7 +187,23 @@
                                             :foo :bar}}
                  :id)))))
 
-  (t/testing "removes alias->qvns"))
+  (t/testing "removes qvns from alias->qvns-set"
+    (t/testing "no qvns left"
+      (t/is (= {:id->alias+qvns {}
+                :alias->qvns-set {}}
+               (sut/state-after-remove-qvns-call-id
+                 {:id->alias+qvns {:id [:a :qvns]}
+                  :alias->qvns-set {:a #{:qvns}}}
+                 :id))))
+    
+    (t/testing "other qvns left"
+      (t/is (= {:id->alias+qvns {}
+                :alias->qvns-set {:foo :blah}}
+               (sut/state-after-remove-qvns-call-id
+                 {:id->alias+qvns {:id [:a :qvns]}
+                  :alias->qvns-set {:a #{:qvns}
+                                    :foo :blah}}
+                 :id))))))
 
 (t/deftest state-after-remove-client-test
   (t/testing "deleting client"
