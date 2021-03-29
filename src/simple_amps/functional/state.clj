@@ -18,8 +18,7 @@
    :uri->executor ...
    :uri->client ...})
 
-(defn activated-qvns-set
-  [state sub]
+(defn activated-qvns-set [state sub]
   (get-in state [:sub->activated-qvns-set sub]))
 
 (defn after-new-alias-qvns [state a qvns]
@@ -35,19 +34,23 @@
   (assoc-in state [:sub->ampsies sub] ampsies))
 
 (declare after-remove)
-(defn after-remove-sub->ampsies
-  [state coll]
+(defn after-remove-id [state id]
+  (after-remove state :id->alias+qvns [id]))
+
+(declare after-remove)
+(defn after-remove-sub->ampsies [state coll]
   (after-remove state :sub->ampsies coll))
 
 (declare after-remove)
-(defn after-remove-sub->activated-qvns-set
-  [state coll]
+(defn after-remove-sub->activated-qvns-set [state coll]
   (after-remove state :sub->activated-qvns-set coll))
 
 (declare after-remove)
-(defn after-remove-uri->client
-  [state coll]
+(defn after-remove-uri->client [state coll]
   (after-remove state :uri->client coll))
+
+(defn alias+qvns [state id]
+  (get-in state [:id->alias+qvns id]))
 
 (defn alias->qvns-set
   [state]
@@ -89,8 +92,7 @@
   [state uri executor]
   (update-in state [:uri->executor uri] #(or % executor)))
 
-(defn sub
-  [state a]
+(defn sub [state a]
   (get-in state [:alias->sub a]))
 
 (defn sub->ampsies
