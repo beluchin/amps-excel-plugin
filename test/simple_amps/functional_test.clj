@@ -159,7 +159,36 @@
   (t/testing "no subscription in place"
     (t/is (nil? (sut/subscription-action+args "a" {:alias->sub {}})))))
 
-(t/deftest state-after-delete-test
+(t/deftest state-after-remove-qvns-call-id-test
+  (t/testing "removes id from id->alias+qvns"
+    (t/is (= {:id->alias+qvns {}}
+             (sut/state-after-remove-qvns-call-id {:id->alias+qvns {:id [:a :qvns]}}
+                                                  :id))))
+
+  (t/testing "removes qvns from sub->activated-qvns-set"
+    (t/testing "no activated qvns left"
+      (t/is (= {:id->alias+qvns {}
+                :alias->sub {:a :sub}
+                :sub->activated-qvns-set {}}
+               (sut/state-after-remove-qvns-call-id
+                 {:id->alias+qvns {:id [:a :qvns]}
+                  :alias->sub {:a :sub}
+                  :sub->activated-qvns-set {:sub #{:qvns}}}
+                 :id))))
+    (t/testing "other activated qvns left"
+      (t/is (= {:id->alias+qvns {}
+                :alias->sub {:a :sub}
+                :sub->activated-qvns-set {:foo :bar}}
+               (sut/state-after-remove-qvns-call-id
+                 {:id->alias+qvns {:id [:a :qvns]}
+                  :alias->sub {:a :sub}
+                  :sub->activated-qvns-set {:sub #{:qvns}
+                                            :foo :bar}}
+                 :id)))))
+
+  (t/testing "removes alias->qvns"))
+
+(t/deftest state-after-remove-client-test
   (t/testing "deleting client"
     (t/is (= {:uri->client {:u2 :c2}
               :sub->ampsies {:sub2 {:client :c2}}
@@ -170,15 +199,6 @@
                                       :sub->activated-qvns-set {:sub1 :qvns-set1
                                                                 :sub2 :qvns-set2}}
                                      :c1)))))
-
-(t/deftest state-after-remove-qvns-call-id-test
-  (t/testing "removes id->alias+qvns"
-    (t/is (= {:id->alias+qvns {}}
-             (sut/state-after-remove-qvns-call-id {:id->alias+qvns {:id :alias+qvns}}
-                                                  :id))))
-
-  (t/testing "removes sub->activated-qvns-set")
-  (t/testing "removes alias->qvns"))
 
 (t/deftest subscribe-args-test
   (with-redefs [sut/combine #(when (= [:subf #{:qvns2f :qvns1f}] %&) :f)]

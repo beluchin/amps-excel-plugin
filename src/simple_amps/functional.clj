@@ -110,7 +110,13 @@
         (s/after-remove-sub->ampsies sub-coll)
         (s/after-remove-sub->activated-qvns-set sub-coll))))
 
-(defn state-after-remove-qvns-call-id [state id] )
+(declare state-after-remove-activated-qvns)
+(defn state-after-remove-qvns-call-id [state id]
+  (let [[a qvns] (s/alias+qvns state id)
+        sub (s/sub state a)]
+    (-> state
+        (s/after-remove-id id)
+        (state-after-remove-activated-qvns sub qvns))))
 
 (defn subscribe-args 
   [sub qvns-set]
@@ -169,3 +175,10 @@
     (let [result (reduce take-until-coll [] (expr/common-path expr))]
       (when (sequential? (get-in m result)) result))))
 
+(defn- state-after-remove-activated-qvns [state sub qvns]
+  (if-let [qvns-set (s/activated-qvns-set state sub)]
+    (let [activated-qvns-set (disj qvns-set qvns)]
+      (if (empty? activated-qvns-set)
+        (s/after-remove-sub->activated-qvns-set state [sub])
+        (s/after-new-sub-activated-qvns-set state activated-qvns-set)))
+    state))
