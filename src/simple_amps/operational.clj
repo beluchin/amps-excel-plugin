@@ -20,8 +20,7 @@
         new-c)))
 
 (declare async revisit)
-(defn on-query-value-and-subscribe
-  [a qvns]
+(defn on-query-value-and-subscribe [a qvns]
   (if-let [sub (s/sub @state a)]
 
     ;; no blocking calls on the thread where the excel functions are called.
@@ -29,7 +28,12 @@
 
     (c/on-inactive (:consumer qvns) "undefined alias")))
 
-(defn on-removed [[a qvns]])
+(declare close-amps-client-if-necessary)
+(defn on-removed [[a qvns]]
+  (when-let [sub (s/sub @state a)]
+    (let [uri (:uri sub)]
+      ;; no blocking calls on the thread where the excel functions are called.
+      (async uri close-amps-client-if-necessary a uri))))
 
 (defn on-require
   [a sub]
@@ -102,6 +106,10 @@
 (defn- clone
   [s]
   (String. s))
+
+(defn- close-amps-client-if-necessary [a uri]
+  (when-let [client (f/client-to-close @state a uri)]
+    (.close client)))
 
 (defn- function
   [kw]

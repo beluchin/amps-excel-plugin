@@ -10,6 +10,18 @@
     (t/is (= {"a" [{"b" 2} {"c" 3}]}
              (cheshire/parse-string "{\"a\": [{\"b\": 2},{\"c\": 3}]}")))))
 
+(t/deftest client-to-close-test
+  (t/testing "there is a client to close - no qvns for alias"
+    (t/is (= :client (sut/client-to-close
+                       {:alias->qnvs-set {}
+                        :uri->client {:uri :client}}
+                       :a
+                       :uri))))
+
+  (t/testing "no client to close"
+    (t/testing "there are qvns")
+    (t/testing "there is no client")))
+
 (t/deftest combine-test
   (t/are [args r] (= r (apply sut/combine args))
     ["f1" ["f2" "f3"]] "(f1) AND ((f2) OR (f3))"
