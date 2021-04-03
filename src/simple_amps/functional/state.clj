@@ -1,4 +1,5 @@
 (ns simple-amps.functional.state
+  (:refer-clojure :exclude [alias])
   (:require [clojure.set :as set]))
 
 ;; this module represents a heterogeneous map 
@@ -32,6 +33,10 @@
 
 (defn after-new-sub-ampsies [state sub ampsies]
   (assoc-in state [:sub->ampsies sub] ampsies))
+
+(declare after-remove)
+(defn after-remove-alias->qvns [state alias]
+  (after-remove state :alias->qvns-set [alias]))
 
 (declare after-remove)
 (defn after-remove-id [state id]
@@ -72,8 +77,7 @@
   [state uri]
   (get-in state [:uri->executor uri]))
 
-(defn qvns-set
-  [state a]
+(defn qvns-set [state a]
   (get-in state [:alias->qvns-set a]))
 
 (defn state-after-new-ampsies
