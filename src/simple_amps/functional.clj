@@ -16,7 +16,8 @@
   [and-filter (set (remove #{and-filter} or-filter-coll))])
 
 (defn client-to-close [state a uri]
-  )
+  (when-not (seq (s/qvns-set state a))
+    (s/client state uri)))
 
 (declare combine-or)
 (defn combine [and-filter or-filter-coll]

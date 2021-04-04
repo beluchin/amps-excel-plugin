@@ -11,7 +11,7 @@
              (cheshire/parse-string "{\"a\": [{\"b\": 2},{\"c\": 3}]}")))))
 
 (t/deftest client-to-close-test
-  (t/testing "there is a client to close - no qvns for alias"
+  (t/testing "there is a client to close"
     (t/is (= :client (sut/client-to-close
                        {:alias->qnvs-set {}
                         :uri->client {:uri :client}}
@@ -19,8 +19,18 @@
                        :uri))))
 
   (t/testing "no client to close"
-    (t/testing "there are qvns")
-    (t/testing "there is no client")))
+    (t/testing "there is no client"
+      (t/is (nil? (sut/client-to-close
+                  {:alias->qnvs-set {}
+                   :uri->client {}}
+                  :a
+                  :uri))))
+    
+    (t/testing "there are qvns"
+      (t/is (nil? (sut/client-to-close
+                  {:alias->qnvs-set {:a :qvns-set}}
+                  :a
+                  :uri))))))
 
 (t/deftest combine-test
   (t/are [args r] (= r (apply sut/combine args))
