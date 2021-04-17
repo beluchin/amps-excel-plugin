@@ -7,9 +7,7 @@
              [state :as s]]
             [functional :as f]))
 
-(defn ampsies
-  "amps connectivity info"
-  [client command-id sub-id]
+(defn ampsies [client command-id sub-id]
   {:client client :command-id command-id :sub-id sub-id})
 
 (defn dedup [and-filter or-filter-coll]
