@@ -13,9 +13,10 @@
 (defn dedup [and-filter or-filter-coll]
   [and-filter (set (remove #{and-filter} or-filter-coll))])
 
-(defn client-to-close [state a uri]
-  (when-not (seq (s/qvns-set state a))
-    (s/client state uri)))
+(defn client-to-close+state [state alias uri]
+  (when-not (seq (s/qvns-set state alias))
+    (when-let [client (s/client state uri)]
+      [client])))
 
 (declare combine-or)
 (defn combine [and-filter or-filter-coll]

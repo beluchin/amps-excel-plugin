@@ -1,4 +1,5 @@
 (ns simple-amps.operational
+  (:refer-clojure :exclude [alias])
   (:require clojure.stacktrace
             logging
             [simple-amps.consumer :as c]
@@ -29,11 +30,11 @@
     (c/on-inactive (:consumer qvns) "undefined alias")))
 
 (declare close-amps-client-if-necessary)
-(defn on-removed [[a qvns]]
-  (when-let [sub (s/sub @state a)]
+(defn on-removed [[alias qvns]]
+  (when-let [sub (s/sub @state alias)]
     (let [uri (:uri sub)]
       ;; no blocking calls on the thread where the excel functions are called.
-      (async uri close-amps-client-if-necessary a uri))))
+      (async uri close-amps-client-if-necessary alias uri))))
 
 (defn on-require
   [a sub]
@@ -107,8 +108,8 @@
   [s]
   (String. s))
 
-(defn- close-amps-client-if-necessary [a uri]
-  (when-let [client (f/client-to-close @state a uri)]
+(defn- close-amps-client-if-necessary [alias uri]
+  (when-let [[client state] (f/client-to-close+state @state alias uri)]
     (.close client)))
 
 (defn- function
@@ -246,8 +247,7 @@
 
 (defn- uniq-id [] (str (java.util.UUID/randomUUID)))
 
-(defn- unsubscribe
-  [subscription]
+(defn- unsubscribe [subscription]
   (let [{:keys [::client ::command-id]} subscription]
     (.unsubscribe client command-id)))
 
