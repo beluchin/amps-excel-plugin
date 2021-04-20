@@ -108,9 +108,11 @@
   [s]
   (String. s))
 
+(declare state)
 (defn- close-amps-client-if-necessary [alias uri]
-  (when-let [[client state] (f/client-to-close+state @state alias uri)]
-    (.close client)))
+  (when-let [[client new-state] (f/client-to-close+state @state alias uri)]
+    (.close client)
+    (reset! state new-state)))
 
 (defn- function
   [kw]

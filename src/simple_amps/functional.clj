@@ -116,12 +116,12 @@
 
 (declare state-after-remove-activated-qvns state-after-remove-qvns)
 (defn state-after-remove-qvns-call-id [state id]
-  (let [[a qvns] (s/alias+qvns state id)
-        sub (s/sub state a)]
+  (let [[alias qvns] (s/alias+qvns state id)
+        sub (s/sub state alias)]
     (-> state
         (s/after-remove-id id)
         (state-after-remove-activated-qvns sub qvns)
-        (state-after-remove-qvns a qvns))))
+        (state-after-remove-qvns alias qvns))))
 
 (defn subscribe-args 
   [sub qvns-set]

@@ -13,23 +13,34 @@
 (t/deftest client-to-close+state-test
   (t/testing "there is a client to close"
     (t/is (= :client (first (sut/client-to-close+state
-                              {:alias->qnvs-set {}
+                              {:alias->qvns-set {}
                                :uri->client {:uri :client}}
-                              :a
-                              :uri)))))
+                              :alias
+                              :uri))))
+    (t/is (= {:alias->qvns-set {}
+              :uri->client {}
+              :alias->sub {:alias :sub}
+              :sub->ampsies {}}
+             (second (sut/client-to-close+state
+                       {:alias->qvns-set {}
+                        :uri->client {:uri :client}
+                        :alias->sub {:alias :sub}
+                        :sub->ampsies {:sub :ampsies}}
+                       :alias
+                       :uri)))))
 
   (t/testing "no client to close"
     (t/testing "there is no client"
       (t/is (nil? (sut/client-to-close+state
-                    {:alias->qnvs-set {}
+                    {:alias->qvns-set {}
                      :uri->client {}}
-                    :a
+                    :alias
                     :uri))))
     
     (t/testing "there are qvns"
       (t/is (nil? (sut/client-to-close+state
-                    {:alias->qnvs-set {:a :qvns-set}}
-                    :a
+                    {:alias->qvns-set {:alias #{:qvns}}}
+                    :alias
                     :uri))))))
 
 (t/deftest combine-test
