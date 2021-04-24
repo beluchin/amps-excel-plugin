@@ -16,7 +16,7 @@
   "returns a existing client if possible. Otherwise creates a new client"
   [uri]
   (or (s/client @state uri) 
-      (let [new-c (get-new-client-notify-qvns uri)]
+      (when-let [new-c (get-new-client-notify-qvns uri)]
         (state-save-client uri new-c)
         new-c)))
 
