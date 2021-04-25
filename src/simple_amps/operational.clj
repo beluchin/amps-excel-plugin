@@ -20,26 +20,26 @@
         (state-save-client uri new-c)
         new-c)))
 
-(declare async revisit)
-(defn on-query-value-and-subscribe [a qvns]
-  (if-let [sub (s/sub @state a)]
+(declare async execute-qvns-action)
+(defn on-query-value-and-subscribe [alias qvns]
+  (if-let [sub (s/sub @state alias)]
 
     ;; no blocking calls on the thread where the excel functions are called.
-    (async (:uri sub) revisit a)
+    (async (:uri sub) execute-qvns-action alias)
 
     (c/on-inactive (:consumer qvns) "undefined alias")))
-
-(declare close-amps-client-if-necessary)
-(defn on-removed [[alias qvns]]
-  (when-let [sub (s/sub @state alias)]
-    (let [uri (:uri sub)]
-      ;; no blocking calls on the thread where the excel functions are called.
-      (async uri close-amps-client-if-necessary alias uri))))
 
 (defn on-require
   [a sub]
   ;; no blocking calls on the thread where the excel functions are called.
-  (async (:uri sub) revisit a))
+  (async (:uri sub) execute-qvns-action a))
+
+(declare execute-unsuscribe-action)
+(defn on-unsubscribed [[alias qvns]]
+  (when-let [sub (s/sub @state alias)]
+    (let [uri (:uri sub)]
+      ;; no blocking calls on the thread where the excel functions are called.
+      (async uri execute-unsuscribe-action alias uri))))
 
 (defn put-alias
   [a sub]
@@ -111,7 +111,12 @@
   (String. s))
 
 (declare state)
-(defn- close-amps-client-if-necessary [alias uri]
+(defn- execute-qvns-action [alias]
+  (when-let [[action args] (f/new-qvns-action+args alias @state)]
+    (apply (function action) args)))
+
+(declare state)
+(defn- execute-unsuscribe-action [alias uri]
   (when-let [[client new-state] (f/client-to-close+state @state alias uri)]
     (.close client)
     (reset! state new-state)))
@@ -228,12 +233,6 @@
                      (new-json-msg-handler sub))]
     (state-save sub (assoc ampsies :command-id command-id) qvns-super-set)
     (notify-many (map :consumer qvns-set-to-activate) c/on-activated)))
-
-(declare state)
-(defn- revisit
-  [a]
-  (when-let [[action args] (f/subscription-action+args a @state)]
-    (apply (function action) args)))
 
 (defn- state-save
   [sub ampsies activated-qvns-set]

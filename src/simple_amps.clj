@@ -39,5 +39,5 @@
   "returns [alias qvns] that was unsubscribed or nil if there was none"
   [x]
   (let [alias+qvns (o/remove-qvns-call-id x)]
-    (when alias+qvns (o/on-removed alias+qvns))
+    (when alias+qvns (o/on-unsubscribed alias+qvns))
     alias+qvns))

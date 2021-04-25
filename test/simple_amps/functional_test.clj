@@ -18,13 +18,15 @@
                               :alias
                               :uri))))
     (t/is (= {:alias->qvns-set {}
-              :uri->client {}
               :alias->sub {:alias :sub}
+              ;; 
+              :uri->client {}
               :sub->ampsies {}}
              (second (sut/client-to-close+state
                        {:alias->qvns-set {}
-                        :uri->client {:uri :client}
                         :alias->sub {:alias :sub}
+                        ;;
+                        :uri->client {:uri :client}
                         :sub->ampsies {:sub :ampsies}}
                        :alias
                        :uri)))))

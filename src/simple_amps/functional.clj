@@ -16,7 +16,9 @@
 (defn client-to-close+state [state alias uri]
   (when-not (seq (s/qvns-set state alias))
     (when-let [client (s/client state uri)]
-      [client])))
+      [client (-> state
+                  (s/after-remove-uri->client [uri])
+                  (s/after-remove-sub->ampsies [(s/sub state alias)]))])))
 
 (declare combine-or)
 (defn combine [and-filter or-filter-coll]
@@ -129,7 +131,7 @@
    (apply combine (dedup (:filter sub) (map (comp first :filter+expr) qvns-set)))
    qvns-set])
 
-(defn subscription-action+args
+(defn new-qvns-action+args
   [a state]
   (let [sub (s/sub state a)
         qvns-set (s/qvns-set state a)]

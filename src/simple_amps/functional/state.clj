@@ -12,6 +12,7 @@
    :alias->sub ...
    :alias->qvns-set ... ;; the set is non-empty
    :id->alias+qvns ...
+   ;; 
 
    ;; implementation
    :sub->activated-qvns-set ...
@@ -19,7 +20,9 @@
    :uri->executor ...
 
    :sub->ampsies ...
-   :uri->client ...})
+   :uri->client ...
+   ;; 
+   })
 
 (defn activated-qvns-set [state sub]
   (get-in state [:sub->activated-qvns-set sub]))
@@ -98,8 +101,8 @@
   [state uri executor]
   (update-in state [:uri->executor uri] #(or % executor)))
 
-(defn sub [state a]
-  (get-in state [:alias->sub a]))
+(defn sub [state alias]
+  (get-in state [:alias->sub alias]))
 
 (defn sub->ampsies
   [state]
