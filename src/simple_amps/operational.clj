@@ -51,8 +51,10 @@
                     (s/after-new-alias-qvns a qvns)
                     (s/after-new-id-alias+qvns id [a qvns]))))
 
-(defn remove-qvns-call-id [id]
-  (swap! state f/state-after-remove-qvns-call-id id))
+(defn remove-qvns-call-id [x]
+  (when-let [alias+qvns (s/alias+qvns @state x)]
+    (swap! state f/state-after-remove-qvns-call-id x)
+    alias+qvns))
 
 (declare get-executor)
 (defn- async
