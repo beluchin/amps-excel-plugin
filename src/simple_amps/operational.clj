@@ -110,7 +110,7 @@
   [s]
   (String. s))
 
-(declare state)
+(declare function state)
 (defn- execute-qvns-action [alias]
   (when-let [[action args] (f/new-qvns-action+args alias @state)]
     (apply (function action) args)))

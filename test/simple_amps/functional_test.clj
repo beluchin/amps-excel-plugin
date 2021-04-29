@@ -167,11 +167,7 @@
 (t/deftest subscription-action+args-test
   (t/testing "while not connected to amps"
     (with-redefs [sut/subscribe-args #(when (= [:sub :qvns-set] %&) :args)]
-      (t/is (= [:subscribe :args] (sut/subscription-action+args
-                                    :a
-                                    {:alias->sub {:a :sub}
-                                     :alias->qvns-set {:a :qvns-set}
-                                     :sub->ampsies {}})))))
+      (t/is (= [:subscribe :args] ))))
 
   (t/testing "while connected to amps"
     (with-redefs [sut/resubscribe-args #(when (= [:sub
@@ -181,7 +177,7 @@
                                                  %&)
                                           :args)]
       (t/is (= [:resubscribe :args]
-               (sut/subscription-action+args
+               (sut/new-qvns-action+args
                  :a
                  {:alias->sub {:a :sub}
                   :alias->qvns-set {:a :qvns-set}
@@ -189,10 +185,10 @@
                   :sub->activated-qvns-set {:sub :activated-qvns-set}})))))
 
   (t/testing "subscription in place; no qvns"
-    (t/is (nil? (sut/subscription-action+args "a" {:alias->sub {"a" :sub}
+    (t/is (nil? (sut/new-qvns-action+args "a" {:alias->sub {"a" :sub}
                                                    :alias->qvns-set {}}))))
   (t/testing "no subscription in place"
-    (t/is (nil? (sut/subscription-action+args "a" {:alias->sub {}})))))
+    (t/is (nil? (sut/new-qvns-action+args "a" {:alias->sub {}})))))
 
 (t/deftest state-after-remove-qvns-call-id-test
   (t/testing "removes id from id->alias+qvns"

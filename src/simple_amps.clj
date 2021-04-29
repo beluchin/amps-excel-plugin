@@ -27,12 +27,12 @@
 
   If the uri is malformed, this will be notified via the 
   query-value-and-subscribe calls."
-  ([^String s ^String uri ^String topic] (require s uri topic nil))
+  ([^String alias ^String uri ^String topic] (require alias uri topic nil))
 
-  ([^String s ^String uri ^String topic ^String filter]
+  ([^String alias ^String uri ^String topic ^String filter]
    (let [sub (f/subscription uri topic filter)]
-      (o/put-alias s sub)
-      (o/on-require s sub)
+      (o/put-alias alias sub)
+      (o/on-require alias sub)
       nil)))
 
 (defn unsubscribe
