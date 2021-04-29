@@ -21,8 +21,8 @@
 
   ([alias uri topic filter]
    (let [sub (f/subscription uri topic filter)]
-      (o/put-alias alias sub)
-      (o/on-require alias sub)
+      (o/save alias sub)
+      (o/async-revisit-conn alias sub)
       nil)))
 
 (defn unsubscribe

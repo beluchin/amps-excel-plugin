@@ -29,7 +29,7 @@
 
     (c/on-inactive (:consumer qvns) "undefined alias")))
 
-(defn on-require
+(defn async-revisit-conn
   [a sub]
   ;; no blocking calls on the thread where the excel functions are called.
   (async (:uri sub) execute-qvns-action a))
@@ -41,7 +41,7 @@
       ;; no blocking calls on the thread where the excel functions are called.
       (async uri execute-unsuscribe-action alias uri))))
 
-(defn put-alias
+(defn save
   [a sub]
   (swap! state s/state-after-new-alias a sub))
 
