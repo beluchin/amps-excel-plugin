@@ -5,12 +5,7 @@
 
 (defn query-value-and-subscribe
   "returns nil or an error when the args are malformed"
-  [^String alias
-   ^String filter
-   ^String nested-map-expr
-   ^String value-expr
-   consumer
-   qvns-call-id]
+  [alias filter nested-map-expr value-expr consumer qvns-call-id]
   (let [qvns-or-error (f/qvns-or-error filter nested-map-expr value-expr consumer)]
     (if (f/error? qvns-or-error)
       qvns-or-error
@@ -20,16 +15,11 @@
 
 (declare on-aliased save-alias)
 (defn require
-  "Returns any other aliases associated with the same subscription or nil.
+  "If the uri is malformed, it will be notified to 
+  consumers provided on the related query-value-and-subscribe calls."
+  ([alias uri topic] (require alias uri topic nil))
 
-  It may result in trying to connect to AMPS - as long as a related 
-  query-value-and-subscribe is active.
-
-  If the uri is malformed, this will be notified via the 
-  query-value-and-subscribe calls."
-  ([^String alias ^String uri ^String topic] (require alias uri topic nil))
-
-  ([^String alias ^String uri ^String topic ^String filter]
+  ([alias uri topic filter]
    (let [sub (f/subscription uri topic filter)]
       (o/put-alias alias sub)
       (o/on-require alias sub)
