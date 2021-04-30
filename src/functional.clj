@@ -9,6 +9,12 @@
     (map vec)
     (into m)))
 
+(defn assoc-if-missing [m k v]
+  (if (m k) m (assoc m k v)))
+
+(defn assoc-in-if-missing [m ks v]
+  (if (get-in m ks) m (assoc-in m ks v)))
+
 (defn common-prefix
   "(... [:a :b] [:a :c]) => [:a]"
   [coll1 coll2]

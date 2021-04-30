@@ -1,6 +1,6 @@
 (ns simple-amps.functional.state
   (:refer-clojure :exclude [alias])
-  (:require [clojure.set :as set]))
+  (:require [functional :as f]))
 
 ;; this module represents a heterogeneous map 
 ;; with no relationships among the keys - the semantics among
@@ -15,6 +15,8 @@
    ;; 
 
    ;; implementation
+   :alias->conn-state-agent ...
+
    :sub->activated-qvns-set ...
 
    :uri->executor ...
@@ -29,6 +31,12 @@
 
 (defn after-new-alias-qvns [state a qvns]
   (update-in state[:alias->qvns-set a] (fnil conj #{}) qvns))
+
+(defn after-new-conn-agent-if-absent [state alias conn-state-agent]
+  (f/assoc-in-if-missing state [:alias->conn-state-agent alias] conn-state-agent))
+
+(defn after-new-executor-if-absent [state uri executor]
+  (f/assoc-in-if-missing state [:uri->executor uri] executor))
 
 (defn after-new-id-alias+qvns [state id alias+qvns]
   (assoc-in state [:id->alias+qvns id] alias+qvns))
@@ -78,6 +86,9 @@
   [state uri]
   (get-in state [:uri->client uri]))
 
+(defn conn-state-agent [state alias]
+  (get-in state :alias->conn-state-agent alias))
+
 (defn executor
   [state uri]
   (get-in state [:uri->executor uri]))
@@ -96,10 +107,6 @@
 (defn state-after-new-client
   [state uri client]
   (assoc-in state [:uri->client uri] client))
-
-(defn state-after-new-executor-if-absent
-  [state uri executor]
-  (update-in state [:uri->executor uri] #(or % executor)))
 
 (defn sub [state alias]
   (get-in state [:alias->sub alias]))

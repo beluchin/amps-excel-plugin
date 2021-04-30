@@ -2,14 +2,20 @@
   (:refer-clojure :exclude [alias])
   (:require clojure.stacktrace
             logging
+            functional
             [simple-amps.consumer :as c]
             [simple-amps.functional :as f]
-            [simple-amps.functional.state :as s])
+            [simple-amps.functional.state :as s]
+            [amps-excel-plugin.functional :as functional])
   (:import [com.crankuptheamps.client
             Client ClientDisconnectHandler Command Message$Command MessageHandler]
            [com.crankuptheamps.client.exception
             ConnectionException
             CommandException]))
+
+(declare get-conn-state-agent revisit-conn)
+(defn async-revisit-conn [alias]
+  (send-off (get-conn-state-agent alias) revisit-conn alias))
 
 (declare get-new-client-notify-qvns state state-save-client)
 (defn get-client
@@ -28,11 +34,6 @@
     (async (:uri sub) execute-qvns-action alias)
 
     (c/on-inactive (:consumer qvns) "undefined alias")))
-
-(defn async-revisit-conn
-  [a sub]
-  ;; no blocking calls on the thread where the excel functions are called.
-  (async (:uri sub) execute-qvns-action a))
 
 (declare execute-unsuscribe-action)
 (defn on-unsubscribed [[alias qvns]]
@@ -55,6 +56,12 @@
   (when-let [alias+qvns (s/alias+qvns @state x)]
     (swap! state f/state-after-remove-qvns-call-id x)
     alias+qvns))
+
+(defn- get-conn-state-agent [alias]
+  (or (s/conn-state-agent @state alias) 
+      (do
+        (swap! state s/after-new-conn-agent-if-absent alias (agent nil))
+        (s/conn-state-agent @state alias))))
 
 (declare get-executor)
 (defn- async
@@ -126,8 +133,7 @@
   (resolve (symbol (name kw))))
 
 (declare state state-save-executor-if-absent)
-(defn- get-executor
-  [uri]
+(defn- get-executor [uri]
   (let [e (s/executor @state uri)]
     (if e
       e
@@ -246,7 +252,7 @@
 
 (defn- state-save-executor-if-absent
   [uri executor]
-  (swap! state s/state-after-new-executor-if-absent uri executor))
+  (swap! state s/after-new-executor-if-absent uri executor))
 
 (defn- uniq-id [] (str (java.util.UUID/randomUUID)))
 

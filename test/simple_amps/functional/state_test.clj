@@ -29,7 +29,7 @@
     {:sub->ampsies {:sub :a}} :sub :a' {:sub->ampsies {:sub :a'}}))
 
 (t/deftest state-after-new-executor-if-absent-test
-  (t/are [s u e s'] (= s' (sut/state-after-new-executor-if-absent s u e))
+  (t/are [s u e s'] (= s' (sut/after-new-executor-if-absent s u e))
     nil :u :e {:uri->executor {:u :e}}
     {:uri->executor {:u :e}} :u :e' {:uri->executor {:u :e}}))
 
