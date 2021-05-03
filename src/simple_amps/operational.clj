@@ -42,9 +42,8 @@
       ;; no blocking calls on the thread where the excel functions are called.
       (async uri execute-unsuscribe-action alias uri))))
 
-(defn save
-  [a sub]
-  (swap! state s/state-after-new-alias a sub))
+(defn save [alias sub]
+  (swap! state s/after-new-alias->sub alias sub))
 
 (defn put-qvns
   [a qvns id]
@@ -239,6 +238,14 @@
                      (new-json-msg-handler sub))]
     (state-save sub (assoc ampsies :command-id command-id) qvns-super-set)
     (notify-many (map :consumer qvns-set-to-activate) c/on-activated)))
+
+(declare function)
+(defn revisit-conn [alias]
+  (let [sub (d/sub @state alias)
+        qvns-set (d/qvns-set @state alias)
+        ampsies (d/ampsies alias)])
+  (doseq [[action args] (f/revisit-conn-actions alias @state)]
+    (apply (function action) args)))
 
 (defn- state-save
   [sub ampsies activated-qvns-set]

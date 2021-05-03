@@ -2,6 +2,11 @@
   (:require [simple-amps.functional.state :as sut]
             [clojure.test :as t]))
 
+(t/deftest after-new-alias->sub-test
+  (t/are [state a x state'] (= state' (sut/after-new-alias->sub state a x))
+    nil :foo :bar {:alias->sub {:foo :bar}}
+    {:alias->sub {:foo :bar}} :foo :qux {:alias->sub {:foo :qux}}))
+
 (t/deftest qvns-set-test
   (t/is (= :foo-set (sut/qvns-set {:alias->qvns-set {"a" :foo-set}} "a"))))
 
@@ -17,11 +22,6 @@
                {:sub->ampsies {{:k :v1} :ampsies
                                {:k :v2} :ampsies}}
                [{:k :v2}])))))
-
-(t/deftest state-after-new-alias-test
-  (t/are [state a x state'] (= state' (sut/state-after-new-alias state a x))
-    nil :foo :bar {:alias->sub {:foo :bar}}
-    {:alias->sub {:foo :bar}} :foo :qux {:alias->sub {:foo :qux}}))
 
 (t/deftest state-after-new-ampsies-test
   (t/are [s sub a s'] (= s' (sut/state-after-new-ampsies s sub a))

@@ -102,6 +102,12 @@
    (set/difference qvns-super-set activated-qvns-set)
    ampsies])
 
+(declare subscribe-args)
+(defn revisit-conn-actions [sub qvns-set ampsies]
+  (when (and sub qvns-set)
+    (when-not ampsies
+      [[:subscribe (subscribe-args sub qvns-set)]])))
+
 (defn state-after-remove-client [state client]
   (let [uri-coll (->> state
                       s/uri->client 
@@ -125,16 +131,14 @@
         (state-after-remove-activated-qvns sub qvns)
         (state-after-remove-qvns alias qvns))))
 
-(defn subscribe-args 
-  [sub qvns-set]
+(defn subscribe-args [sub qvns-set]
   [sub
    (apply combine (dedup (:filter sub) (map (comp first :filter+expr) qvns-set)))
    qvns-set])
 
-(defn new-qvns-action+args
-  [a state]
-  (let [sub (s/sub state a)
-        qvns-set (s/qvns-set state a)]
+(defn new-qvns-action+args [alias state]
+  (let [sub (s/sub state alias)
+        qvns-set (s/qvns-set state alias)]
     (when (and sub qvns-set)
       (if-let [ampsies (s/ampsies state sub)]
         [:resubscribe (resubscribe-args sub

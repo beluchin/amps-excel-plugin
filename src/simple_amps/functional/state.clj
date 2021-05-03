@@ -41,6 +41,9 @@
 (defn after-new-id-alias+qvns [state id alias+qvns]
   (assoc-in state [:id->alias+qvns id] alias+qvns))
 
+(defn after-new-alias->sub [state alias sub]
+  (assoc-in state [:alias->sub alias] sub))
+
 (defn after-new-sub-activated-qvns-set [state sub qvns-set]
   (assoc-in state [:sub->activated-qvns-set sub] qvns-set))
 
@@ -99,10 +102,6 @@
 (defn state-after-new-ampsies
   [state sub ampsies]
   (assoc-in state [:sub->ampsies sub] ampsies))
-
-(defn state-after-new-alias
-  [state a sub]
-  (assoc-in state [:alias->sub a] sub))
 
 (defn state-after-new-client
   [state uri client]

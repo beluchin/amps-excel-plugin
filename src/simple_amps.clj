@@ -13,17 +13,14 @@
           (o/on-query-value-and-subscribe alias qvns-or-error)
           nil))))
 
-(declare on-aliased save-alias)
 (defn require
   "If the uri is malformed, it will be notified to 
   consumers provided on the related query-value-and-subscribe calls."
   ([alias uri topic] (require alias uri topic nil))
 
   ([alias uri topic filter]
-   (let [sub (f/subscription uri topic filter)]
-      (o/save alias sub)
-      (o/async-revisit-conn alias)
-      nil)))
+   (o/save alias (f/subscription uri topic filter))
+   (o/async-revisit-conn alias)))
 
 (defn unsubscribe
   "returns [alias qvns] that was unsubscribed or nil if there was none"
