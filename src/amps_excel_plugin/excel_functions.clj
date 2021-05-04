@@ -43,11 +43,10 @@
     rtd))
 
 (defn java-require
-  "all args are required except the filter"
-  [^String alias ^String uri ^String topic ^String filter]
+  [alias uri topic opt-filter]
   (logging/info (str "require alias:" alias " uri:" uri
-                     " topic:" topic " filter:" filter))
-  (simple-amps/require alias uri topic filter)
+                     " topic:" topic " opt-filter:" opt-filter))
+  (simple-amps/require alias uri topic opt-filter)
   "OK")
 
 (defn- new-rtd

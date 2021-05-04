@@ -20,7 +20,7 @@
 
   ([alias uri topic filter]
    (o/save alias (f/subscription uri topic filter))
-   (o/async-revisit-conn alias)))
+   (o/async-revisit uri)))
 
 (defn unsubscribe
   "returns [alias qvns] that was unsubscribed or nil if there was none"

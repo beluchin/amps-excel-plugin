@@ -12,9 +12,9 @@
             ConnectionException
             CommandException]))
 
-(declare get-conn-state-agent revisit-conn)
-(defn async-revisit-conn [alias]
-  (send-off (get-conn-state-agent alias) revisit-conn alias))
+(declare async revisit)
+(defn async-revisit [uri]
+  (async uri revisit uri))
 
 (declare get-new-client-notify-qvns state state-save-client)
 (defn get-client
@@ -62,8 +62,7 @@
         (s/conn-state-agent @state alias))))
 
 (declare get-executor)
-(defn- async
-  [^String uri f & args]
+(defn- async [uri f & args]
   (.submit
     (get-executor uri)
     #(try
@@ -239,8 +238,8 @@
     (notify-many (map :consumer qvns-set-to-activate) c/on-activated)))
 
 (declare function)
-(defn revisit-conn [alias]
-  (doseq [[action args] (f/revisit-conn-actions alias @state)]
+(defn revisit [uri]
+  (doseq [[action args] (f/revisit-actions uri @state)]
     (apply (function action) args)))
 
 (defn- state-save

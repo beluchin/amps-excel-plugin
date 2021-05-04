@@ -195,14 +195,21 @@
                #{{:filter+expr [:qvns1f :foo]}}
                :ampsies)))))
 
-(t/deftest revisit-conn-actions-test
+(t/deftest revisit-actions-test
+  (with-redefs [sut/revisit-alias-actions #(cond (= :alias1 %1) [:action1 :args1]
+                                                 (= :alias2 %1) [:action2 :args2])]
+    (t/is (= [[:action1 :args1] [:action2 :args2]]
+             (sut/revisit-actions :u {:alias->sub {:alias1 {:uri :u}
+                                                   :alias2 {:uri :u}}})))))
+
+(t/deftest revisit-alias-actions-test
   (t/testing "subscribe"
     (with-redefs [sut/subscribe-args #(when (= [:sub :qvns-set] %&) :args)]
-      (t/is (= [[:subscribe :args]]
-               (sut/revisit-conn-actions :alias
-                                         {:alias->sub {:alias :sub}
-                                          :alias->qvns-set {:alias :qvns-set}
-                                          :sub->ampsies {}}))))))
+      (t/is (= [:subscribe :args]
+               (sut/revisit-alias-actions :alias
+                                          {:alias->sub {:alias :sub}
+                                           :alias->qvns-set {:alias :qvns-set}
+                                           :sub->ampsies {}}))))))
 
 (t/deftest state-after-remove-qvns-call-id-test
   (t/testing "removes id from id->alias+qvns"
