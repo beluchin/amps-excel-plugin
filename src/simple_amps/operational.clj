@@ -5,8 +5,7 @@
             functional
             [simple-amps.consumer :as c]
             [simple-amps.functional :as f]
-            [simple-amps.functional.state :as s]
-            [amps-excel-plugin.functional :as functional])
+            [simple-amps.functional.state :as s])
   (:import [com.crankuptheamps.client
             Client ClientDisconnectHandler Command Message$Command MessageHandler]
            [com.crankuptheamps.client.exception
@@ -241,9 +240,6 @@
 
 (declare function)
 (defn revisit-conn [alias]
-  (let [sub (d/sub @state alias)
-        qvns-set (d/qvns-set @state alias)
-        ampsies (d/ampsies alias)])
   (doseq [[action args] (f/revisit-conn-actions alias @state)]
     (apply (function action) args)))
 

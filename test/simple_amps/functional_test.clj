@@ -199,7 +199,10 @@
   (t/testing "subscribe"
     (with-redefs [sut/subscribe-args #(when (= [:sub :qvns-set] %&) :args)]
       (t/is (= [[:subscribe :args]]
-               (sut/revisit-conn-actions :sub :qvns-set nil))))))
+               (sut/revisit-conn-actions :alias
+                                         {:alias->sub {:alias :sub}
+                                          :alias->qvns-set {:alias :qvns-set}
+                                          :sub->ampsies {}}))))))
 
 (t/deftest state-after-remove-qvns-call-id-test
   (t/testing "removes id from id->alias+qvns"

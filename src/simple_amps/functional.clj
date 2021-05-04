@@ -103,10 +103,13 @@
    ampsies])
 
 (declare subscribe-args)
-(defn revisit-conn-actions [sub qvns-set ampsies]
-  (when (and sub qvns-set)
-    (when-not ampsies
-      [[:subscribe (subscribe-args sub qvns-set)]])))
+(defn revisit-conn-actions [alias state]
+  (let [sub (s/sub state alias)
+        qvns-set (s/qvns-set state alias)]
+    (when (and sub qvns-set)
+      (let [ampsies (s/ampsies state sub)]
+        (when-not ampsies
+          [[:subscribe (subscribe-args sub qvns-set)]])))))
 
 (defn state-after-remove-client [state client]
   (let [uri-coll (->> state
