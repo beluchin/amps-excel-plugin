@@ -5,6 +5,23 @@
             [simple-amps.functional.expr :as expr]
             [simple-amps.functional.state :as f-state]))
 
+(t/deftest actions-test
+  (t/testing "subscribe"
+    (with-redefs [sut/subscribe-args #(when (= [:sub #{:qvns}] %&) :args)]
+      (t/is (= [:subscribe :args]
+               (sut/actions :alias
+                            {:alias->sub {:alias :sub}
+                             :alias->qvns-set {:alias #{:qvns}}
+                             :sub->ampsies {}})))))
+
+  (t/testing "nothing to do"
+    (t/testing "no sub"
+      (t/is (nil? (sut/actions :alias {:alias->qvns-set {:alias #{:qvns}}}))))
+    (t/testing "no qvns coll"
+      (t/is (nil? (sut/actions :alias {:alias->qvns-set {}
+                                       :alias->sub {:alias :sub}}))))))
+
+
 (t/deftest cheshire-test
   (t/testing "array of maps"
     (t/is (= {"a" [{"b" 2} {"c" 3}]}
@@ -112,6 +129,7 @@
   (t/testing "missing filter"
     (t/is (sut/in-scope? :m {}))))
 
+;; toremove
 (t/deftest new-qvns-action+args-test
   (t/testing "while not connected to amps"
     (with-redefs [sut/subscribe-args #(when (= [:sub :qvns-set] %&) :args)]
@@ -194,22 +212,6 @@
                  {:filter+expr [:qvns2f :foo]}}
                #{{:filter+expr [:qvns1f :foo]}}
                :ampsies)))))
-
-(t/deftest revisit-actions-test
-  (with-redefs [sut/revisit-alias-actions #(cond (= :alias1 %1) [:action1 :args1]
-                                                 (= :alias2 %1) [:action2 :args2])]
-    (t/is (= [[:action1 :args1] [:action2 :args2]]
-             (sut/revisit-actions :u {:alias->sub {:alias1 {:uri :u}
-                                                   :alias2 {:uri :u}}})))))
-
-(t/deftest revisit-alias-actions-test
-  (t/testing "subscribe"
-    (with-redefs [sut/subscribe-args #(when (= [:sub :qvns-set] %&) :args)]
-      (t/is (= [:subscribe :args]
-               (sut/revisit-alias-actions :alias
-                                          {:alias->sub {:alias :sub}
-                                           :alias->qvns-set {:alias :qvns-set}
-                                           :sub->ampsies {}}))))))
 
 (t/deftest state-after-remove-qvns-call-id-test
   (t/testing "removes id from id->alias+qvns"

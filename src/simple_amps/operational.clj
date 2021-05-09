@@ -55,12 +55,6 @@
     (swap! state f/state-after-remove-qvns-call-id x)
     alias+qvns))
 
-(defn- get-conn-state-agent [alias]
-  (or (s/conn-state-agent @state alias) 
-      (do
-        (swap! state s/after-new-conn-agent-if-absent alias (agent nil))
-        (s/conn-state-agent @state alias))))
-
 (declare get-executor)
 (defn- async [uri f & args]
   (.submit
@@ -72,7 +66,8 @@
 
          (apply f args))
        (catch Throwable ex
-         (logging/error (with-out-str (clojure.stacktrace/print-cause-trace ex)))))))
+         (logging/error (with-out-str (clojure.stacktrace/print-cause-trace ex))))))
+  nil)
 
 (defn- executeAsync-n-get-command-id
   [client topic sub-id fi handler]
@@ -176,7 +171,6 @@
   (doseq [[value qvns] (f/handle-json json sub @state)]
     (notify c/on-oof (:consumer qvns) value)))
 
-(declare async)
 (defn- new-json-msg-handler
   [sub]
   (let [uri (:uri sub)
@@ -237,10 +231,9 @@
     (state-save sub (assoc ampsies :command-id command-id) qvns-super-set)
     (notify-many (map :consumer qvns-set-to-activate) c/on-activated)))
 
-(declare function)
-(defn revisit [uri]
-  (doseq [[action args] (f/revisit-actions uri @state)]
-    (apply (function action) args)))
+(defn- revisit [uri]
+  (doseq [[action args] (map #(f/actions % state) (f/aliases uri @state))]
+    (when action (apply (function action) args))))
 
 (defn- state-save
   [sub ampsies activated-qvns-set]

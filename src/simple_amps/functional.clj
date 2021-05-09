@@ -7,6 +7,23 @@
              [state :as s]]
             [functional :as f]))
 
+(defn actions 
+  ([alias state]
+   (let [sub (s/sub state alias)
+         qvns-coll (s/qvns-set state alias)
+         ampsies (s/ampsies state sub)
+         activated-qvns-coll (s/activated-qvns-set state sub)]
+     (actions sub qvns-coll ampsies activated-qvns-coll)))
+  ([sub qvns-coll ampsies activated-qvns-coll]
+   (when (and sub (seq qvns-coll) (not ampsies))
+     [:subscribe (subscribe-args sub qvns-coll)])))
+
+(defn aliases [uri state]
+  (->> state
+      s/alias->sub
+      (filter (fn [[_ sub]] (= uri (:uri sub))))
+      (map first)))
+
 (defn ampsies [client command-id sub-id]
   {:client client :command-id command-id :sub-id sub-id})
 
@@ -102,23 +119,6 @@
    (set/difference qvns-super-set activated-qvns-set)
    ampsies])
 
-(defn revisit-actions [uri state]
-  #_(let [sub (s/sub state alias)
-        qvns-set (s/qvns-set state alias)]
-    (when (and sub qvns-set)
-      (let [ampsies (s/ampsies state sub)]
-        (when-not ampsies
-          [[:subscribe (subscribe-args sub qvns-set)]])))))
-
-(declare subscribe-args)
-(defn revisit-alias-actions [alias state]
-  (let [sub (s/sub state alias)
-        qvns-set (s/qvns-set state alias)]
-    (when (and sub qvns-set)
-      (let [ampsies (s/ampsies state sub)]
-        (when-not ampsies
-          [:subscribe (subscribe-args sub qvns-set)])))))
-
 (defn state-after-remove-client [state client]
   (let [uri-coll (->> state
                       s/uri->client 
@@ -147,6 +147,7 @@
    (apply combine (dedup (:filter sub) (map (comp first :filter+expr) qvns-set)))
    qvns-set])
 
+;; toremove
 (defn new-qvns-action+args [alias state]
   (let [sub (s/sub state alias)
         qvns-set (s/qvns-set state alias)]

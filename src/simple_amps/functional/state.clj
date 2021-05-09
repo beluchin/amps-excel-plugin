@@ -15,8 +15,6 @@
    ;; 
 
    ;; implementation
-   :alias->conn-state-agent ...
-
    :sub->activated-qvns-set ...
 
    :uri->executor ...
@@ -31,9 +29,6 @@
 
 (defn after-new-alias-qvns [state a qvns]
   (update-in state[:alias->qvns-set a] (fnil conj #{}) qvns))
-
-(defn after-new-conn-agent-if-absent [state alias conn-state-agent]
-  (f/assoc-in-if-missing state [:alias->conn-state-agent alias] conn-state-agent))
 
 (defn after-new-executor-if-absent [state uri executor]
   (f/assoc-in-if-missing state [:uri->executor uri] executor))
@@ -77,8 +72,7 @@
   [state]
   (:alias->qvns-set state))
 
-(defn alias->sub
-  [state]
+(defn alias->sub  [state]
   (:alias->sub state))
 
 (defn ampsies 
@@ -88,9 +82,6 @@
 (defn client
   [state uri]
   (get-in state [:uri->client uri]))
-
-(defn conn-state-agent [state alias]
-  (get-in state :alias->conn-state-agent alias))
 
 (defn executor
   [state uri]
