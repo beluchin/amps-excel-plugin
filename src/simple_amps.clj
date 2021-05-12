@@ -10,8 +10,7 @@
   (let [qvns-or-error (f/qvns-or-error filter nested-map-expr value-expr consumer)]
     (if (f/error? qvns-or-error)
       qvns-or-error
-      (let [state (o/save alias qvns-or-error qvns-call-id)
-            uri (f/uri state alias)]
+      (let [uri (o/save alias qvns-or-error qvns-call-id)]
         (if uri
           (o/async-revisit uri)
           (c/on-inactive consumer "undefined alias"))))))
@@ -26,8 +25,10 @@
    (o/async-revisit uri)))
 
 (defn unsubscribe
-  "returns [alias qvns] that was unsubscribed or nil if there was none"
   [x]
-  (let [alias+qvns (o/remove-qvns-call-id x)]
-    (when alias+qvns (o/on-unsubscribed alias+qvns))
-    alias+qvns))
+  (when-let [uri (o/remove-qvns-call-id x)]
+    (o/async-revisit uri))
+  ;; toremove
+  #_(let [alias+qvns (o/remove-qvns-call-id x)]
+      (when alias+qvns (o/on-unsubscribed alias+qvns))
+      alias+qvns))
