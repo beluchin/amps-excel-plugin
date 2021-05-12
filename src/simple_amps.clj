@@ -1,6 +1,7 @@
 (ns simple-amps
   (:refer-clojure :exclude [alias filter require])
-  (:require [simple-amps.functional :as f]
+  (:require [simple-amps.consumer :as c]
+            [simple-amps.functional :as f]
             [simple-amps.operational :as o]))
 
 (defn query-value-and-subscribe
@@ -9,9 +10,11 @@
   (let [qvns-or-error (f/qvns-or-error filter nested-map-expr value-expr consumer)]
     (if (f/error? qvns-or-error)
       qvns-or-error
-      (do (o/put-qvns alias qvns-or-error qvns-call-id)
-          (o/on-query-value-and-subscribe alias qvns-or-error)
-          nil))))
+      (let [state (o/save alias qvns-or-error qvns-call-id)
+            uri (f/uri state alias)]
+        (if uri
+          (o/async-revisit uri)
+          (c/on-inactive consumer "undefined alias"))))))
 
 (defn require
   "If the uri is malformed, it will be notified to 

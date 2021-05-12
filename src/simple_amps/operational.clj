@@ -2,15 +2,18 @@
   (:refer-clojure :exclude [alias])
   (:require clojure.stacktrace
             logging
-            functional
             [simple-amps.consumer :as c]
             [simple-amps.functional :as f]
             [simple-amps.functional.state :as s])
   (:import [com.crankuptheamps.client
-            Client ClientDisconnectHandler Command Message$Command MessageHandler]
+            Client
+            ClientDisconnectHandler
+            Command
+            Message$Command
+            MessageHandler]
            [com.crankuptheamps.client.exception
-            ConnectionException
-            CommandException]))
+            CommandException
+            ConnectionException]))
 
 (declare async revisit)
 (defn async-revisit [uri]
@@ -25,15 +28,6 @@
         (state-save-client uri new-c)
         new-c)))
 
-(declare async execute-qvns-action)
-(defn on-query-value-and-subscribe [alias qvns]
-  (if-let [sub (s/sub @state alias)]
-
-    ;; no blocking calls on the thread where the excel functions are called.
-    (async (:uri sub) execute-qvns-action alias)
-
-    (c/on-inactive (:consumer qvns) "undefined alias")))
-
 (declare execute-unsuscribe-action)
 (defn on-unsubscribed [[alias qvns]]
   (when-let [sub (s/sub @state alias)]
@@ -41,14 +35,13 @@
       ;; no blocking calls on the thread where the excel functions are called.
       (async uri execute-unsuscribe-action alias uri))))
 
-(defn save [alias sub]
-  (swap! state s/after-new-alias->sub alias sub))
-
-(defn put-qvns
-  [a qvns id]
-  (swap! state #(-> %
-                    (s/after-new-alias-qvns a qvns)
-                    (s/after-new-id-alias+qvns id [a qvns]))))
+(defn save 
+  ([alias sub]
+   (swap! state s/after-new-alias->sub alias sub))
+  ([alias qvns id]
+   (swap! state #(-> %
+                     (s/after-new-alias-qvns alias qvns)
+                     (s/after-new-id-alias+qvns id [alias qvns])))))
 
 (defn remove-qvns-call-id [x]
   (when-let [alias+qvns (s/alias+qvns @state x)]

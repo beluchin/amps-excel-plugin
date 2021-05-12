@@ -7,16 +7,22 @@
              [state :as s]]
             [functional :as f]))
 
+(declare subscribe-args resubscribe-args)
 (defn actions 
   ([alias state]
-   (let [sub (s/sub state alias)
-         qvns-coll (s/qvns-set state alias)
-         ampsies (s/ampsies state sub)
+   (let [sub                 (s/sub state alias)
+         qvns-coll           (s/qvns-set state alias)
+         ampsies             (s/ampsies state sub)
          activated-qvns-coll (s/activated-qvns-set state sub)]
      (actions sub qvns-coll ampsies activated-qvns-coll)))
   ([sub qvns-coll ampsies activated-qvns-coll]
-   (when (and sub (seq qvns-coll) (not ampsies))
-     [:subscribe (subscribe-args sub qvns-coll)])))
+   (when (and sub qvns-coll)
+     (if ampsies
+       [:resubscribe (resubscribe-args sub
+                                       qvns-coll
+                                       activated-qvns-coll
+                                       ampsies)]
+       [:subscribe (subscribe-args sub qvns-coll)]))))
 
 (defn aliases [uri state]
   (->> state
@@ -163,6 +169,9 @@
   (let [s {:uri uri :topic topic}]
     (if fi (assoc s :filter fi) s)))
 
+(defn uri [state alias]
+  (:uri (s/sub state alias)))
+
 (declare evaluate)
 (defn value
   ([m qvns] (value m (:nested-map-expr qvns) (:value-expr qvns)))
@@ -173,7 +182,7 @@
          (evaluate value-expr))
      (evaluate m value-expr))))
 
-(defn combine-or [filter-coll]
+(defn- combine-or [filter-coll]
   (when (every? (comp not nil?) filter-coll)
     (let [ff (first filter-coll)]
       (if (< 1 (count filter-coll))

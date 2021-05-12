@@ -6,21 +6,35 @@
             [simple-amps.functional.state :as f-state]))
 
 (t/deftest actions-test
-  (t/testing "subscribe"
-    (with-redefs [sut/subscribe-args #(when (= [:sub #{:qvns}] %&) :args)]
-      (t/is (= [:subscribe :args]
-               (sut/actions :alias
-                            {:alias->sub {:alias :sub}
-                             :alias->qvns-set {:alias #{:qvns}}
-                             :sub->ampsies {}})))))
-
   (t/testing "nothing to do"
     (t/testing "no sub"
       (t/is (nil? (sut/actions :alias {:alias->qvns-set {:alias #{:qvns}}}))))
     (t/testing "no qvns coll"
       (t/is (nil? (sut/actions :alias {:alias->qvns-set {}
-                                       :alias->sub {:alias :sub}}))))))
+                                       :alias->sub {:alias :sub}})))))
 
+  (t/testing "subscribe"
+    (with-redefs [sut/subscribe-args #(when (= [:sub :qvns-set] %&) :args)]
+      (t/is (= [:subscribe :args]
+               (sut/actions :alias
+                            {:alias->sub {:alias :sub}
+                             :alias->qvns-set {:alias :qvns-set}
+                             :sub->ampsies {}})))))
+
+  (t/testing "while connected to amps"
+    (with-redefs [sut/resubscribe-args #(when (= [:sub
+                                                  :qvns-set
+                                                  :activated-qvns-set
+                                                  :ampsies]
+                                                 %&)
+                                          :args)]
+      (t/is (= [:resubscribe :args]
+               (sut/actions
+                 :alias
+                 {:alias->sub {:alias :sub}
+                  :alias->qvns-set {:alias :qvns-set}
+                  :sub->ampsies {:sub :ampsies}
+                  :sub->activated-qvns-set {:sub :activated-qvns-set}}))))))
 
 (t/deftest cheshire-test
   (t/testing "array of maps"
