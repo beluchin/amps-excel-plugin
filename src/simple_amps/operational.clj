@@ -211,8 +211,7 @@
      (notify-many (map :consumer qvns-set) c/on-activated))))
 
 (declare state-save)
-(defn- resubscribe
-  [sub fi qvns-super-set qvns-set-to-activate ampsies]
+(defn- resubscribe [sub fi qvns-super-set qvns-set-to-activate ampsies]
   (notify-many (map :consumer qvns-set-to-activate) c/on-activating)
   (let [command-id (executeAsync-try-replacing-n-get-command-id
                      (:client ampsies)
@@ -225,8 +224,9 @@
     (notify-many (map :consumer qvns-set-to-activate) c/on-activated)))
 
 (defn- revisit [uri]
-  (doseq [[action args] (map #(f/actions % state) (f/aliases uri @state))]
-    (when action (apply (function action) args))))
+  (let [s @state]
+    (doseq [[action args] (map #(f/actions % s) (f/aliases uri s))]
+      (when action (apply (function action) args)))))
 
 (defn- state-save
   [sub ampsies activated-qvns-set]

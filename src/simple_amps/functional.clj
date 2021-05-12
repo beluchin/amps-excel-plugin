@@ -117,8 +117,7 @@
                            (map (comp vec second)))]
     (flatten qvns-set-coll)))
 
-(defn resubscribe-args
-  [sub qvns-super-set activated-qvns-set ampsies]
+(defn resubscribe-args [sub qvns-super-set activated-qvns-set ampsies]
   [sub
    (apply combine (dedup (:filter sub) (map (comp first :filter+expr) qvns-super-set)))
    qvns-super-set
@@ -152,18 +151,6 @@
   [sub
    (apply combine (dedup (:filter sub) (map (comp first :filter+expr) qvns-set)))
    qvns-set])
-
-;; toremove
-(defn new-qvns-action+args [alias state]
-  (let [sub (s/sub state alias)
-        qvns-set (s/qvns-set state alias)]
-    (when (and sub qvns-set)
-      (if-let [ampsies (s/ampsies state sub)]
-        [:resubscribe (resubscribe-args sub
-                                        qvns-set
-                                        (s/activated-qvns-set state sub)
-                                        ampsies)]
-        [:subscribe (subscribe-args sub qvns-set)]))))
 
 (defn subscription [uri topic fi]
   (let [s {:uri uri :topic topic}]
