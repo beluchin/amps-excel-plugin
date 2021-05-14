@@ -91,23 +91,10 @@
     (logging/info (str "client disconnected: " uri))
     (remove-client client)))
 
-(defn- clone
-  [s]
+(defn- clone [s]
   (String. s))
 
-(declare function state)
-(defn- execute-qvns-action [alias]
-  (when-let [[action args] (f/new-qvns-action+args alias @state)]
-    (apply (function action) args)))
-
-(declare state)
-(defn- execute-unsuscribe-action [alias uri]
-  (when-let [[client new-state] (f/client-to-close+state @state alias uri)]
-    (.close client)
-    (reset! state new-state)))
-
-(defn- function
-  [kw]
+(defn- function [kw]
   (resolve (symbol (name kw))))
 
 (declare state state-save-executor-if-absent)
@@ -120,16 +107,14 @@
         (s/executor @state uri)))))
 
 (declare client-disconnect-handler get-new-client-name)
-(defn- get-new-client
-  [uri]
+(defn- get-new-client [uri]
   (doto (Client. (get-new-client-name))
     (.connect uri)
     (.setDisconnectHandler client-disconnect-handler)
     (.logon)))
 
 (declare notify-many)
-(defn- get-new-client-notify-qvns
-  [uri]
+(defn- get-new-client-notify-qvns [uri]
   (let [consumer-coll (map :consumer (f/qvns-set @state uri))]
     (notify-many consumer-coll c/on-activating)
     (try (get-new-client uri)
@@ -139,8 +124,7 @@
                    (str "cannot connect: " (.getMessage ex)))
       nil))))
 
-(defn- get-new-client-name
-  []
+(defn- get-new-client-name []
   (format "%s:amps-excel-plugin:%s"
           (System/getProperty "user.name")
           (str (java.util.UUID/randomUUID))))
