@@ -28,25 +28,18 @@
         (state-save-client uri new-c)
         new-c)))
 
-(declare execute-unsuscribe-action)
-(defn on-unsubscribed [[alias qvns]]
-  (when-let [sub (s/sub @state alias)]
-    (let [uri (:uri sub)]
-      ;; no blocking calls on the thread where the excel functions are called.
-      (async uri execute-unsuscribe-action alias uri))))
-
 (defn save 
   ([alias sub]
    (swap! state s/after-new-alias->sub alias sub))
   ([alias qvns id]
-   (swap! state #(-> %
-                     (s/after-new-alias-qvns alias qvns)
-                     (s/after-new-id-alias+qvns id [alias qvns])))))
+   (let [new-state (swap! state #(-> %
+                                     (s/after-new-alias-qvns alias qvns)
+                                     (s/after-new-id-alias+qvns id [alias qvns])))]
+     (f/uri new-state alias))))
 
 (defn remove-qvns-call-id [x]
-  (when-let [alias+qvns (s/alias+qvns @state x)]
-    (swap! state f/state-after-remove-qvns-call-id x)
-    alias+qvns))
+  (let [[old-state] (swap-vals! state f/state-after-remove-qvns-call-id x)]
+    (f/uri-from-qvns-call-id old-state x)))
 
 (declare get-executor)
 (defn- async [uri f & args]

@@ -24,11 +24,6 @@
    (o/save alias (f/subscription uri topic filter))
    (o/async-revisit uri)))
 
-(defn unsubscribe
-  [x]
-  (when-let [uri (o/remove-qvns-call-id x)]
-    (o/async-revisit uri))
-  ;; toremove
-  #_(let [alias+qvns (o/remove-qvns-call-id x)]
-      (when alias+qvns (o/on-unsubscribed alias+qvns))
-      alias+qvns))
+(defn unsubscribe [qvns-call-id]
+  (when-let [uri (o/remove-qvns-call-id qvns-call-id)]
+    (o/async-revisit uri)))

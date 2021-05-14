@@ -159,6 +159,10 @@
 (defn uri [state alias]
   (:uri (s/sub state alias)))
 
+(defn uri-from-qvns-call-id [state x]
+  (let [[alias] (s/alias+qvns state x)]
+    (uri state alias)))
+
 (declare evaluate)
 (defn value
   ([m qvns] (value m (:nested-map-expr qvns) (:value-expr qvns)))
