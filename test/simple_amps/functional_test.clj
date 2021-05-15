@@ -21,7 +21,7 @@
                              :alias->qvns-set {:alias :qvns-set}
                              :sub->ampsies {}})))))
 
-  (t/testing "while connected to amps"
+  (t/testing "resubscribe"
     (with-redefs [sut/resubscribe-args #(when (= [:sub
                                                   :qvns-set
                                                   :activated-qvns-set
@@ -34,7 +34,10 @@
                  {:alias->sub {:alias :sub}
                   :alias->qvns-set {:alias :qvns-set}
                   :sub->ampsies {:sub :ampsies}
-                  :sub->activated-qvns-set {:sub :activated-qvns-set}}))))))
+                  :sub->activated-qvns-set {:sub :activated-qvns-set}})))))
+
+  (t/testing "disconnect"
+    (t/is (= :disconnect (first (sut/actions :sub nil :ampsies :blah))))))
 
 (t/deftest cheshire-test
   (t/testing "array of maps"

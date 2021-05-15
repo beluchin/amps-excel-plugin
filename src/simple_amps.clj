@@ -24,6 +24,8 @@
    (o/save alias (f/subscription uri topic filter))
    (o/async-revisit uri)))
 
-(defn unsubscribe [qvns-call-id]
+(defn unsubscribe
+  "consider returning an error when the id does not match a qvns"
+  [qvns-call-id]
   (when-let [uri (o/remove-qvns-call-id qvns-call-id)]
     (o/async-revisit uri)))

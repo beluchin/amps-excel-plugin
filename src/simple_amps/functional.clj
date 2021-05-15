@@ -16,13 +16,18 @@
          activated-qvns-coll (s/activated-qvns-set state sub)]
      (actions sub qvns-coll ampsies activated-qvns-coll)))
   ([sub qvns-coll ampsies activated-qvns-coll]
-   (when (and sub qvns-coll)
-     (if ampsies
-       [:resubscribe (resubscribe-args sub
-                                       qvns-coll
-                                       activated-qvns-coll
-                                       ampsies)]
-       [:subscribe (subscribe-args sub qvns-coll)]))))
+   (cond
+     (and sub qvns-coll ampsies)
+     [:resubscribe (resubscribe-args sub
+                                     qvns-coll
+                                     activated-qvns-coll
+                                     ampsies)]
+     
+     (and sub qvns-coll (not ampsies))
+     [:subscribe (subscribe-args sub qvns-coll)]
+
+     (and sub (not qvns-coll) ampsies)
+     [:disconnect])))
 
 (defn aliases [uri state]
   (->> state
