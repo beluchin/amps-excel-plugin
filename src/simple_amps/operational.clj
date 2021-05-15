@@ -1,5 +1,5 @@
 (ns simple-amps.operational
-  (:refer-clojure :exclude [alias])
+  (:refer-clojure :exclude [alias remove])
   (:require clojure.stacktrace
             logging
             [simple-amps.consumer :as c]
@@ -82,21 +82,23 @@
          (.unsubscribe client command-id)
          (executeAsync-n-get-command-id client topic sub-id fi handler))))
 
-(declare notify-many remove-client)
+(declare notify-many remove)
 (defn on-disconnected
   [client]
   (let [uri (str (.getURI client))
         consumer-coll (map :consumer (f/qvns-set @state uri))]
     (notify-many consumer-coll c/on-inactive "client disconnected")
     (logging/info (str "client disconnected: " uri))
-    (remove-client client)))
+    (remove client)))
 
 (defn- clone [s]
   (String. s))
 
+(declare remove)
 (defn- disconnect [{:keys [:client :command-id] :as ampsies}]
   (.unsubscribe client command-id)
-  (.disconnect client))
+  (.disconnect client)
+  (remove client))
 
 (defn- function [kw]
   (resolve (symbol (name kw))))
@@ -173,8 +175,8 @@
   [coll f & args]
   (doseq [c coll] (apply notify f c args)))
 
-(defn- remove-client [c]
-  (swap! state f/state-after-remove-client c))
+(defn- remove [client]
+  (swap! state f/state-after-remove-client client))
 
 (declare state-save uniq-id)
 (defn- subscribe
