@@ -37,7 +37,7 @@
                   :sub->activated-qvns-set {:sub :activated-qvns-set}})))))
 
   (t/testing "disconnect"
-    (t/is (= :disconnect (first (sut/actions :sub nil :ampsies :blah))))))
+    (t/is (= [:disconnect [:ampsies]] (sut/actions :sub nil :ampsies :blah)))))
 
 (t/deftest cheshire-test
   (t/testing "array of maps"

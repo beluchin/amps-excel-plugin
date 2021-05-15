@@ -94,6 +94,10 @@
 (defn- clone [s]
   (String. s))
 
+(defn- disconnect [{:keys [:client :command-id] :as ampsies}]
+  (.unsubscribe client command-id)
+  (.disconnect client))
+
 (defn- function [kw]
   (resolve (symbol (name kw))))
 
@@ -220,10 +224,6 @@
   (swap! state s/after-new-executor-if-absent uri executor))
 
 (defn- uniq-id [] (str (java.util.UUID/randomUUID)))
-
-(defn- unsubscribe [subscription]
-  (let [{:keys [::client ::command-id]} subscription]
-    (.unsubscribe client command-id)))
 
 (def ^:private state (atom nil))
 

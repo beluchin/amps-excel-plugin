@@ -27,7 +27,7 @@
      [:subscribe (subscribe-args sub qvns-coll)]
 
      (and sub (not qvns-coll) ampsies)
-     [:disconnect])))
+     [:disconnect [ampsies]])))
 
 (defn aliases [uri state]
   (->> state
