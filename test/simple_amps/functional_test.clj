@@ -36,48 +36,13 @@
                   :sub->ampsies {:sub :ampsies}
                   :sub->activated-qvns-set {:sub :activated-qvns-set}})))))
 
-  (t/testing "disconnect"
-    (t/is (= [:disconnect [:ampsies]] (sut/actions :sub nil :ampsies :blah)))))
+  (t/testing "unsubscribe"
+    (t/is (= [:unsubscribe [:ampsies]] (sut/actions :sub nil :ampsies :blah)))))
 
 (t/deftest cheshire-test
   (t/testing "array of maps"
     (t/is (= {"a" [{"b" 2} {"c" 3}]}
              (cheshire/parse-string "{\"a\": [{\"b\": 2},{\"c\": 3}]}")))))
-
-(t/deftest client-to-close+state-test
-  (t/testing "there is a client to close"
-    (t/is (= :client (first (sut/client-to-close+state
-                              {:alias->qvns-set {}
-                               :uri->client {:uri :client}}
-                              :alias
-                              :uri))))
-    (t/is (= {:alias->qvns-set {}
-              :alias->sub {:alias :sub}
-              ;; 
-              :uri->client {}
-              :sub->ampsies {}}
-             (second (sut/client-to-close+state
-                       {:alias->qvns-set {}
-                        :alias->sub {:alias :sub}
-                        ;;
-                        :uri->client {:uri :client}
-                        :sub->ampsies {:sub :ampsies}}
-                       :alias
-                       :uri)))))
-
-  (t/testing "no client to close"
-    (t/testing "there is no client"
-      (t/is (nil? (sut/client-to-close+state
-                    {:alias->qvns-set {}
-                     :uri->client {}}
-                    :alias
-                    :uri))))
-    
-    (t/testing "there are qvns"
-      (t/is (nil? (sut/client-to-close+state
-                    {:alias->qvns-set {:alias #{:qvns}}}
-                    :alias
-                    :uri))))))
 
 (t/deftest combine-test
   (t/are [args r] (= r (apply sut/combine args))

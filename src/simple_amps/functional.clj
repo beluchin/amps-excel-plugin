@@ -27,7 +27,7 @@
      [:subscribe (subscribe-args sub qvns-coll)]
 
      (and sub (not qvns-coll) ampsies)
-     [:disconnect [ampsies]])))
+     [:unsubscribe [ampsies]])))
 
 (defn aliases [uri state]
   (->> state
@@ -40,13 +40,6 @@
 
 (defn dedup [and-filter or-filter-coll]
   [and-filter (set (remove #{and-filter} or-filter-coll))])
-
-(defn client-to-close+state [state alias uri]
-  (when-not (seq (s/qvns-set state alias))
-    (when-let [client (s/client state uri)]
-      [client (-> state
-                  (s/after-remove-uri->client [uri])
-                  (s/after-remove-sub->ampsies [(s/sub state alias)]))])))
 
 (declare combine-or)
 (defn combine [and-filter or-filter-coll]

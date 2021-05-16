@@ -2,10 +2,6 @@
   (:refer-clojure :exclude [alias])
   (:require [functional :as f]))
 
-;; this module represents a heterogeneous map 
-;; with no relationships among the keys - the semantics among
-;; keys are established elsewhere. 
-
 (comment 
   ;; this is the shape of the state
   {;; user defined

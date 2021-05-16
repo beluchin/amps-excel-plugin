@@ -94,12 +94,6 @@
 (defn- clone [s]
   (String. s))
 
-(declare remove)
-(defn- disconnect [{:keys [:client :command-id] :as ampsies}]
-  (.unsubscribe client command-id)
-  (.disconnect client)
-  (remove client))
-
 (defn- function [kw]
   (resolve (symbol (name kw))))
 
@@ -222,6 +216,13 @@
   (swap! state s/after-new-executor-if-absent uri executor))
 
 (defn- uniq-id [] (str (java.util.UUID/randomUUID)))
+
+(defn- unsubscribe [{:keys [:client :command-id] :as ampsies}]
+  (.unsubscribe client command-id)
+  ;; this should remove the ampsies from the state
+  ;; and close the client if there are no further subscriptions
+  ;; associated with the client
+  )
 
 (def ^:private state (atom nil))
 
