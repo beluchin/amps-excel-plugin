@@ -38,7 +38,7 @@
      (f/uri new-state alias))))
 
 (defn remove-qvns-call-id [x]
-  (let [[old-state] (swap-vals! state f/state-after-remove-qvns-call-id x)]
+  (let [[old-state new-state] (swap-vals! state f/state-after-remove-qvns-call-id x)]
     (f/uri-from-qvns-call-id old-state x)))
 
 (declare get-executor)
@@ -163,16 +163,12 @@
             (let [json (clone (.getData msg))]
               (async uri handle-json-oof json sub))))))))
 
-(defn- notify
-  "a call to one consumer - protected against exceptions"
-  [f c & args]
+(defn- notify [f c & args]
   (try (apply f c args)
        (catch Throwable ex
          (logging/error (with-out-str (clojure.stacktrace/print-cause-trace ex))))))
 
-(defn- notify-many
-  "eagerly notify each of the consumers on the collection"
-  [coll f & args]
+(defn- notify-many [coll f & args]
   (doseq [c coll] (apply notify f c args)))
 
 (defn- remove [client]

@@ -28,7 +28,10 @@
   (get-in state [:sub->activated-qvns-set sub]))
 
 (defn after-new-alias-qvns [state a qvns]
-  (update-in state[:alias->qvns-set a] (fnil conj #{}) qvns))
+  (update-in state [:alias->qvns-set a] (fnil conj #{}) qvns))
+
+(defn after-new-alias->qvns-set [state alias qvns-set]
+  (assoc-in state [:alias->qvns-set alias] qvns-set))
 
 (defn after-new-executor-if-absent [state uri executor]
   (f/assoc-in-if-missing state [:uri->executor uri] executor))
