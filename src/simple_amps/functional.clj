@@ -130,16 +130,17 @@
    ampsies])
 
 (defn state-after-remove-client [state client]
-  (let [uri-coll (->> state
-                      s/uri->client 
-                      (filter (comp #{client} second))
-                      (map first))
+  (let [[uri] (->> state
+                        s/uri->client 
+                        (filter (comp #{client} second))
+                        (map first))
         sub-coll (->> state
                       s/sub->ampsies
                       (filter (comp #{client} :client second))
                       (map first))]
     (-> state 
-        (s/after-remove-uri->client uri-coll)
+        (s/after-remove-uri->client [uri])
+        (s/after-remove-uri->executor [uri])
         (s/after-remove-sub->ampsies sub-coll)
         (s/after-remove-sub->activated-qvns-set sub-coll))))
 

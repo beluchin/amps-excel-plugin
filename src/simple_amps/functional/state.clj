@@ -68,6 +68,10 @@
 (defn after-remove-uri->client [state coll]
   (after-remove state :uri->client coll))
 
+(declare after-remove)
+(defn after-remove-uri->executor [state coll]
+  (after-remove state :uri->executor coll))
+
 (defn alias+qvns [state id]
   (get-in state [:id->alias+qvns id]))
 
