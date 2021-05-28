@@ -7,6 +7,36 @@
              [state :as s]]
             [functional :as f]))
 
+(defn- combine-or [filter-coll]
+  (when (every? (comp not nil?) filter-coll)
+    (let [ff (first filter-coll)]
+      (if (< 1 (count filter-coll))
+        (reduce #(format "%s OR (%s)" %1 %2)
+                (format "(%s)" ff)
+                (rest filter-coll))
+        ff))))
+
+(defn- evaluate [m value-expr]
+  (expr/evaluate value-expr m))
+
+(defn- keys-to-first-coll [m expr]
+  (letfn [(take-until-coll
+            [coll k]
+            (let [result (conj coll k)]
+              (if (sequential? (get-in m result))
+                (reduced result)
+                result)))]
+    (let [result (reduce take-until-coll [] (expr/common-path expr))]
+      (when (sequential? (get-in m result)) result))))
+
+(defn- state-after-remove-qvns [state alias qvns]
+  (if-let [qvns-set (s/qvns-set state alias)]
+    (let [new-qvns-set (disj qvns-set qvns)]
+      (if (empty? new-qvns-set)
+        (s/after-remove-alias->qvns state alias)
+        (s/after-new-alias->qvns-set state alias new-qvns-set)))
+    state))
+
 (declare subscribe-args resubscribe-args)
 (defn actions 
   ([alias state]
@@ -27,7 +57,10 @@
      [:subscribe (subscribe-args sub qvns-coll)]
 
      (and sub (not qvns-coll) ampsies)
-     [:unsubscribe [sub ampsies]])))
+     (let [client (:client ampsies)]
+       (if (only? sub client state)
+         [:disconnect client]
+         [:unsubscribe [sub ampsies]])))))
 
 (defn aliases [uri state]
   (->> state
@@ -41,7 +74,6 @@
 (defn dedup [and-filter or-filter-coll]
   [and-filter (set (remove #{and-filter} or-filter-coll))])
 
-(declare combine-or)
 (defn combine [and-filter or-filter-coll]
   (let [to-or (combine-or or-filter-coll)]
     (if and-filter
@@ -52,7 +84,6 @@
 
 (def error? keyword?)
 
-(declare keys-to-first-coll)
 (defn first-nested-map 
   "Returns a map extracted from m based on the expr or nil. 
 
@@ -137,7 +168,6 @@
         (s/after-remove-sub->ampsies sub-coll)
         (s/after-remove-sub->activated-qvns-set sub-coll))))
 
-(declare state-after-remove-qvns)
 (defn state-after-remove-qvns-call-id [state id]
   (let [[alias qvns] (s/alias+qvns state id)
         sub (s/sub state alias)]
@@ -161,7 +191,6 @@
   (let [[alias] (s/alias+qvns state x)]
     (uri state alias)))
 
-(declare evaluate)
 (defn value
   ([m qvns] (value m (:nested-map-expr qvns) (:value-expr qvns)))
   ([m nested-map-expr value-expr]
@@ -170,35 +199,3 @@
          (first-nested-map nested-map-expr)
          (evaluate value-expr))
      (evaluate m value-expr))))
-
-(defn- combine-or [filter-coll]
-  (when (every? (comp not nil?) filter-coll)
-    (let [ff (first filter-coll)]
-      (if (< 1 (count filter-coll))
-        (reduce #(format "%s OR (%s)" %1 %2)
-                (format "(%s)" ff)
-                (rest filter-coll))
-        ff))))
-
-(defn- evaluate
-  [m value-expr]
-  (expr/evaluate value-expr m))
-
-(defn- keys-to-first-coll
-  [m expr]
-  (letfn [(take-until-coll
-            [coll k]
-            (let [result (conj coll k)]
-              (if (sequential? (get-in m result))
-                (reduced result)
-                result)))]
-    (let [result (reduce take-until-coll [] (expr/common-path expr))]
-      (when (sequential? (get-in m result)) result))))
-
-(defn- state-after-remove-qvns [state alias qvns]
-  (if-let [qvns-set (s/qvns-set state alias)]
-    (let [new-qvns-set (disj qvns-set qvns)]
-      (if (empty? new-qvns-set)
-        (s/after-remove-alias->qvns state alias)
-        (s/after-new-alias->qvns-set state alias new-qvns-set)))
-    state))

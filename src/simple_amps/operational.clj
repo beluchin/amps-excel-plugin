@@ -83,8 +83,7 @@
          (executeAsync-n-get-command-id client topic sub-id fi handler))))
 
 (declare notify-many remove)
-(defn on-disconnected
-  [client]
+(defn on-disconnected [client]
   (let [uri (str (.getURI client))
         consumer-coll (map :consumer (f/qvns-set @state uri))]
     (notify-many consumer-coll c/on-inactive "client disconnected")
