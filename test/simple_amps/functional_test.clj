@@ -37,7 +37,7 @@
                   :sub->activated-qvns-set {:sub :activated-qvns-set}})))))
 
   (t/testing "unsubscribe"
-    (t/is (= [:unsubscribe [:ampsies]] (sut/actions :sub nil :ampsies :blah)))))
+    (t/is (= [:unsubscribe [:sub :ampsies]] (sut/actions :sub nil :ampsies :blah)))))
 
 (t/deftest cheshire-test
   (t/testing "array of maps"

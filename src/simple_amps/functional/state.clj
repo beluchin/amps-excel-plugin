@@ -4,13 +4,13 @@
 
 (comment 
   ;; this is the shape of the state
-  {;; user defined
+  {;; user state
    :alias->sub ...
    :alias->qvns-set ... ;; the set is non-empty
    :id->alias+qvns ...
    ;; 
 
-   ;; implementation
+   ;; connection state
    :sub->activated-qvns-set ...
 
    :uri->executor ...

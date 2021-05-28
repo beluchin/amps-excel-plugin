@@ -183,6 +183,11 @@
      (state-save sub (f/ampsies client command-id sub-id) qvns-set)
      (notify-many (map :consumer qvns-set) c/on-activated))))
 
+(defn- remove-from-connection-state [sub]
+  (swap! state #(-> %
+                    (s/after-remove-sub->ampsies [sub])
+                    (s/after-remove-sub->activated-qvns-set [sub]))))
+
 (declare state-save)
 (defn- resubscribe [sub fi qvns-super-set qvns-set-to-activate ampsies]
   (notify-many (map :consumer qvns-set-to-activate) c/on-activating)
@@ -217,16 +222,17 @@
 
 (defn- uniq-id [] (str (java.util.UUID/randomUUID)))
 
-(defn- unsubscribe [{:keys [:client :command-id] :as ampsies}]
+(defn- unsubscribe [sub {:keys [:client :command-id] :as ampsies}]
   (.unsubscribe client command-id)
-  ;; this should remove the ampsies from the state
-  ;; and close the client if there are no further subscriptions
-  ;; associated with the client
+
+  (remove-from-connection-state sub)
+
+  ;; in addition, it must close the client if there are no further subscriptions
   )
 
 (def ^:private state (atom nil))
 
 (def ^:private client-disconnect-handler 
-  (reify ClientDisconnectHandler
-    (invoke [_ client]
-      (async (str (.getURI client)) on-disconnected client))))
+(reify ClientDisconnectHandler
+  (invoke [_ client]
+    (async (str (.getURI client)) on-disconnected client))))
