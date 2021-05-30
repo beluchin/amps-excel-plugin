@@ -158,9 +158,9 @@
 
 (defn state-after-remove-client [state client]
   (let [[uri] (->> state
-                        s/uri->client 
-                        (filter (comp #{client} second))
-                        (map first))
+                   s/uri->client 
+                   (filter (comp #{client} second))
+                   (map first))
         sub-coll (->> state
                       s/sub->ampsies
                       (filter (comp #{client} :client second))

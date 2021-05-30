@@ -207,12 +207,13 @@
     (t/is (= {:uri->client {:u2 :c2}
               :sub->ampsies {:sub2 {:client :c2}}
               :sub->activated-qvns-set {:sub2 :qvns-set2}}
-             (sut/state-after-remove-client {:uri->client {:u1 :c1, :u2 :c2}
-                                      :sub->ampsies {:sub1 {:client :c1}
-                                                     :sub2 {:client :c2}}
-                                      :sub->activated-qvns-set {:sub1 :qvns-set1
-                                                                :sub2 :qvns-set2}}
-                                     :c1)))))
+             (sut/state-after-remove-client
+               {:uri->client {:u1 :c1, :u2 :c2}
+                :sub->ampsies {:sub1 {:client :c1}
+                               :sub2 {:client :c2}}
+                :sub->activated-qvns-set {:sub1 :qvns-set1
+                                          :sub2 :qvns-set2}}
+               :c1)))))
 
 (t/deftest subscribe-args-test
   (with-redefs [sut/combine #(when (= [:subf #{:qvns2f :qvns1f}] %&) :f)]
