@@ -29,6 +29,9 @@
     (let [result (reduce take-until-coll [] (expr/common-path expr))]
       (when (sequential? (get-in m result)) result))))
 
+(defn- only? [sub client state]
+  (= 1 (count (filter #(= client (:client (second %))) (s/sub->ampsies state)))))
+
 (defn- state-after-remove-qvns [state alias qvns]
   (if-let [qvns-set (s/qvns-set state alias)]
     (let [new-qvns-set (disj qvns-set qvns)]
@@ -44,8 +47,8 @@
          qvns-coll           (s/qvns-set state alias)
          ampsies             (s/ampsies state sub)
          activated-qvns-coll (s/activated-qvns-set state sub)]
-     (actions sub qvns-coll ampsies activated-qvns-coll)))
-  ([sub qvns-coll ampsies activated-qvns-coll]
+     (actions sub qvns-coll ampsies activated-qvns-coll state)))
+  ([sub qvns-coll ampsies activated-qvns-coll state]
    (cond
      (and sub qvns-coll ampsies)
      [:resubscribe (resubscribe-args sub
@@ -59,7 +62,7 @@
      (and sub (not qvns-coll) ampsies)
      (let [client (:client ampsies)]
        (if (only? sub client state)
-         [:disconnect client]
+         [:disconnect [client]]
          [:unsubscribe [sub ampsies]])))))
 
 (defn aliases [uri state]

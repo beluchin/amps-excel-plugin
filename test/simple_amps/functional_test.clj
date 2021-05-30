@@ -47,7 +47,12 @@
                                             :sub' {:client :c}}})))))
 
   (t/testing "disconnect"
-    (t/is (= [:disconnect :client] (sut/actions :sub )))))
+    (let [ampsies {:client :c}]
+      (t/is (= [:disconnect [:c]] (sut/actions :sub
+                                             nil
+                                             ampsies
+                                             :blah
+                                             {:sub->ampsies {:sub ampsies}}))))))
 
 (t/deftest cheshire-test
   (t/testing "array of maps"
