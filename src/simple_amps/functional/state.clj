@@ -114,6 +114,4 @@
 
 (defn- after-remove
   [state k coll]
-  (when-let [v (k state)]
-    (let [new-v (apply dissoc v coll)]
-      (if (empty? new-v) (dissoc state k) (assoc state k new-v)))))
+  (update state k #(apply dissoc % coll)))

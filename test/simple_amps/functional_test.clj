@@ -205,10 +205,12 @@
 (t/deftest state-after-remove-client-test
   (t/testing "deleting client"
     (t/is (= {:uri->client {:u2 :c2}
+              :uri->executor {}
               :sub->ampsies {:sub2 {:client :c2}}
               :sub->activated-qvns-set {:sub2 :qvns-set2}}
              (sut/state-after-remove-client
                {:uri->client {:u1 :c1, :u2 :c2}
+                :uri->executor {:u1 :e1}
                 :sub->ampsies {:sub1 {:client :c1}
                                :sub2 {:client :c2}}
                 :sub->activated-qvns-set {:sub1 :qvns-set1
