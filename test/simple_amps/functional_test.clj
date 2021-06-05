@@ -6,53 +6,67 @@
             [simple-amps.functional.state :as f-state]))
 
 (t/deftest actions-test
-  (t/testing "nothing to do"
-    (t/testing "no sub"
-      (t/is (nil? (sut/actions :alias {:alias->qvns-set {:alias #{:qvns}}}))))
-    (t/testing "no qvns coll"
-      (t/is (nil? (sut/actions :alias {:alias->qvns-set {}
-                                       :alias->sub {:alias :sub}})))))
+  (let [sub {}]
+    (t/testing "nothing to do"
+      (t/testing "no sub"
+        (t/is (nil? (sut/actions :alias {:alias->qvns-set {:alias #{:qvns}}}))))
+      
+      (t/testing "no qvns coll"
+        (t/is (nil? (sut/actions :alias {:alias->qvns-set {}
+                                         :alias->sub {:alias sub}})))
+        (t/is (nil? (sut/actions :alias {:alias->sub {:alias sub}}))))
 
-  (t/testing "subscribe"
-    (with-redefs [sut/subscribe-args #(when (= [:sub :qvns-set] %&) :args)]
-      (t/is (= [:subscribe :args]
-               (sut/actions :alias
-                            {:alias->sub {:alias :sub}
-                             :alias->qvns-set {:alias :qvns-set}
-                             :sub->ampsies {}})))))
+      (t/testing "qvns coll across multiple aliases for same sub"
+        (t/is (nil? (sut/actions :alias1
+                                 {
+                                  :alias->sub {:alias1 sub
+                                               :alias2 sub}
+                                  :alias->qvns-set {:alias2 #{:qvns}}
 
-  (t/testing "resubscribe"
-    (with-redefs [sut/resubscribe-args #(when (= [:sub
-                                                  :qvns-set
-                                                  :activated-qvns-set
-                                                  :ampsies]
-                                                 %&)
-                                          :args)]
-      (t/is (= [:resubscribe :args]
-               (sut/actions
-                 :alias
-                 {:alias->sub {:alias :sub}
-                  :alias->qvns-set {:alias :qvns-set}
-                  :sub->ampsies {:sub :ampsies}
-                  :sub->activated-qvns-set {:sub :activated-qvns-set}})))))
+                                  :sub->ampsies {sub {:client :c}}
+                                  :sub->activated-qvns-set {sub #{:qvns}}
+                                  }) ))))
 
-  (t/testing "unsubscribe"
-    (let [ampsies {:client :c}]
-      (t/is (= [:unsubscribe [:sub ampsies]]
-               (sut/actions :sub
-                            nil
-                            ampsies
-                            :blah
-                            {:sub->ampsies {:sub ampsies
-                                            :sub' {:client :c}}})))))
+    (t/testing "subscribe"
+      (with-redefs [sut/subscribe-args #(when (= [sub :qvns-set] %&) :args)]
+        (t/is (= [:subscribe :args]
+                 (sut/actions :alias
+                              {:alias->sub {:alias sub}
+                               :alias->qvns-set {:alias :qvns-set}
+                               :sub->ampsies {}})))))
 
-  (t/testing "disconnect"
-    (let [ampsies {:client :c}]
-      (t/is (= [:disconnect [:c]] (sut/actions :sub
-                                             nil
-                                             ampsies
-                                             :blah
-                                             {:sub->ampsies {:sub ampsies}}))))))
+    (t/testing "resubscribe"
+      (with-redefs [sut/resubscribe-args #(when (= [sub
+                                                    :qvns-set
+                                                    :activated-qvns-set
+                                                    :ampsies]
+                                                   %&)
+                                            :args)]
+        (t/is (= [:resubscribe :args]
+                 (sut/actions
+                   :alias
+                   {:alias->sub {:alias sub}
+                    :alias->qvns-set {:alias :qvns-set}
+                    :sub->ampsies {sub :ampsies}
+                    :sub->activated-qvns-set {sub :activated-qvns-set}})))))
+
+    (t/testing "unsubscribe"
+      (let [ampsies {:client :c}]
+        (t/is (= [:unsubscribe [sub ampsies]]
+                 (sut/actions sub
+                              nil
+                              ampsies
+                              :blah
+                              {:sub->ampsies {sub ampsies
+                                              :sub' {:client :c}}})))))
+
+    (t/testing "disconnect"
+      (let [ampsies {:client :c}]
+        (t/is (= [:disconnect [:c]] (sut/actions sub
+                                                 nil
+                                                 ampsies
+                                                 :blah
+                                                 {:sub->ampsies {sub ampsies}})))))))
 
 (t/deftest cheshire-test
   (t/testing "array of maps"
@@ -150,16 +164,29 @@
       )))
 
 (t/deftest qvns-set-test
-  #_(t/testing "from subscription alias"
-    (t/is (= :foo-set (sut/qvns-set {:alias->qvns-set {"a" :foo-set}} "a"))))
+  (t/testing "uri"
+    (t/is (= #{:qvns1 :qvns2}
+             (sut/qvns-set {:alias->sub {:alias1 {:uri :u}
+                                         :alias2 {:uri :u}}
+                            :alias->qvns-set {:alias1 #{:qvns1}
+                                              :alias2 #{:qvns2}}}
+                           :u))))
 
-  (t/testing "from subscription"
+  (t/testing "subscription"
     (t/are [state sub qvns-set] (= qvns-set (sut/qvns-set state sub))
       {:alias->qvns-set {:a :foo-set}
-       :alias->sub {:a {:bar :qux}}} {:bar :qux} :foo-set
-      
+       :alias->sub {:a {:bar :qux}}}
+      {:bar :qux}
+      :foo-set
+
       ;; a subscription has multiple aliases.
       ;; https://stackoverflow.com/a/42771807/614800
+      {:alias->sub {:alias1 {:topic :t}
+                    :alias2 {:topic :t}}
+       :alias->qvns-set {:alias1 #{:qvns1}
+                         :alias2 #{:qvns2}}}
+      {:topic :t}
+      #{:qvns1 :qvns2}
       )))
 
 (t/deftest resubscribe-args-test

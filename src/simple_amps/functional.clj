@@ -7,6 +7,9 @@
              [state :as s]]
             [functional :as f]))
 
+(defn- alias-coll [state sub]
+  (map first (filter #(#{sub} (second %)) (s/alias->sub state))))
+
 (defn- combine-or [filter-coll]
   (when (every? (comp not nil?) filter-coll)
     (let [ff (first filter-coll)]
@@ -40,26 +43,26 @@
         (s/after-new-alias->qvns-set state alias new-qvns-set)))
     state))
 
-(declare subscribe-args resubscribe-args)
+(declare qvns-set subscribe-args resubscribe-args)
 (defn actions 
   ([alias state]
-   (let [sub                 (s/sub state alias)
-         qvns-coll           (s/qvns-set state alias)
-         ampsies             (s/ampsies state sub)
-         activated-qvns-coll (s/activated-qvns-set state sub)]
-     (actions sub qvns-coll ampsies activated-qvns-coll state)))
-  ([sub qvns-coll ampsies activated-qvns-coll state]
+   (let [sub                (s/sub state alias)
+         qvns-set           (qvns-set state sub)
+         ampsies            (s/ampsies state sub)
+         activated-qvns-set (s/activated-qvns-set state sub)]
+     (actions sub qvns-set ampsies activated-qvns-set state)))
+  ([sub qvns-set ampsies activated-qvns-set state]
    (cond
-     (and sub qvns-coll ampsies)
+     (and sub qvns-set ampsies (not= qvns-set activated-qvns-set))
      [:resubscribe (resubscribe-args sub
-                                     qvns-coll
-                                     activated-qvns-coll
+                                     qvns-set
+                                     activated-qvns-set
                                      ampsies)]
      
-     (and sub qvns-coll (not ampsies))
-     [:subscribe (subscribe-args sub qvns-coll)]
+     (and sub qvns-set (not ampsies))
+     [:subscribe (subscribe-args sub qvns-set)]
 
-     (and sub (not qvns-coll) ampsies)
+     (and sub (not qvns-set) ampsies)
      (let [client (:client ampsies)]
        (if (only? sub client state)
          [:disconnect [client]]
@@ -135,10 +138,15 @@
 (defmulti qvns-set #(cond (map? %2) :subscription :else :uri))
 (defmethod qvns-set :subscription
   [state sub]
-  (let [sub->alias (set/map-invert (s/alias->sub state))]
+  (let [alias-coll (alias-coll state sub)
+        qvns-set-coll (->> alias-coll
+                           (select-keys (s/alias->qvns-set state))
+                           (map (comp vec second)))]
+    (set (flatten qvns-set-coll)))
+  #_(let [sub->alias (set/map-invert (s/alias->sub state))]
     (-> sub->alias
         (get sub)
-        ((s/alias->qvns-set state)))))
+        ((or (s/alias->qvns-set state) {})))))
 (defmethod qvns-set :uri
   [state uri]
   (let [alias-coll (->> (s/alias->sub state)
@@ -147,7 +155,7 @@
         qvns-set-coll (->> alias-coll
                            (select-keys (s/alias->qvns-set state))
                            (map (comp vec second)))]
-    (flatten qvns-set-coll)))
+    (set (flatten qvns-set-coll))))
 
 (defn resubscribe-args [sub qvns-super-set activated-qvns-set ampsies]
   [sub
