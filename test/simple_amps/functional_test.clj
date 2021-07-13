@@ -6,7 +6,8 @@
             [simple-amps.functional.state :as f-state]))
 
 (t/deftest actions-test
-  (let [sub {}]
+  (let [sub {}
+        qvns-set #{:qvns}]
     (t/testing "nothing to do"
       (t/testing "no sub"
         (t/is (nil? (sut/actions :alias {:alias->qvns-set {:alias #{:qvns}}}))))
@@ -28,16 +29,16 @@
                                   }) ))))
 
     (t/testing "subscribe"
-      (with-redefs [sut/subscribe-args #(when (= [sub :qvns-set] %&) :args)]
+      (with-redefs [sut/subscribe-args #(when (= [sub qvns-set] %&) :args)]
         (t/is (= [:subscribe :args]
                  (sut/actions :alias
                               {:alias->sub {:alias sub}
-                               :alias->qvns-set {:alias :qvns-set}
+                               :alias->qvns-set {:alias qvns-set}
                                :sub->ampsies {}})))))
 
     (t/testing "resubscribe"
       (with-redefs [sut/resubscribe-args #(when (= [sub
-                                                    :qvns-set
+                                                    qvns-set
                                                     :activated-qvns-set
                                                     :ampsies]
                                                    %&)
@@ -46,7 +47,7 @@
                  (sut/actions
                    :alias
                    {:alias->sub {:alias sub}
-                    :alias->qvns-set {:alias :qvns-set}
+                    :alias->qvns-set {:alias qvns-set}
                     :sub->ampsies {sub :ampsies}
                     :sub->activated-qvns-set {sub :activated-qvns-set}})))))
 
@@ -140,7 +141,7 @@
   (t/testing "missing filter"
     (t/is (sut/in-scope? :m {}))))
 
-(t/deftest qvns-coll-test
+(t/deftest qvns-set-test
   (t/is (= [:qvns1 :qvns2] (sut/qvns-set {:alias->sub {:a1 {:uri :u}
                                                         :a2 {:uri :u}}
                                            :alias->qvns-set {:a1 #{:qvns1}
@@ -174,10 +175,10 @@
 
   (t/testing "subscription"
     (t/are [state sub qvns-set] (= qvns-set (sut/qvns-set state sub))
-      {:alias->qvns-set {:a :foo-set}
+      {:alias->qvns-set {:a #{:qvns}}
        :alias->sub {:a {:bar :qux}}}
       {:bar :qux}
-      :foo-set
+      #{:qvns}
 
       ;; a subscription has multiple aliases.
       ;; https://stackoverflow.com/a/42771807/614800
@@ -186,8 +187,7 @@
        :alias->qvns-set {:alias1 #{:qvns1}
                          :alias2 #{:qvns2}}}
       {:topic :t}
-      #{:qvns1 :qvns2}
-      )))
+      #{:qvns1 :qvns2})))
 
 (t/deftest resubscribe-args-test
   (with-redefs [sut/combine #(when (= [:subf #{:qvns2f :qvns1f}] %&) :f)]

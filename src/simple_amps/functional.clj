@@ -47,22 +47,25 @@
 (defn actions 
   ([alias state]
    (let [sub                (s/sub state alias)
-         qvns-set           (qvns-set state sub)
+         non-empty-qvns-set (not-empty (qvns-set state sub))
          ampsies            (s/ampsies state sub)
          activated-qvns-set (s/activated-qvns-set state sub)]
-     (actions sub qvns-set ampsies activated-qvns-set state)))
-  ([sub qvns-set ampsies activated-qvns-set state]
+     (actions sub non-empty-qvns-set ampsies activated-qvns-set state)))
+  ([sub non-empty-qvns-set ampsies activated-qvns-set state]
    (cond
-     (and sub qvns-set ampsies (not= qvns-set activated-qvns-set))
+     (and sub
+          non-empty-qvns-set
+          ampsies
+          (not= non-empty-qvns-set activated-qvns-set))
      [:resubscribe (resubscribe-args sub
-                                     qvns-set
+                                     non-empty-qvns-set
                                      activated-qvns-set
                                      ampsies)]
      
-     (and sub qvns-set (not ampsies))
-     [:subscribe (subscribe-args sub qvns-set)]
+     (and sub non-empty-qvns-set (not ampsies))
+     [:subscribe (subscribe-args sub non-empty-qvns-set)]
 
-     (and sub (not qvns-set) ampsies)
+     (and sub (not non-empty-qvns-set) ampsies)
      (let [client (:client ampsies)]
        (if (only? sub client state)
          [:disconnect [client]]
