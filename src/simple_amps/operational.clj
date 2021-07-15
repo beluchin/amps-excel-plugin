@@ -1,5 +1,5 @@
 (ns simple-amps.operational
-  (:refer-clojure :exclude [alias remove])
+  (:refer-clojure :exclude [alias filter remove])
   (:require clojure.stacktrace
             logging
             [simple-amps.consumer :as c]
@@ -173,15 +173,15 @@
 
 (declare state-save uniq-id)
 (defn- subscribe
-  ([sub fi qvns-set]
-   (when-let [c (get-client (:uri sub))] (subscribe sub fi qvns-set c)))
-  ([sub fi qvns-set client]
+  ([sub filter qvns-set]
+   (when-let [c (get-client (:uri sub))] (subscribe sub filter qvns-set c)))
+  ([sub filter qvns-set client]
    (let [sub-id     (uniq-id)
          command-id (executeAsync-n-get-command-id 
                       client
                       (:topic sub)
                       sub-id
-                      fi
+                      filter
                       (new-json-msg-handler sub))]
      (state-save sub (f/ampsies client command-id sub-id) qvns-set)
      (notify-many (map :consumer qvns-set) c/on-activated))))
