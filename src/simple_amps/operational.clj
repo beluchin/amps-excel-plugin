@@ -41,6 +41,11 @@
   (let [[old-state new-state] (swap-vals! state f/state-after-remove-qvns-call-id x)]
     (f/uri-from-qvns-call-id old-state x)))
 
+(defn revisit [uri]
+  (let [s @state]
+    (doseq [[action args] (f/actions uri state)]
+      (when action (apply (function action) args)))))
+
 (declare get-executor)
 (defn- async [uri f & args]
   (.submit
@@ -203,11 +208,6 @@
                      (new-json-msg-handler sub))]
     (state-save sub (assoc ampsies :command-id command-id) qvns-super-set)
     (notify-many (map :consumer qvns-set-to-activate) c/on-activated)))
-
-(defn- revisit [uri]
-  (let [s @state]
-    (doseq [[action args] (map #(f/actions % s) (f/aliases uri s))]
-      (when action (apply (function action) args)))))
 
 (defn- state-save
   [sub ampsies activated-qvns-set]

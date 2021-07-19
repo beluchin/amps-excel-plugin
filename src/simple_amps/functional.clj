@@ -44,32 +44,28 @@
     state))
 
 (declare qvns-set subscribe-args resubscribe-args)
-(defn actions 
-  ([alias state]
-   (let [sub                (s/sub state alias)
-         non-empty-qvns-set (not-empty (qvns-set state sub))
-         ampsies            (s/ampsies state sub)
-         activated-qvns-set (s/activated-qvns-set state sub)]
-     (actions sub non-empty-qvns-set ampsies activated-qvns-set state)))
-  ([sub non-empty-qvns-set ampsies activated-qvns-set state]
-   (cond
-     (and sub
-          non-empty-qvns-set
-          ampsies
-          (not= non-empty-qvns-set activated-qvns-set))
-     [:resubscribe (resubscribe-args sub
-                                     non-empty-qvns-set
-                                     activated-qvns-set
-                                     ampsies)]
-     
-     (and sub non-empty-qvns-set (not ampsies))
-     [:subscribe (subscribe-args sub non-empty-qvns-set)]
+(defn actions [sub state]
+  (let [non-empty-qvns-set (not-empty (qvns-set state sub))
+        ampsies            (s/ampsies state sub)
+        activated-qvns-set (s/activated-qvns-set state sub)]
+    (cond
+      (and sub
+           non-empty-qvns-set
+           ampsies
+           (not= non-empty-qvns-set activated-qvns-set))
+      [:resubscribe (resubscribe-args sub
+                                      non-empty-qvns-set
+                                      activated-qvns-set
+                                      ampsies)]
+      
+      (and sub non-empty-qvns-set (not ampsies))
+      [:subscribe (subscribe-args sub non-empty-qvns-set)]
 
-     (and sub (not non-empty-qvns-set) ampsies)
-     (let [client (:client ampsies)]
-       (if (only? sub client state)
-         [:disconnect [client]]
-         [:unsubscribe [sub ampsies]])))))
+      (and sub (not non-empty-qvns-set) ampsies)
+      (let [client (:client ampsies)]
+        (if (only? sub client state)
+          [:disconnect [client]]
+          [:unsubscribe [sub ampsies]])))))
 
 (defn aliases [uri state]
   (->> state
