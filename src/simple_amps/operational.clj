@@ -15,37 +15,6 @@
             CommandException
             ConnectionException]))
 
-(declare async revisit)
-(defn async-revisit [uri]
-  (async uri revisit uri))
-
-(declare get-new-client-notify-qvns state state-save-client)
-(defn get-client
-  "returns a existing client if possible. Otherwise creates a new client"
-  [uri]
-  (or (s/client @state uri) 
-      (when-let [new-c (get-new-client-notify-qvns uri)]
-        (state-save-client uri new-c)
-        new-c)))
-
-(defn save 
-  ([alias sub]
-   (swap! state s/after-new-alias->sub alias sub))
-  ([alias qvns id]
-   (let [new-state (swap! state #(-> %
-                                     (s/after-new-alias-qvns alias qvns)
-                                     (s/after-new-id-alias+qvns id [alias qvns])))]
-     (f/uri new-state alias))))
-
-(defn remove-qvns-call-id [x]
-  (let [[old-state new-state] (swap-vals! state f/state-after-remove-qvns-call-id x)]
-    (f/uri-from-qvns-call-id old-state x)))
-
-(defn revisit [uri]
-  (let [s @state]
-    (doseq [[action args] (f/actions uri state)]
-      (when action (apply (function action) args)))))
-
 (declare get-executor)
 (defn- async [uri f & args]
   (.submit
@@ -239,3 +208,32 @@
 (reify ClientDisconnectHandler
   (invoke [_ client]
     (async (str (.getURI client)) on-disconnected client))))
+
+(defn async-revisit [uri]
+  (async uri revisit uri))
+
+(defn get-client
+  "returns a existing client if possible. Otherwise creates a new client"
+  [uri]
+  (or (s/client @state uri) 
+      (when-let [new-c (get-new-client-notify-qvns uri)]
+        (state-save-client uri new-c)
+        new-c)))
+
+(defn save 
+  ([alias sub]
+   (swap! state s/after-new-alias->sub alias sub))
+  ([alias qvns id]
+   (let [new-state (swap! state #(-> %
+                                     (s/after-new-alias-qvns alias qvns)
+                                     (s/after-new-id-alias+qvns id [alias qvns])))]
+     (f/uri new-state alias))))
+
+(defn remove-qvns-call-id [x]
+  (let [[old-state new-state] (swap-vals! state f/state-after-remove-qvns-call-id x)]
+    (f/uri-from-qvns-call-id old-state x)))
+
+(defn revisit [uri]
+  (let [s @state]
+    (doseq [[action args] (f/action uri state)]
+      (when action (apply (function action) args)))))

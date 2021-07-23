@@ -44,7 +44,7 @@
     state))
 
 (declare qvns-set subscribe-args resubscribe-args)
-(defn actions [sub state]
+(defn action [sub state]
   (let [non-empty-qvns-set (not-empty (qvns-set state sub))
         ampsies            (s/ampsies state sub)
         activated-qvns-set (s/activated-qvns-set state sub)]

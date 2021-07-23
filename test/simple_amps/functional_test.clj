@@ -5,20 +5,20 @@
             [simple-amps.functional.expr :as expr]
             [simple-amps.functional.state :as f-state]))
 
-(t/deftest actions-test
+(t/deftest action-test
   (let [sub {}
         qvns-set #{:qvns}]
     (t/testing "nothing to do"
       (t/testing "empty state"
-        (t/is (nil? (sut/actions sub {}))))
+        (t/is (nil? (sut/action sub {}))))
       
       (t/testing "no qvns coll"
-        (t/is (nil? (sut/actions sub {:alias->qvns-set {}
+        (t/is (nil? (sut/action sub {:alias->qvns-set {}
                                       :alias->sub {:alias sub}})))
-        (t/is (nil? (sut/actions sub {:alias->sub {:alias sub}}))))
+        (t/is (nil? (sut/action sub {:alias->sub {:alias sub}}))))
 
       (t/testing "qvns coll across multiple aliases for same sub - all activated"
-        (t/is (nil? (sut/actions sub
+        (t/is (nil? (sut/action sub
                                  {
                                   :alias->sub {:alias1 sub
                                                :alias2 sub}
@@ -31,7 +31,7 @@
     (t/testing "subscribe"
       (with-redefs [sut/subscribe-args #(when (= [sub qvns-set] %&) :args)]
         (t/is (= [:subscribe :args]
-                 (sut/actions sub
+                 (sut/action sub
                               {:alias->sub {:alias sub}
                                :alias->qvns-set {:alias qvns-set}
                                :sub->ampsies {}})))))
@@ -44,7 +44,7 @@
                                                    %&)
                                             :args)]
         (t/is (= [:resubscribe :args]
-                 (sut/actions
+                 (sut/action
                    sub
                    {:alias->sub {:alias sub}
                     :alias->qvns-set {:alias qvns-set}
@@ -54,7 +54,7 @@
     (t/testing "unsubscribe"
       (let [ampsies {:client :c}]
         (t/is (= [:unsubscribe [sub ampsies]]
-                 (sut/actions sub
+                 (sut/action sub
                               {:alias->qvns-set {}
                                :sub->ampsies {sub ampsies
                                               :sub1 ampsies}})))))
@@ -62,7 +62,7 @@
     (t/testing "disconnect"
       (let [ampsies {:client :c}]
         (t/is (= [:disconnect [:c]] 
-                 (sut/actions sub
+                 (sut/action sub
                               {:alias->qvns-set {}
                                :sub->ampsies {sub ampsies}})))))))
 
