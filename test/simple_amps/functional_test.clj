@@ -5,6 +5,14 @@
             [simple-amps.functional.expr :as expr]
             [simple-amps.functional.state :as f-state]))
 
+(defn- binary-expr
+  [ks op const]
+  (expr/->BinaryExpr (expr/->ValueExpr ks) op (expr/->ConstantExpr const)))
+
+(defn- value-expr
+  [ks]
+  (expr/->ValueExpr ks))
+
 (t/deftest action-test
   (let [sub {}
         qvns-set #{:qvns}]
@@ -66,6 +74,19 @@
                               {:alias->qvns-set {}
                                :sub->ampsies {sub ampsies}})))))))
 
+(t/deftest actions-test
+  (t/testing "will disconnect if no qvns"
+    (t/is (:disconnect (first (single (sut/actions :u {:uri->client {:u :client}})))))
+    (t/testing "otherwise returns actions per sub"
+      ))
+  #_(let [sub1 {:uri :u :topic :t1}
+        sub2 {:uri :u :topic :t2}]
+    (with-redefs [sut/action
+                  (fn [sub _] (or (and (= sub sub1 :action1))
+                                  (and (= sub sub2 :action2))))]
+      (t/is (= [:action1 :action2]
+               (sut/actions :u {:alias->sub {:a1 sub1, :a2 sub2}}))))))
+
 (t/deftest cheshire-test
   (t/testing "array of maps"
     (t/is (= {"a" [{"b" 2} {"c" 3}]}
@@ -90,7 +111,6 @@
     :f    nil           [:f    #{}]
     nil   nil           [nil   #{}]))
 
-(declare binary-expr)
 (t/deftest first-kite-test
   (t/testing "happy path"
     (t/is (= {:a {:b 1 :c 2}}
@@ -256,7 +276,11 @@
   (t/is (= {:uri :foo :topic :bar} (sut/subscription :foo :bar nil)))
   (t/is (= {:uri :foo :topic :bar :filter :baz} (sut/subscription :foo :bar :baz))))
 
-(declare value-expr)
+(t/deftest subscriptions
+  (t/is (= #{{:uri :u :topic :t1} {:uri :u :topic :t2}}
+           (set (sut/subscriptions :u {:alias->sub {:a1 {:uri :u :topic :t1}
+                                                    :a2 {:uri :u :topic :t2}}})))))
+
 (t/deftest value-test
   (t/is (= 42 (sut/value {:a [{:b 1} {:b 2 :c 42}]}
                          (binary-expr [:a :b] = 2)
@@ -266,10 +290,3 @@
                            nil
                            (value-expr [:a :b]))))))
 
-(defn- binary-expr
-  [ks op const]
-  (expr/->BinaryExpr (expr/->ValueExpr ks) op (expr/->ConstantExpr const)))
-
-(defn- value-expr
-  [ks]
-  (expr/->ValueExpr ks))

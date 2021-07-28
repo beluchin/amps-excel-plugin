@@ -67,6 +67,11 @@
           [:disconnect [client]]
           [:unsubscribe [sub ampsies]])))))
 
+(declare subscriptions)
+(defn actions [uri state]
+  (let [subs (subscriptions uri state)]
+    (map #(action % state) subs)))
+
 (defn aliases [uri state]
   (->> state
       s/alias->sub
@@ -121,8 +126,7 @@
   (let [expr (second (:filter+expr qvns))]
     (or (not expr) (expr/evaluate expr m))))
 
-(defn qvns-or-error 
-  [fi nested-map-expr value-expr consumer]
+(defn qvns-or-error [fi nested-map-expr value-expr consumer]
   (-> {:value-expr (expr/parse-value-expr value-expr)
        :consumer consumer}
       (#(if fi
@@ -193,6 +197,12 @@
 (defn subscription [uri topic fi]
   (let [s {:uri uri :topic topic}]
     (if fi (assoc s :filter fi) s)))
+
+(defn subscriptions [uri state]
+  (->> state
+      s/alias->sub
+      (map second)
+      (clojure.core/filter #(#{uri} (:uri %)))))
 
 (defn uri [state alias]
   (:uri (s/sub state alias)))
