@@ -1,9 +1,9 @@
 (ns simple-amps.functional-test
   (:require [cheshire.core :as cheshire]
             [clojure.test :as t]
+            [functional :as f]
             [simple-amps.functional :as sut]
-            [simple-amps.functional.expr :as expr]
-            [simple-amps.functional.state :as f-state]))
+            [simple-amps.functional.expr :as expr]))
 
 (defn- binary-expr
   [ks op const]
@@ -22,27 +22,27 @@
       
       (t/testing "no qvns coll"
         (t/is (nil? (sut/action sub {:alias->qvns-set {}
-                                      :alias->sub {:alias sub}})))
+                                     :alias->sub {:alias sub}})))
         (t/is (nil? (sut/action sub {:alias->sub {:alias sub}}))))
 
       (t/testing "qvns coll across multiple aliases for same sub - all activated"
         (t/is (nil? (sut/action sub
-                                 {
-                                  :alias->sub {:alias1 sub
-                                               :alias2 sub}
-                                  :alias->qvns-set {:alias2 #{:qvns}}
+                                {
+                                 :alias->sub {:alias1 sub
+                                              :alias2 sub}
+                                 :alias->qvns-set {:alias2 #{:qvns}}
 
-                                  :sub->ampsies {sub {:client :c}}
-                                  :sub->activated-qvns-set {sub #{:qvns}}
-                                  })))))
+                                 :sub->ampsies {sub {:client :c}}
+                                 :sub->activated-qvns-set {sub #{:qvns}}
+                                 })))))
 
     (t/testing "subscribe"
       (with-redefs [sut/subscribe-args #(when (= [sub qvns-set] %&) :args)]
         (t/is (= [:subscribe :args]
                  (sut/action sub
-                              {:alias->sub {:alias sub}
-                               :alias->qvns-set {:alias qvns-set}
-                               :sub->ampsies {}})))))
+                             {:alias->sub {:alias sub}
+                              :alias->qvns-set {:alias qvns-set}
+                              :sub->ampsies {}})))))
 
     (t/testing "resubscribe"
       (with-redefs [sut/resubscribe-args #(when (= [sub
@@ -63,20 +63,24 @@
       (let [ampsies {:client :c}]
         (t/is (= [:unsubscribe [sub ampsies]]
                  (sut/action sub
-                              {:alias->qvns-set {}
-                               :sub->ampsies {sub ampsies
-                                              :sub1 ampsies}})))))
+                             {:alias->qvns-set {}
+                              :sub->ampsies {sub ampsies
+                                             :sub1 ampsies}})))))
 
     (t/testing "disconnect"
       (let [ampsies {:client :c}]
         (t/is (= [:disconnect [:c]] 
                  (sut/action sub
-                              {:alias->qvns-set {}
-                               :sub->ampsies {sub ampsies}})))))))
+                             {:alias->qvns-set {}
+                              :sub->ampsies {sub ampsies}})))))))
 
 (t/deftest actions-test
   (t/testing "will disconnect if no qvns"
-    (t/is (:disconnect (first (single (sut/actions :u {:uri->client {:u :client}})))))
+    (t/is (= :disconnect
+             (first (f/single (sut/actions :u {:uri->client {:u :client}})))))
+    (t/is (= :disconnect
+             (first (f/single (sut/actions :u {:uri->client {:u :client}
+                                               :alias->sub {:a {:uri :u}}})))))
     (t/testing "otherwise returns actions per sub"
       ))
   #_(let [sub1 {:uri :u :topic :t1}
@@ -113,12 +117,8 @@
 
 (t/deftest first-kite-test
   (t/testing "happy path"
-    (t/is (= {:a {:b 1 :c 2}}
-             (sut/first-nested-map {:a [{:b 1 :c 2} {:b 3}]
-                              :d 4}
-
-                             ;; /a/b = 1
-                             (binary-expr [:a :b] = 1)))))
+    (t/is = {:a {:b 1 :c 2}}
+))
 
   (t/testing "no sequential value - expr is true - the entire map is the kite"
     (t/is (= {:a 1} (sut/first-nested-map {:a 1} (binary-expr [:a] = 1)))))
