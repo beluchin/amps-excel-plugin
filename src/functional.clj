@@ -40,3 +40,12 @@
                    [[k]])))
              m))
     []))
+
+(defn single 
+  "https://stackoverflow.com/a/14851515/614800"
+  [seq]
+  (if (clojure.core/seq (rest seq))
+   (throw (RuntimeException. "should have precisely one item, but had at least 2"))
+   (if (clojure.core/seq seq)
+     (first seq)
+     (throw (RuntimeException. "should have precisely one item, but had 0")))))

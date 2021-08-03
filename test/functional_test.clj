@@ -19,3 +19,9 @@
   (t/are [m ks v r] (= r (sut/assoc-in-if-missing m ks v))
     {}             [:k1 :k2] :v  {:k1 {:k2 :v}}
     {:k1 {:k2 :v}} [:k1 :k2] :v' {:k1 {:k2 :v}}))
+
+(t/deftest single-test
+  (t/is (= :a (sut/single [:a])))
+  (t/is (thrown? RuntimeException (sut/single [])))
+  (t/is (thrown? RuntimeException (sut/single nil)))
+  (t/is (thrown? RuntimeException (sut/single [:a :b]))))

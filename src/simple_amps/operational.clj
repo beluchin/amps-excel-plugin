@@ -1,5 +1,5 @@
 (ns simple-amps.operational
-  (:refer-clojure :exclude [alias filter remove])
+  (:refer-clojure :exclude [remove])
   (:require clojure.stacktrace
             logging
             [simple-amps.consumer :as c]
