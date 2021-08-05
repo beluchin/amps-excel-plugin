@@ -75,21 +75,21 @@
                               :sub->ampsies {sub ampsies}})))))))
 
 (t/deftest actions-test
-  (t/testing "will disconnect if no qvns"
-    (t/is (= :disconnect
-             (first (f/single (sut/actions :u {:uri->client {:u :client}})))))
-    (t/is (= :disconnect
-             (first (f/single (sut/actions :u {:uri->client {:u :client}
-                                               :alias->sub {:a {:uri :u}}})))))
-    (t/testing "otherwise returns actions per sub"
-      ))
-  #_(let [sub1 {:uri :u :topic :t1}
-        sub2 {:uri :u :topic :t2}]
-    (with-redefs [sut/action
-                  (fn [sub _] (or (and (= sub sub1 :action1))
-                                  (and (= sub sub2 :action2))))]
-      (t/is (= [:action1 :action2]
-               (sut/actions :u {:alias->sub {:a1 sub1, :a2 sub2}}))))))
+  (t/testing "if there is a client, will disconnect if no qvns"
+    (t/is (= [:disconnect :client]
+             (f/single (sut/actions :u {:uri->client {:u :client}}))))
+    (t/is (= [:disconnect :client]
+             (f/single (sut/actions :u {:uri->client {:u :client}
+                                        :alias->sub {:a {:uri :u}}}))))
+
+    (t/testing "else if there are subs for uri, returns actions per sub"
+      (let [sub {:uri :u}
+            state {:alias->sub {:a sub}}]
+        (with-redefs [sut/action #(when (= [sub state] %&) :action)]
+          (t/is (= [:action] (sut/actions :u state))))))
+
+    #_(t/testing "else do nothing"
+      (throw (UnsupportedOperationException.)))))
 
 (t/deftest cheshire-test
   (t/testing "array of maps"

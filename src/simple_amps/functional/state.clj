@@ -1,5 +1,4 @@
 (ns simple-amps.functional.state
-  (:refer-clojure :exclude [alias])
   (:require [functional :as f]))
 
 (comment 
@@ -82,8 +81,7 @@
   [state sub]
   (get-in state [:sub->ampsies sub]))
 
-(defn client
-  [state uri]
+(defn client [state uri]
   (get-in state [:uri->client uri]))
 
 (defn executor

@@ -69,14 +69,24 @@
 
 (declare subscriptions)
 (defn actions [uri state]
-  (let [subs (subscriptions uri state)]
-    (map #(action % state) subs)))
+  (let [client (s/client state uri)]
+    (if (and client (not (seq (qvns-set state uri))))
+      [[:disconnect client]]
+      (let [subs (subscriptions uri state)]
+        (map #(action % state) subs))))
+
+  ;; also considered but rejected as wrong - disconnect if subs yield no action
+  ;;   * an unsubscribe action from the only subscribed sub may result in 
+  ;;     a client with no qvns
+  ;;   * a quick succession of qvns/remove calls may end up in 
+  ;;     no resulting action at the subscription and an incorrect disconnect
+  )
 
 (defn aliases [uri state]
   (->> state
-      s/alias->sub
-      (filter (fn [[_ sub]] (= uri (:uri sub))))
-      (map first)))
+       s/alias->sub
+       (filter (fn [[_ sub]] (= uri (:uri sub))))
+       (map first)))
 
 (defn ampsies [client command-id sub-id]
   {:client client :command-id command-id :sub-id sub-id})
