@@ -15,6 +15,14 @@
             CommandException
             ConnectionException]))
 
+(def ^:private state (atom nil))
+
+(declare async on-disconnected)
+(def ^:private client-disconnect-handler 
+  (reify ClientDisconnectHandler
+    (invoke [_ client]
+      (async (str (.getURI client)) on-disconnected client))))
+
 (declare get-executor)
 (defn- async [uri f & args]
   (.submit
@@ -145,7 +153,7 @@
 (defn- remove [client]
   (swap! state f/state-after-remove-client client))
 
-(declare state-save uniq-id)
+(declare get-client state-save uniq-id)
 (defn- subscribe
   ([sub filter qvns-set]
    (when-let [c (get-client (:uri sub))] (subscribe sub filter qvns-set c)))
@@ -202,13 +210,7 @@
   ;; in addition, it must close the client if there are no further subscriptions
   )
 
-(def ^:private state (atom nil))
-
-(def ^:private client-disconnect-handler 
-(reify ClientDisconnectHandler
-  (invoke [_ client]
-    (async (str (.getURI client)) on-disconnected client))))
-
+(declare revisit)
 (defn async-revisit [uri]
   (async uri revisit uri))
 

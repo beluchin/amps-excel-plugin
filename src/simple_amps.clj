@@ -7,6 +7,7 @@
 (defn query-value-and-subscribe
   "returns nil or an error when the args are malformed"
   [alias filter nested-map-expr value-expr consumer qvns-call-id]
+
   (let [qvns-or-error (f/qvns-or-error filter nested-map-expr value-expr consumer)]
     (if (f/error? qvns-or-error)
       qvns-or-error
