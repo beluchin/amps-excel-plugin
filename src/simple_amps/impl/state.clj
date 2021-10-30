@@ -1,4 +1,4 @@
-(ns simple-amps.functional.state
+(ns simple-amps.impl.state
   (:require [functional :as f]))
 
 (comment 

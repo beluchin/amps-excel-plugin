@@ -1,8 +1,8 @@
-(ns simple-amps.functional
+(ns simple-amps.impl
   (:refer-clojure :exclude [alias])
   (:require [cheshire.core :as cheshire]
             [clojure.set :as set]
-            [simple-amps.functional
+            [simple-amps.impl
              [expr  :as expr]
              [state :as s]]
             [functional :as f]))

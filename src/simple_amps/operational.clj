@@ -3,8 +3,8 @@
   (:require clojure.stacktrace
             logging
             [simple-amps.consumer :as c]
-            [simple-amps.functional :as f]
-            [simple-amps.functional.state :as s])
+            [simple-amps.impl :as f]
+            [simple-amps.impl.state :as s])
   (:import [com.crankuptheamps.client
             Client
             ClientDisconnectHandler

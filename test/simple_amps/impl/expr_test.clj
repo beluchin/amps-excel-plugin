@@ -1,5 +1,5 @@
-(ns simple-amps.functional.expr-test
-  (:require [simple-amps.functional.expr :as sut]
+(ns simple-amps.impl.expr-test
+  (:require [simple-amps.impl.expr :as sut]
             [clojure.test :as t]))
 
 (t/deftest binary-expr-test

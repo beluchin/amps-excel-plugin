@@ -1,4 +1,4 @@
-(ns simple-amps.functional.expr
+(ns simple-amps.impl.expr
   (:require [clojure.string :as string]
             [functional :as f]))
 

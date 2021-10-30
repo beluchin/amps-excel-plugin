@@ -1,5 +1,5 @@
-(ns simple-amps.functional.state-test
-  (:require [simple-amps.functional.state :as sut]
+(ns simple-amps.impl.state-test
+  (:require [simple-amps.impl.state :as sut]
             [clojure.test :as t]))
 
 (t/deftest after-new-alias->sub-test

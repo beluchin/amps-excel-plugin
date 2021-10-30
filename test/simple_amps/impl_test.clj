@@ -1,9 +1,9 @@
-(ns simple-amps.functional-test
+(ns simple-amps.impl-test
   (:require [cheshire.core :as cheshire]
             [clojure.test :as t]
             [functional :as f]
-            [simple-amps.functional :as sut]
-            [simple-amps.functional.expr :as expr]))
+            [simple-amps.impl :as sut]
+            [simple-amps.impl.expr :as expr]))
 
 (defn- binary-expr
   [ks op const]

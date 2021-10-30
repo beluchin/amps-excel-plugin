@@ -1,7 +1,7 @@
 (ns simple-amps
   (:refer-clojure :exclude [alias filter require])
   (:require [simple-amps.consumer :as c]
-            [simple-amps.functional :as f]
+            [simple-amps.impl :as f]
             [simple-amps.operational :as o]))
 
 (defn query-value-and-subscribe
