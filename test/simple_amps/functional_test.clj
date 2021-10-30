@@ -276,10 +276,11 @@
   (t/is (= {:uri :foo :topic :bar} (sut/subscription :foo :bar nil)))
   (t/is (= {:uri :foo :topic :bar :filter :baz} (sut/subscription :foo :bar :baz))))
 
-(t/deftest subscriptions
+(t/deftest subscriptions-test
   (t/is (= #{{:uri :u :topic :t1} {:uri :u :topic :t2}}
-           (set (sut/subscriptions :u {:alias->sub {:a1 {:uri :u :topic :t1}
-                                                    :a2 {:uri :u :topic :t2}}})))))
+           (set (sut/subscriptions {:alias->sub {:a1 {:uri :u :topic :t1}
+                                                 :a2 {:uri :u :topic :t2}}}
+                                   :u)))))
 
 (t/deftest value-test
   (t/is (= 42 (sut/value {:a [{:b 1} {:b 2 :c 42}]}
