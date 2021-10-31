@@ -65,14 +65,7 @@
                  (sut/action sub
                              {:alias->qvns-set {}
                               :sub->ampsies {sub ampsies
-                                             :sub1 ampsies}})))))
-
-    (t/testing "disconnect"
-      (let [ampsies {:client :c}]
-        (t/is (= [:disconnect [:c]] 
-                 (sut/action sub
-                             {:alias->qvns-set {}
-                              :sub->ampsies {sub ampsies}})))))))
+                                             :sub1 ampsies}})))))))
 
 (t/deftest actions-test
   (t/testing "if there is a client, will disconnect if no qvns"

@@ -66,10 +66,7 @@
       [:subscribe (subscribe-args sub non-empty-qvns-set)]
 
       (and sub (not non-empty-qvns-set) ampsies)
-      (let [client (:client ampsies)]
-        (if (only? sub client state)
-          [:disconnect [client]]
-          [:unsubscribe [sub ampsies]])))))
+      [:unsubscribe [sub ampsies]])))
 
 (declare client subscriptions)
 (defn actions [uri state]
