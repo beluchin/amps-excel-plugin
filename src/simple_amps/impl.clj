@@ -48,6 +48,10 @@
   (let [non-empty-qvns-set (not-empty (qvns-set state sub))
         ampsies            (s/ampsies state sub)
         activated-qvns-set (s/activated-qvns-set state sub)]
+
+    ;; unclear why the check for sub on the conditions below
+    ;; i.e. why would a sub be nil
+
     (cond
       (and sub
            non-empty-qvns-set
@@ -67,9 +71,9 @@
           [:disconnect [client]]
           [:unsubscribe [sub ampsies]])))))
 
-(declare subscriptions)
+(declare client subscriptions)
 (defn actions [uri state]
-  (let [client (s/client state uri)]
+  (let [client (client state uri)]
     (if (and client (not (seq (qvns-set state uri))))
       [[:disconnect client]]
       (let [subs (subscriptions state uri)]
@@ -91,8 +95,7 @@
 (defn ampsies [client command-id sub-id]
   {:client client :command-id command-id :sub-id sub-id})
 
-(defn dedup [and-filter or-filter-coll]
-  [and-filter (set (remove #{and-filter} or-filter-coll))])
+(def client s/client)
 
 (defn combine [and-filter or-filter-coll]
   (let [to-or (combine-or or-filter-coll)]
@@ -101,6 +104,9 @@
         (format "(%s) AND (%s)" and-filter to-or)
         and-filter)
       to-or)))
+
+(defn dedup [and-filter or-filter-coll]
+  [and-filter (set (remove #{and-filter} or-filter-coll))])
 
 (def error? keyword?)
 

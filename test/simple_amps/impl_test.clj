@@ -88,8 +88,10 @@
         (with-redefs [sut/action #(when (= [sub state] %&) :action)]
           (t/is (= [:action] (sut/actions :u state))))))
 
-    #_(t/testing "else do nothing"
-      (throw (UnsupportedOperationException.)))))
+    (t/testing "no client and no subs - do nothing"
+      (with-redefs [sut/client #(when (= [:state :uri] %&) nil)
+                    sut/subscriptions #(when (= [:state :uri] %&) nil)]
+        (t/is (not (seq (sut/actions :uri :state))))))))
 
 (t/deftest cheshire-test
   (t/testing "array of maps"

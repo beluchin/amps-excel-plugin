@@ -15,5 +15,4 @@
                                                        ;; :builtin-config-files ["myconfigfile.clj"]
                                                        }}}}}
 
-  :aot [amps-excel-plugin.excel-functions]
-  )
+  :aot [amps-excel-plugin.excel-functions])
