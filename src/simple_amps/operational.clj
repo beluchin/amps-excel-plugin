@@ -236,6 +236,5 @@
     (f/uri-from-qvns-call-id old-state x)))
 
 (defn revisit [uri]
-  (let [s @state]
-    (doseq [[action args] (f/action uri state)]
-      (when action (apply (function action) args)))))
+  (doseq [[action args] (f/actions uri @state)]
+    (when action (apply (function action) args))))
