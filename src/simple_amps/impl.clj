@@ -158,11 +158,7 @@
         qvns-set-coll (->> alias-coll
                            (select-keys (s/alias->qvns-set state))
                            (map (comp vec second)))]
-    (set (flatten qvns-set-coll)))
-  #_(let [sub->alias (set/map-invert (s/alias->sub state))]
-    (-> sub->alias
-        (get sub)
-        ((or (s/alias->qvns-set state) {})))))
+    (set (flatten qvns-set-coll))))
 (defmethod qvns-set :uri
   [state uri]
   (let [alias-coll (->> (s/alias->sub state)
