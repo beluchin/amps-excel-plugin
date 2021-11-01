@@ -68,12 +68,12 @@
       (and sub (not non-empty-qvns-set) ampsies)
       [:unsubscribe [sub ampsies]])))
 
-(declare client subscriptions)
+(declare client subscription-set)
 (defn actions [uri state]
   (let [client (client state uri)]
     (if (and client (not (seq (qvns-set state uri))))
       [[:disconnect client]]
-      (let [subs (subscriptions state uri)]
+      (let [subs (subscription-set state uri)]
         (map #(action % state) subs))))
 
   ;; also considered but rejected as wrong - disconnect if subs yield no action
@@ -211,11 +211,12 @@
   (let [s {:uri uri :topic topic}]
     (if fi (assoc s :filter fi) s)))
 
-(defn subscriptions [state uri]
+(defn subscription-set [state uri]
   (->> state
       s/alias->sub
       (map second)
-      (clojure.core/filter #(#{uri} (:uri %)))))
+      (clojure.core/filter #(#{uri} (:uri %)))
+      set))
 
 (defn uri [state alias]
   (:uri (s/sub state alias)))

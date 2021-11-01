@@ -83,7 +83,7 @@
 
     (t/testing "no client and no subs - do nothing"
       (with-redefs [sut/client #(when (= [:state :uri] %&) nil)
-                    sut/subscriptions #(when (= [:state :uri] %&) nil)]
+                    sut/subscription-set #(when (= [:state :uri] %&) nil)]
         (t/is (not (seq (sut/actions :uri :state))))))))
 
 (t/deftest cheshire-test
@@ -271,11 +271,15 @@
   (t/is (= {:uri :foo :topic :bar} (sut/subscription :foo :bar nil)))
   (t/is (= {:uri :foo :topic :bar :filter :baz} (sut/subscription :foo :bar :baz))))
 
-(t/deftest subscriptions-test
-  (t/is (= #{{:uri :u :topic :t1} {:uri :u :topic :t2}}
-           (set (sut/subscriptions {:alias->sub {:a1 {:uri :u :topic :t1}
-                                                 :a2 {:uri :u :topic :t2}}}
-                                   :u)))))
+(t/deftest subscription-set-test
+  (let [subscriptions (sut/subscription-set
+                        {:alias->sub {:a1 {:uri :u :topic :t1}
+                                      :a11 {:uri :u :topic :t1} 
+                                      :a2 {:uri :u :topic :t2}}}
+                        :u)]
+    (t/is (= #{{:uri :u :topic :t1} {:uri :u :topic :t2}}
+             (set subscriptions)))
+    (t/is (= 2 (count subscriptions)))))
 
 (t/deftest value-test
   (t/is (= 42 (sut/value {:a [{:b 1} {:b 2 :c 42}]}
