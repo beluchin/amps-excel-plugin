@@ -203,9 +203,9 @@
    (apply combine (dedup (:filter sub) (map (comp first :filter+expr) qvns-set)))
    qvns-set])
 
-(defn subscription [uri topic fi]
+(defn subscription [uri topic optfilter]
   (let [s {:uri uri :topic topic}]
-    (if fi (assoc s :filter fi) s)))
+    (if optfilter (assoc s :filter optfilter) s)))
 
 (defn subscription-set [state uri]
   (->> state
