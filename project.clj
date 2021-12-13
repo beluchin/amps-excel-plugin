@@ -5,7 +5,7 @@
                  [com.google.guava/guava "29.0-jre"]
                  [com.crankuptheamps/client "5.3.0.4"]]
 
-  :repl-options {:init-ns simple-amps.operational}
+  ;;:repl-options {:init-ns simple-amps.operational}
 
   ;; flycheck-clojure setup
   :plugins [[lein-environ "1.0.0"]]
