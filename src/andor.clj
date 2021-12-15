@@ -2,10 +2,10 @@
   (:refer-clojure :exclude [and or])
   (:require [clojure.set :as set]))
 
-(defrecord ^:private And [operand-set])
+(defrecord And [operand-set])
 
 (declare or try-to-recombine-or-into-and)
-(defrecord ^:private Or [operand-set])
+(defrecord Or [operand-set])
 
 (declare and)
 (defn- try-to-recombine-or-into-and [ands]
