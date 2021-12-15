@@ -1,4 +1,5 @@
 (ns amps.content-filter
+  (:refer-clojure :exclude [remove])
   (:require andor)
   (:import [andor Or]))
 
