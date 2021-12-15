@@ -1,41 +1,11 @@
 (ns andor
-  (:refer-clojure :exclude [and or remove])
+  (:refer-clojure :exclude [and or])
   (:require [clojure.set :as set]))
 
-(defprotocol Remove
-  (remove [cf to-remove]))
-(extend-protocol Remove
-  Object
-  (remove [this to-remove]
-    (when-not (= this to-remove)
-      (throw (UnsupportedOperationException.)))))
-
 (defrecord ^:private And [operand-set])
-(extend-type And
-  StringForm
-  (string-form [this] (->> (:operand-set this)
-                        (map #(format "(%s)" (string-form %)))
-                        (String/join " AND "))))
 
 (declare or try-to-recombine-or-into-and)
 (defrecord ^:private Or [operand-set])
-(extend-type Or
-  StringForm
-  (string-form [this]
-    (let [operand-set (:operand-set this)
-          recombined (try-to-recombine-or-into-and operand-set)]
-      (if (not= recombined this)
-        (string-form recombined)
-        (->> operand-set
-             (map #(format "(%s)" (string-form %)))
-             (String/join " OR ")))))
- 
-  Remove
-  (remove [this to-remove]
-    (let [operand-set (:operand-set this)]
-      (if (contains? operand-set to-remove)
-        (apply or (clojure.core/remove #{to-remove} operand-set))
-        this))))
 
 (declare and)
 (defn- try-to-recombine-or-into-and [ands]
@@ -58,6 +28,12 @@
        (if (= 1 (count non-nil-args))
          (first non-nil-args)
          (->And non-nil-args))))))
+
+(defn optimize [expr]
+  (if (clojure.core/and (instance? Or expr)
+                        (every? #(instance? And %) (:operand-set expr)))
+    (try-to-recombine-or-into-and (:operand-set expr))
+    expr))
 
 (defn or
   ([x] x)
