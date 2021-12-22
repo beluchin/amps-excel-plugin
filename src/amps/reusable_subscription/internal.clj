@@ -80,12 +80,6 @@
   (check-for-subscribed (get resubs [client topic]) client topic filter sub-id)
   (assoc resubs [client topic] (->Subscribed filter sub-id command-id)))
 
-(defn unsubscribed
-  "returns a new state of the reusable subscriptions. Throws if an
-  unsubscribe or a filter replacement was not pending for the given filter"
-  [resubs client topic filter command-id]
-  resubs)
-
 (defn failed-to-subscribe
   "returns a new state of the reusable subscriptions. Throws if a
   subscription was not pending for the given filter. Calling it while
