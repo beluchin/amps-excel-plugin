@@ -3,6 +3,9 @@
   (:require [amps.reusable-subscription.internal :as sut]
             [clojure.test :as t]))
 
+(defn- disconnected [resubs]
+  (sut/disconnected resubs :client))
+
 (defn- ensure
   ([resubs]
    (ensure resubs :filter))
@@ -89,3 +92,10 @@
                  subscribed
                  (remove :filter)
                  sut/action)))))
+
+(t/deftest disconnected-test
+  (t/is (= (subscribe)
+           (-> (resubs-after-fresh-subscribe)
+               disconnected
+               ensure
+               sut/action))))

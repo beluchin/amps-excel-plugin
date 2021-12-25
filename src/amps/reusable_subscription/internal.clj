@@ -46,4 +46,5 @@
 (defn failed-to-subscribe [resubs client topic]
   (dissoc resubs [client topic]))
 
-(defn disconnected [resubs client])
+(defn disconnected [resubs client]
+  resubs)
