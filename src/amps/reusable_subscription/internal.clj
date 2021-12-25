@@ -47,4 +47,8 @@
   (dissoc resubs [client topic]))
 
 (defn disconnected [resubs client]
-  resubs)
+  (loop [resubs resubs
+         topics (map second (filter (comp #{client} first) (keys resubs)))]
+    (when (seq topics)
+      (recur (dissoc resubs [client (first topics)])
+             (next topics)))))
