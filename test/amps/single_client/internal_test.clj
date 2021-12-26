@@ -1,5 +1,5 @@
-(ns amps.single-client-test
-  (:require [amps.single-client :as sut]
+(ns amps.single-client.internal-test
+  (:require [amps.single-client.internal :as sut]
             [clojure.test :as t]))
 
 (t/deftest ensure-test
