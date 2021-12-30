@@ -1,6 +1,7 @@
 (ns amps.single-client
   (:require amps
             [amps.single-client.internal :as internal]
+            [clojure.tools.logging :as log]
             helpers))
 
 (def ^:private cmgr (atom nil))
@@ -8,9 +9,11 @@
 (def ^:private client-disconnect-handler
   (amps/new-client-disconnect-handler
     (fn [client]
-      (swap! cmgr internal/disconnected (str (.getURI client)))
-      (when-let [c @disconnected-client-consumer]
-        (c client)))))
+      (let [uri (str (.getURI client))]
+        (log/info uri "disconnected")
+        (swap! cmgr internal/disconnected uri)
+        (when-let [c @disconnected-client-consumer]
+          (c client))))))
 
 (declare unique-name)
 (defn- new-client-delay [uri]
