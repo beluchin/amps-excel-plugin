@@ -30,6 +30,10 @@
 (defn- user-name []
   (System/getProperty "user.name"))
 
+(defn closed [client]
+  (swap! cmgr internal/disconnected (str (.getURI client)))
+  nil)
+
 (defn get-client [uri]
   (if-let [p (internal/promise @cmgr uri)]
     @p
@@ -39,4 +43,5 @@
         deref)))
 
 (defn set-disconnected-client-consumer [c]
-  (reset! disconnected-client-consumer c))
+  (reset! disconnected-client-consumer c)
+  nil)
