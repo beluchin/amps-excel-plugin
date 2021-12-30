@@ -4,15 +4,18 @@
             [clojure.tools.logging :as log]
             helpers))
 
+(def ^:dynamic *disconnected-client-consumer* nil)
+;;(alter-var-root #'*client-name* (constantly "amps-excel-plugin"))
+(def ^:dynamic *client-name* nil)
+
 (def ^:private cmgr (atom nil))
-(def ^:private disconnected-client-consumer (atom nil))
 (def ^:private client-disconnect-handler
   (amps/new-client-disconnect-handler
     (fn [client]
       (let [uri (str (.getURI client))]
-        (log/info uri "disconnected")
+        (log/info uri (.getName client) "disconnected")
         (swap! cmgr internal/disconnected uri)
-        (when-let [c @disconnected-client-consumer]
+        (when-let [c *disconnected-client-consumer*]
           (c client))))))
 
 (declare unique-name)
@@ -21,11 +24,11 @@
 
 (declare unique-including user-name)
 (defn- unique-name []
-  (unique-including "single-client" (user-name) (helpers/get-pid)))
+  (unique-including *client-name* "single-client" (user-name) (helpers/get-pid)))
 
 (declare unique-string)
 (defn- unique-including [& strs]
-  (clojure.string/join "-" (flatten [strs (unique-string)])))
+  (clojure.string/join "-" (filter (comp not nil?) (flatten [strs (unique-string)]))))
 
 (defn- unique-string []
   (java.util.UUID/randomUUID))
@@ -45,6 +48,3 @@
         (internal/promise uri)
         deref)))
 
-(defn set-disconnected-client-consumer [c]
-  (reset! disconnected-client-consumer c)
-  nil)
