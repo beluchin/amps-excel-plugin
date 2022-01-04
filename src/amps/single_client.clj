@@ -13,14 +13,20 @@
   (amps/new-client-disconnect-handler
     (fn [client]
       (let [uri (str (.getURI client))]
-        (log/info uri (.getName client) "disconnected")
+        (log/info "disconnected" uri (.getName client))
         (swap! cmgr internal/disconnected uri)
         (when-let [c *disconnected-client-consumer*]
           (c client))))))
 
 (declare unique-name)
 (defn- new-client-delay [uri]
-  (delay (amps/new-client uri (unique-name) client-disconnect-handler)))
+  (delay (let [n (unique-name)
+               c (try (amps/new-client uri n client-disconnect-handler)
+                      (catch Throwable ex
+                        (swap! cmgr internal/failed-to-connect uri)
+                        (throw ex)))]
+           (log/info "connected" uri (.getName c))
+           c)))
 
 (declare unique-including user-name)
 (defn- unique-name []
