@@ -1,7 +1,8 @@
 (ns amps.qvns.internal-test
   (:refer-clojure :exclude [ensure])
   (:require [amps.qvns.internal :as sut]
-            [clojure.test :as t]))
+            [clojure.test :as t]
+            test-helpers))
 
 (def ^:private action sut/action)
 
@@ -14,14 +15,20 @@
 
 (def ^:private mgr sut/mgr)
 
-(defn- qvns [& k+v--coll]
-  (throw (UnsupportedOperationException.)))
+(defn- qvns [& {:as overrides}]
+  (merge (test-helpers/map-of-keywords uri
+                                       topic
+                                       context-filter
+                                       item-filter
+                                       value-extractor
+                                       event-handlers)
+         overrides))
 
 (defn- replace-filter []
-  (throw (UnsupportedOperationException.)))
+  (sut/->ReplaceFilter :content-filter :sub-id :command-id))
 
 (defn- subscribed [mgr]
-  (throw (UnsupportedOperationException.)))
+  (sut/subscribed mgr :uri :topic :content-filter :sub-id :command-id))
 
 (t/deftest ensure-test
   (t/testing "initial subscription"
