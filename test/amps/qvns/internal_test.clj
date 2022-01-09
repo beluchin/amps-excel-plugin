@@ -6,10 +6,10 @@
 (def ^:private action sut/action)
 
 (defn- ensure [mgr]
-  (throw (UnsupportedOperationException.)))
+  (sut/ensure mgr :qvns))
 
 (defn- initial-subscription []
-  (throw (UnsupportedOperationException.)))
+  (sut/->InitialSubscription [[:topic :content-filter]] [:activating-runnable]))
 
 (t/deftest ensure-test
   (t/testing "initial subscription"
