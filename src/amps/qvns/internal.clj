@@ -10,17 +10,17 @@
 
 (defn action [result])
 
-(defn ensure [mgr qvns]
+(defn ensure [state qvns]
   "may decide to make the initial subscription associated with other
   qvns's on the same uri i.e. different topic or even same topic /
   different content filter")
 
-(defn disconnected [uri])
+(defn disconnected [state uri])
 
-(defn failed-to-subscribe [uri topic content-filter])
+(defn failed-to-subscribe [state uri topic content-filter])
 
-(defn mgr [result])
+(defn state [result])
 
-(defn remove [mgr qvns])
+(defn remove [state qvns])
 
-(defn subscribed [mgr topic content-filter sub-id command-id])
+(defn subscribed [state topic content-filter sub-id command-id])

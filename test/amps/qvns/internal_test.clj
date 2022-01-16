@@ -14,49 +14,43 @@
 
 (declare qvns)
 (defn- ensure
-  ([mgr] (ensure mgr (qvns)))
-  ([mgr qvns] (sut/ensure mgr qvns)))
+  ([state] (ensure state (qvns)))
+  ([state qvns] (sut/ensure state qvns)))
 
-(declare mgr subscribed)
-(defn- ensured-subscription-mgr []
-  (-> nil ensure mgr subscribed mgr))
+(declare state subscribed)
+(defn- ensured-subscription-state []
+  (-> nil ensure state subscribed state))
 
-(defn- handle-message [mgr]
+(defn- handle-message [state]
   (throw (UnsupportedOperationException.)))
 
 (defn- initial-subscription []
   (sut/->InitialSubscription [[:topic :content-filter]] [:activating-runnable]))
 
-(def ^:private mgr sut/mgr)
+(def ^:private state sut/state)
 
-(defn- m-stream [& {:as overrides}]
+(defn- msg-stream [& {:as overrides}]
   (throw (UnsupportedOperationException.)))
 
 (defn- qvns [& {:as overrides}]
-  {:value-expr :value-expr
-   :m-stream   {:filter-expr :filter-expr
-                :mqm-stream  (test-helpers/map-of-keywords uri
-                                                           topic
-                                                           filter-expr)}}
-  #_(merge (test-helpers/map-of-keywords uri
-                                         topic
-                                         context-filter
-                                         item-filter
-                                         value-extractor
-                                         event-handlers)
-           overrides))
+  {:value-extractor :value-extractor
+   :msg-stream      {:filter-expr    :filter-expr
+                     :mq-msg-stream  (test-helpers/map-of-keywords
+                                       uri
+                                       topic
+                                       filter-expr)}})
 
 (defn- remove
-  ([mgr] (remove mgr :qvns))
-  ([mgr qvns] (sut/remove mgr qvns)))
+  ([state] (remove state :qvns))
+  ([state qvns] (sut/remove state qvns)))
 
 (defn- replace-filter []
   (sut/->ReplaceFilter :content-filter :sub-id :command-id))
 
-(defn- subscribed [mgr]
-  (sut/subscribed mgr :uri :topic :content-filter :sub-id :command-id))
+(defn- subscribed [state]
+  (sut/subscribed state :uri :topic :content-filter :sub-id :command-id))
 
-(defn- unsubscribe [mgr]
+(defn- unsubscribe [state]
   (throw (UnsupportedOperationException.)))
 
 (t/deftest ensure-test
@@ -74,40 +68,40 @@
     (t/is (= (replace-filter)
              (-> nil
                  ensure
-                 mgr
+                 state
                  subscribed
-                 mgr
-                 (ensure (qvns (m-stream :filter-expr :filter-expr-2)))
+                 state
+                 (ensure (qvns (msg-stream :filter-expr :filter-expr-2)))
                  action))))
 
   (t/testing "consume value"
     ;; subscription is already in place and a value is available
     (t/is (= (consume-value 42)
-             (-> (ensured-subscription-mgr)
+             (-> (ensured-subscription-state)
                  handle-message
                  (ensure (qvns :value-extractor (constantly 42)))
                  action))))
 
   (t/testing "do nothing"
     ;; subscription is already in place and no message has yet come in
-    (t/is (nil? (-> (ensured-subscription-mgr)
+    (t/is (nil? (-> (ensured-subscription-state)
                     (ensure (qvns :value-extractor :value-extractor-2))
                     action)))))
 
 (t/deftest remove-test 
   (t/testing "disconnect"
     (t/is (= (disconnect)
-             (-> (ensured-subscription-mgr)
+             (-> (ensured-subscription-state)
                  remove
                  action))))
 
   (t/testing "unsubscribe" 
     (t/is (= (unsubscribe)
-             (-> (ensured-subscription-mgr)
+             (-> (ensured-subscription-state)
                  (ensure (qvns :topic :topic-y))
-                 mgr
+                 state
                  subscribed
-                 mgr
+                 state
                  (remove (qvns :topic :topic-y))
                  action))))
 
