@@ -10,7 +10,7 @@
   (throw (UnsupportedOperationException.)))
 
 (defn- disconnect []
-  (sut/->Disconnect :client))
+  (sut/->Disconnect :uri))
 
 (declare qvns)
 (defn- ensure
@@ -54,7 +54,7 @@
   (sut/->ReplaceFilter :content-filter :sub-id :command-id))
 
 (defn- subscribed [mgr]
-  (sut/subscribed mgr :client :topic :content-filter :sub-id :command-id))
+  (sut/subscribed mgr :uri :topic :content-filter :sub-id :command-id))
 
 (defn- unsubscribe [mgr]
   (throw (UnsupportedOperationException.)))
@@ -112,5 +112,10 @@
                  action))))
 
   (t/testing "replace filter"
-    (throw (UnsupportedOperationException.))))
+    (throw (UnsupportedOperationException.)))
+
+  (t/testing "do nothing"
+    ;; when there are more qvns associated with the same m-stream
+    ;; i.e. multiple value extractors on the same messages.
+    ))
 
