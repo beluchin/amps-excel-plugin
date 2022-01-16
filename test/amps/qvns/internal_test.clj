@@ -6,30 +6,45 @@
 
 (def ^:private action sut/action)
 
+(defn- consume-value [x]
+  (throw (UnsupportedOperationException.)))
+
 (defn- disconnect []
   (sut/->Disconnect :client))
 
+(declare qvns)
 (defn- ensure
-  ([mgr] (ensure mgr :qvns))
+  ([mgr] (ensure mgr (qvns)))
   ([mgr qvns] (sut/ensure mgr qvns)))
 
 (declare mgr subscribed)
 (defn- ensured-subscription-mgr []
   (-> nil ensure mgr subscribed mgr))
 
+(defn- handle-message [mgr]
+  (throw (UnsupportedOperationException.)))
+
 (defn- initial-subscription []
   (sut/->InitialSubscription [[:topic :content-filter]] [:activating-runnable]))
 
 (def ^:private mgr sut/mgr)
 
+(defn- m-stream [& {:as overrides}]
+  (throw (UnsupportedOperationException.)))
+
 (defn- qvns [& {:as overrides}]
-  (merge (test-helpers/map-of-keywords uri
-                                       topic
-                                       context-filter
-                                       item-filter
-                                       value-extractor
-                                       event-handlers)
-         overrides))
+  {:value-expr :value-expr
+   :m-stream   {:filter-expr :filter-expr
+                :mqm-stream  (test-helpers/map-of-keywords uri
+                                                           topic
+                                                           filter-expr)}}
+  #_(merge (test-helpers/map-of-keywords uri
+                                         topic
+                                         context-filter
+                                         item-filter
+                                         value-extractor
+                                         event-handlers)
+           overrides))
 
 (defn- remove
   ([mgr] (remove mgr :qvns))
@@ -46,19 +61,38 @@
 
 (t/deftest ensure-test
   (t/testing "initial subscription"
-    (t/is (= (initial-subscription) (-> nil
-                                        ensure
-                                        action))))
+    (t/is (= (initial-subscription) (-> nil ensure action)))
+
+    (t/testing "decide to take action related to other qvns"
+      (t/testing "same topic"
+        (throw (UnsupportedOperationException.)))
+    
+      (t/testing "different topic"
+        (throw (UnsupportedOperationException.)))))
 
   (t/testing "replace filter"
-    (t/is (= (replace-filter) (-> nil
-                                  ensure
-                                  mgr
-                                  subscribed
-                                  mgr
-                                  (ensure (qvns :item-filter :new-item-filter))
-                                  action)))))
+    (t/is (= (replace-filter)
+             (-> nil
+                 ensure
+                 mgr
+                 subscribed
+                 mgr
+                 (ensure (qvns (m-stream :filter-expr :filter-expr-2)))
+                 action))))
 
+  (t/testing "consume value"
+    ;; subscription is already in place and a value is available
+    (t/is (= (consume-value 42)
+             (-> (ensured-subscription-mgr)
+                 handle-message
+                 (ensure (qvns :value-extractor (constantly 42)))
+                 action))))
+
+  (t/testing "do nothing"
+    ;; subscription is already in place and no message has yet come in
+    (t/is (nil? (-> (ensured-subscription-mgr)
+                    (ensure (qvns :value-extractor :value-extractor-2))
+                    action)))))
 
 (t/deftest remove-test 
   (t/testing "disconnect"
@@ -67,13 +101,16 @@
                  remove
                  action))))
 
-  (t/testing "unsubscribe - different topic" 
+  (t/testing "unsubscribe" 
     (t/is (= (unsubscribe)
              (-> (ensured-subscription-mgr)
-                 (ensure (qvns :client :client :topic :topic-y))
+                 (ensure (qvns :topic :topic-y))
                  mgr
                  subscribed
                  mgr
-                 (remove (qvns :client :client :topic :topic-y))
-                 action)))))
+                 (remove (qvns :topic :topic-y))
+                 action))))
+
+  (t/testing "replace filter"
+    (throw (UnsupportedOperationException.))))
 

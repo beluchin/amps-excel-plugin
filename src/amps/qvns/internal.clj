@@ -1,5 +1,5 @@
 (ns amps.qvns.internal
-  (:refer-clojure :exclude [ensure]))
+  (:refer-clojure :exclude [ensure remove]))
 
 (defrecord Disconnect [client])
 (defrecord InitialSubscription [topic+content-filter--coll
@@ -8,7 +8,10 @@
 
 (defn action [result])
 
-(defn ensure [mgr qvns])
+(defn ensure [mgr qvns]
+  "may decide to make the initial subscription associated with other
+  qvns's on the same uri i.e. different topic or even same topic /
+  different content filter")
 
 (defn mgr [result])
 
