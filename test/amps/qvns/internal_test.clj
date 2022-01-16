@@ -29,16 +29,22 @@
 
 (def ^:private state sut/state)
 
-(defn- msg-stream [& {:as overrides}]
-  (throw (UnsupportedOperationException.)))
+(defn- msg-stream
+  ([] {:filter-expr    :filter-expr
+       :mq-msg-stream  (test-helpers/map-of-keywords
+                         uri
+                         topic
+                         filter-expr)})
+  ([& {:as overrides}]
+   (throw (UnsupportedOperationException.))))
 
-(defn- qvns [& {:as overrides}]
-  {:value-extractor :value-extractor
-   :msg-stream      {:filter-expr    :filter-expr
-                     :mq-msg-stream  (test-helpers/map-of-keywords
-                                       uri
-                                       topic
-                                       filter-expr)}})
+(defn- qvns
+  ([] {:value-extractor :value-extractor, :msg-stream (msg-stream)})
+  ([& {:as overrides}]
+   (let [override-to-keys {:topic [:msg-stream :mq-msg-stream :topic]}]
+     (reduce (fn [m [k v]] (assoc-in m (get override-to-keys k [k]) v))
+             (qvns)
+             overrides))))
 
 (defn- remove
   ([state] (remove state :qvns))
@@ -47,8 +53,8 @@
 (defn- replace-filter []
   (sut/->ReplaceFilter :content-filter :sub-id :command-id))
 
-(defn- subscribed [state]
-  (sut/subscribed state :uri :topic :content-filter :sub-id :command-id))
+(defn- subscribed 
+  ([state] (sut/subscribed state :uri :topic :content-filter :sub-id :command-id)))
 
 (defn- unsubscribe [state]
   (throw (UnsupportedOperationException.)))
@@ -71,7 +77,7 @@
                  state
                  subscribed
                  state
-                 (ensure (qvns (msg-stream :filter-expr :filter-expr-2)))
+                 (ensure (qvns :msg-stream (msg-stream :filter-expr :filter-expr-2)))
                  action))))
 
   (t/testing "consume value"
@@ -100,7 +106,7 @@
              (-> (ensured-subscription-state)
                  (ensure (qvns :topic :topic-y))
                  state
-                 subscribed
+                 (subscribed :topic :topic-y)
                  state
                  (remove (qvns :topic :topic-y))
                  action))))

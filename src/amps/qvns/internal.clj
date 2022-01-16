@@ -23,4 +23,6 @@
 
 (defn remove [state qvns])
 
-(defn subscribed [state topic content-filter sub-id command-id])
+(defn subscribed [state uri topic content-filter sub-id command-id]
+  "returns (perhaps among other things) the collection of runnables to
+  call to notify that the subscription is active")
