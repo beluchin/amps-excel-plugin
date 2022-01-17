@@ -24,9 +24,6 @@
 (defn- handle-message [state]
   (throw (UnsupportedOperationException.)))
 
-(defn- initial-subscription []
-  (sut/->InitialSubscription [[:topic :content-filter]] [:activating-runnable]))
-
 (def ^:private state sut/state)
 
 (defn- msg-stream
@@ -53,6 +50,9 @@
 (defn- replace-filter []
   (sut/->ReplaceFilter :content-filter :sub-id :command-id))
 
+(defn- subscribe []
+  (sut/->Subscribe [[:topic :content-filter]] [:activating-runnable]))
+
 (defn- subscribed 
   ([state] (sut/subscribed state :uri :topic :content-filter :sub-id :command-id)))
 
@@ -60,8 +60,8 @@
   (throw (UnsupportedOperationException.)))
 
 (t/deftest ensure-test
-  (t/testing "initial subscription"
-    (t/is (= (initial-subscription) (-> nil ensure decision)))
+  (t/testing "subscribe"
+    (t/is (= (subscribe) (-> nil ensure decision)))
 
     (t/testing "decide to take decision related to other qvns"
       (t/testing "same topic"
