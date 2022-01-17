@@ -2,7 +2,8 @@
   (:refer-clojure :exclude [ensure remove]))
 
 ;; --- decisions
-(defrecord ConsumeValue [x])
+(defrecord ConsumeOof [x oof-consumer-coll])
+(defrecord ConsumeValue [x value-consumer-coll])
 (defrecord Disconnect [uri])
 ;; when acting on this decision, the amps client needs to be closed 
 ;; should all the subscriptions fail
@@ -11,6 +12,12 @@
 (defrecord ReplaceFilter [content-filter sub-id command-id])
 (defrecord Unsubscribe [command-id])
 ;; ---
+
+(defn consumed [state sub-id m]
+  "returns state+ConsumeValue-coll")
+
+(defn consumed-oof [state sub-id m]
+  "returns state+ConsumeOof-coll")
 
 (defn decision [result])
 
@@ -26,10 +33,10 @@
   either because of error or manually disconnected on the
   Galvanometer
 
-  returns the state")
+  returns the state+inactive-reason-consumer-coll")
 
 (defn failed-to-subscribe [state uri topic content-filter]
-  "returns state+inactive-runnable-coll")
+  "returns state+inactive-reason-consumer-coll")
 
 (defn state [result])
 
