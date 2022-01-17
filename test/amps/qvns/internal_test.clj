@@ -4,7 +4,7 @@
             [clojure.test :as t]
             test-helpers))
 
-(def ^:private action sut/action)
+(def ^:private decision sut/decision)
 
 (defn- consume-value [x]
   (throw (UnsupportedOperationException.)))
@@ -61,9 +61,9 @@
 
 (t/deftest ensure-test
   (t/testing "initial subscription"
-    (t/is (= (initial-subscription) (-> nil ensure action)))
+    (t/is (= (initial-subscription) (-> nil ensure decision)))
 
-    (t/testing "decide to take action related to other qvns"
+    (t/testing "decide to take decision related to other qvns"
       (t/testing "same topic"
         (throw (UnsupportedOperationException.)))
     
@@ -78,7 +78,7 @@
                  subscribed
                  state
                  (ensure (qvns :msg-stream (msg-stream :filter-expr :filter-expr-2)))
-                 action))))
+                 decision))))
 
   (t/testing "consume value"
     ;; subscription is already in place and a value is available
@@ -86,20 +86,20 @@
              (-> (ensured-subscription-state)
                  handle-message
                  (ensure (qvns :value-extractor (constantly 42)))
-                 action))))
+                 decision))))
 
   (t/testing "do nothing"
     ;; subscription is already in place and no message has yet come in
     (t/is (nil? (-> (ensured-subscription-state)
                     (ensure (qvns :value-extractor :value-extractor-2))
-                    action)))))
+                    decision)))))
 
 (t/deftest remove-test 
   (t/testing "disconnect"
     (t/is (= (disconnect)
              (-> (ensured-subscription-state)
                  remove
-                 action))))
+                 decision))))
 
   (t/testing "unsubscribe" 
     (t/is (= (unsubscribe)
@@ -109,7 +109,7 @@
                  (subscribed :topic :topic-y)
                  state
                  (remove (qvns :topic :topic-y))
-                 action))))
+                 decision))))
 
   (t/testing "replace filter"
     (throw (UnsupportedOperationException.)))

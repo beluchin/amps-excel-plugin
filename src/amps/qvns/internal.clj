@@ -8,7 +8,7 @@
 (defrecord ReplaceFilter [content-filter sub-id command-id])
 (defrecord Unsubscribe [command-id])
 
-(defn action [result])
+(defn decision [result])
 
 (defn ensure [state qvns]
   "may decide to make the initial subscription associated with other
