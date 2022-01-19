@@ -2,8 +2,8 @@
   (:require [amps.query-value-and-subscribe.callbacks :as callbacks]
             andor))
 
-(defn activating-runnable [qvns]
-  (partial callbacks/on-activating (:callbacks qvns)))
+(defn callbacks [qvns]
+  (:callbacks qvns))
 
 (defn content-filter [qvns]
   (andor/and (get-in qvns [:msg-stream :filter-expr])

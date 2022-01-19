@@ -35,7 +35,9 @@
    (throw (UnsupportedOperationException.))))
 
 (defn- qvns
-  ([] {:value-extractor :value-extractor, :msg-stream (msg-stream)})
+  ([] {:callbacks :callbacks
+       :value-extractor :value-extractor
+       :msg-stream (msg-stream)})
   ([& {:as overrides}]
    (let [override-to-keys {:topic [:msg-stream :mq-msg-stream :topic]}]
      (reduce (fn [m [k v]] (assoc-in m (get override-to-keys k [k]) v))
@@ -52,7 +54,7 @@
 (defn- subscribe []
   (let [qvns (qvns)]
     (sut/->Subscribe [[(qvns/topic qvns) (qvns/content-filter qvns)]]
-                     [(qvns/activating-runnable qvns)])))
+                     [(qvns/callbacks qvns)])))
 
 (defn- subscribed 
   ([state] (sut/subscribed state :uri :topic :content-filter :sub-id :command-id)))
@@ -61,10 +63,10 @@
   (throw (UnsupportedOperationException.)))
 
 (t/deftest ensure-test
-  (t/testing "subscribe"
+  (t/testing "basic subscribe"
     (t/is (= (subscribe) (-> nil ensure decision)))
 
-    #_(t/testing "decide to take decision related to other qvns"
+    #_(t/testing "subscribe to other qvns"
       (t/testing "same topic"
         (throw (UnsupportedOperationException.)))
     
