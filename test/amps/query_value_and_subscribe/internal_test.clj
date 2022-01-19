@@ -53,8 +53,9 @@
 
 (defn- subscribe []
   (let [qvns (qvns)]
-    (sut/->Subscribe [[(qvns/topic qvns) (qvns/content-filter qvns)]]
-                     [(qvns/callbacks qvns)])))
+    (sut/->Subscribe [{:topic (qvns/topic qvns)
+                       :content-filter (qvns/content-filter qvns)
+                       :callbacks (qvns/callbacks qvns)}])))
 
 (defn- subscribed 
   ([state] (sut/subscribed state :uri :topic :content-filter :sub-id :command-id)))
@@ -66,11 +67,11 @@
   (t/testing "basic subscribe"
     (t/is (= (subscribe) (-> nil ensure decision)))
 
-    #_(t/testing "subscribe to other qvns"
-      (t/testing "same topic"
+    (t/testing "subscribe to other qvns"
+      #_(t/testing "one subscription"
         (throw (UnsupportedOperationException.)))
     
-      (t/testing "different topic"
+      #_(t/testing "multiple subscriptions"
         (throw (UnsupportedOperationException.)))))
 
   #_(t/testing "replace filter"
