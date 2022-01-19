@@ -1,5 +1,7 @@
-(ns amps.qvns.internal
-  (:refer-clojure :exclude [ensure remove]))
+(ns amps.query-value-and-subscribe.internal
+  (:refer-clojure :exclude [ensure remove])
+  (:require [amps.query-value-and-subscribe.qvns :as qvns]
+            andor))
 
 ;; --- decisions
 (defrecord ConsumeOof [x oof-consumer-coll])
@@ -13,20 +15,30 @@
 (defrecord Unsubscribe [command-id])
 ;; ---
 
+(defn- new-state+Subscribe [state qvns]
+  [(conj state qvns) (->Subscribe [(qvns/topic qvns) (qvns/content-filter qvns)]
+                                  [(qvns/activating-runnable qvns)])])
+
+(defn- subscribe? [state qvns]
+  (contains? state qvns))
+
 (defn consumed [state sub-id m]
   "returns state+ConsumeValue-coll")
 
 (defn consumed-oof [state sub-id m]
   "returns state+ConsumeOof-coll")
 
-(defn decision [result])
+(def decision second)
 
-(defn ensure [state qvns]
+(defn ensure
   "may decide to make the initial subscription associated with other
   qvns's on the same uri i.e. different topic or even same topic /
   different content filter
 
-  returns state+decision")
+  returns state+decision"
+  [state qvns]
+  (cond
+    (subscribe? state qvns) (new-state+Subscribe state qvns)))
 
 (defn disconnected [state uri]
   "to be called when the client is disconnected outside of the process
@@ -38,7 +50,7 @@
 (defn failed-to-subscribe [state uri topic content-filter]
   "returns state+inactive-reason-consumer-coll")
 
-(defn state [result])
+(def state first)
 
 (defn remove [state qvns])
 

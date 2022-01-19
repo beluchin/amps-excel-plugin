@@ -1,8 +1,8 @@
-(ns amps.qvns.internal-test
+(ns amps.query-value-and-subscribe.internal-test
   (:refer-clojure :exclude [ensure remove])
-  (:require [amps.qvns.internal :as sut]
+  (:require [amps.query-value-and-subscribe.internal :as sut]
             [clojure.test :as t]
-            test-helpers))
+            [amps.query-value-and-subscribe.qvns :as qvns]))
 
 (def ^:private decision sut/decision)
 
@@ -27,11 +27,10 @@
 (def ^:private state sut/state)
 
 (defn- msg-stream
-  ([] {:filter-expr    :filter-expr
-       :mq-msg-stream  (test-helpers/map-of-keywords
-                         uri
-                         topic
-                         filter-expr)})
+  ([] {:filter-expr    :msg-stream-filter-expr
+       :mq-msg-stream  {:uri         :uri
+                        :topic       :topic
+                        :filter-expr :mq-msg-stream-filter-expr}})
   ([& {:as overrides}]
    (throw (UnsupportedOperationException.))))
 
@@ -51,7 +50,9 @@
   (sut/->ReplaceFilter :content-filter :sub-id :command-id))
 
 (defn- subscribe []
-  (sut/->Subscribe [[:topic :content-filter]] [:activating-runnable]))
+  (let [qvns (qvns)]
+    (sut/->Subscribe [[(qvns/topic qvns) (qvns/content-filter qvns)]]
+                     [(qvns/activating-runnable qvns)])))
 
 (defn- subscribed 
   ([state] (sut/subscribed state :uri :topic :content-filter :sub-id :command-id)))
@@ -63,14 +64,14 @@
   (t/testing "subscribe"
     (t/is (= (subscribe) (-> nil ensure decision)))
 
-    (t/testing "decide to take decision related to other qvns"
+    #_(t/testing "decide to take decision related to other qvns"
       (t/testing "same topic"
         (throw (UnsupportedOperationException.)))
     
       (t/testing "different topic"
         (throw (UnsupportedOperationException.)))))
 
-  (t/testing "replace filter"
+  #_(t/testing "replace filter"
     (t/is (= (replace-filter)
              (-> nil
                  ensure
@@ -80,7 +81,7 @@
                  (ensure (qvns :msg-stream (msg-stream :filter-expr :filter-expr-2)))
                  decision))))
 
-  (t/testing "consume value"
+  #_(t/testing "consume value"
     ;; subscription is already in place and a value is available
     (t/is (= (consume-value 42)
              (-> (ensured-subscription-state)
@@ -88,7 +89,7 @@
                  (ensure (qvns :value-extractor (constantly 42)))
                  decision))))
 
-  (t/testing "do nothing"
+  #_(t/testing "do nothing"
     ;; subscription is already in place and no message has yet come in
     (t/is (nil? (-> (ensured-subscription-state)
                     (ensure (qvns :value-extractor :value-extractor-2))
