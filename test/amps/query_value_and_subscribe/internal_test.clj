@@ -21,7 +21,7 @@
 (declare state subscribed)
 (defn- ensured-subscription-state
   ([] (-> nil ensure state subscribed state))
-  ([selector x] (throw (UnsupportedOperationException.))))
+  ([& {:as overrides}] (throw (UnsupportedOperationException.))))
 
 (defn- handle-message [state]
   (throw (UnsupportedOperationException.)))
@@ -48,11 +48,20 @@
 (defn- replace-filter []
   (sut/->ReplaceFilter :content-filter :sub-id :command-id))
 
-(defn- subscribe []
-  (let [qvns (qvns)]
-    (sut/->Subscribe [{:topic (qvns/topic qvns)
-                       :content-filter (qvns/content-filter qvns)
-                       :callbacks (qvns/callbacks qvns)}])))
+(declare subscribe-args)
+(defn- subscribe
+  ([] (sut/->Subscribe (subscribe-args)))
+  ([& overrides]
+   (sut/->Subscribe (apply subscribe-args overrides))))
+
+(defn- subscribe-args
+  ([]
+   (let [qvns (qvns)]
+     [{:topic (qvns/topic qvns)
+       :content-filter (qvns/content-filter qvns)
+       :callbacks (qvns/callbacks qvns)}]))
+  ([& {:as overrides}]
+   [(merge (helpers/single (subscribe-args)) overrides)]))
 
 (defn- subscribed 
   ([state] (sut/subscribed state :uri :topic :content-filter :sub-id :command-id)))
