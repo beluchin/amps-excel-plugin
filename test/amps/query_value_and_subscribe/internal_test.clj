@@ -15,29 +15,26 @@
 (declare qvns)
 (defn- ensure
   ([state] (ensure state (qvns)))
-  ([state qvns] (sut/ensure state qvns)))
+  ([state qvns] (sut/ensure state qvns))
+  ([state selector x & overrrides] (throw (UnsupportedOperationException.))))
 
 (declare state subscribed)
-(defn- ensured-subscription-state []
-  (-> nil ensure state subscribed state))
+(defn- ensured-subscription-state
+  ([] (-> nil ensure state subscribed state))
+  ([selector x] (throw (UnsupportedOperationException.))))
 
 (defn- handle-message [state]
   (throw (UnsupportedOperationException.)))
 
 (def ^:private state sut/state)
 
-(defn- msg-stream
-  ([] {:filter-expr    :msg-stream-filter-expr
-       :mq-msg-stream  {:uri         :uri
-                        :topic       :topic
-                        :filter-expr :mq-msg-stream-filter-expr}})
-  ([& {:as overrides}]
-   (throw (UnsupportedOperationException.))))
-
 (defn- qvns
-  ([] {:callbacks :callbacks
+  ([] {:callbacks       :callbacks
        :value-extractor :value-extractor
-       :msg-stream (msg-stream)})
+       :msg-stream      {:filter-expr   :msg-stream-filter-expr
+                         :mq-msg-stream {:uri         :uri
+                                         :topic       :topic
+                                         :filter-expr :mq-msg-stream-filter-expr}}})
   ([& {:as overrides}]
    (let [override-to-keys {:topic [:msg-stream :mq-msg-stream :topic]}]
      (reduce (fn [m [k v]] (assoc-in m (get override-to-keys k [k]) v))
@@ -68,35 +65,45 @@
     (t/is (= (subscribe) (-> nil ensure decision)))
 
     (t/testing "subscribe to other qvns"
-      #_(t/testing "one subscription"
-        (throw (UnsupportedOperationException.)))
+      (t/testing
+          "one subscription - different msg-stream filters, same
+          mq-msg-stream"
+          (t/is (= (subscribe :content-filter
+                              (andor/and :mq-msg-stream-filter-expr
+                                         (andor/or :msg-filter-1
+                                                   :msg-filter-2)))
+                   (-> (ensured-subscription-state :msg-stream-filter-expr
+                                                   :msg-filter-1)
+                       (ensure :msg-stream-filter-expr
+                               :msg-filter-2)
+                       decision))))
     
       #_(t/testing "multiple subscriptions"
-        (throw (UnsupportedOperationException.)))))
+          (throw (UnsupportedOperationException.)))))
 
   #_(t/testing "replace filter"
-    (t/is (= (replace-filter)
-             (-> nil
-                 ensure
-                 state
-                 subscribed
-                 state
-                 (ensure (qvns :msg-stream (msg-stream :filter-expr :filter-expr-2)))
-                 decision))))
+      (t/is (= (replace-filter)
+               (-> nil
+                   ensure
+                   state
+                   subscribed
+                   state
+                   (ensure (qvns :msg-stream-filter-expr :filter-expr-2))
+                   decision))))
 
   #_(t/testing "consume value"
-    ;; subscription is already in place and a value is available
-    (t/is (= (consume-value 42)
-             (-> (ensured-subscription-state)
-                 handle-message
-                 (ensure (qvns :value-extractor (constantly 42)))
-                 decision))))
+      ;; subscription is already in place and a value is available
+      (t/is (= (consume-value 42)
+               (-> (ensured-subscription-state)
+                   handle-message
+                   (ensure (qvns :value-extractor (constantly 42)))
+                   decision))))
 
   #_(t/testing "do nothing"
-    ;; subscription is already in place and no message has yet come in
-    (t/is (nil? (-> (ensured-subscription-state)
-                    (ensure (qvns :value-extractor :value-extractor-2))
-                    decision)))))
+      ;; subscription is already in place and no message has yet come in
+      (t/is (nil? (-> (ensured-subscription-state)
+                      (ensure (qvns :value-extractor :value-extractor-2))
+                      decision)))))
 
 (t/deftest remove-test 
   (t/testing "disconnect"
