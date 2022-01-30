@@ -5,9 +5,11 @@
 (defn callbacks [qvns]
   (:callbacks qvns))
 
-(defn content-filter [qvns]
-  (andor/and (get-in qvns [:msg-stream :filter-expr])
-             (get-in qvns [:msg-stream :mq-msg-stream :filter-expr])))
+(defn filter-expr [qvns]
+  (:filter-expr qvns))
+
+(defn msg-stream-filter-expr [qvns]
+  (get-in qvns [:mgs-stream :filter-exp]))
 
 (defn topic [qvns]
-  (get-in qvns [:msg-stream :mq-msg-stream :topic]))
+  (get-in qvns [:msg-stream :topic]))

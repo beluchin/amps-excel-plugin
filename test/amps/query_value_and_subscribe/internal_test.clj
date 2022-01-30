@@ -19,9 +19,8 @@
   ([state selector x & overrrides] (throw (UnsupportedOperationException.))))
 
 (declare state subscribed)
-(defn- ensured-subscription-state
-  ([] (-> nil ensure state subscribed state))
-  ([& {:as overrides}] (throw (UnsupportedOperationException.))))
+(defn- ensured-subscription-state []
+  (-> nil ensure state subscribed state))
 
 (defn- handle-message [state]
   (throw (UnsupportedOperationException.)))
@@ -31,13 +30,13 @@
 (defn- qvns
   ([] {:callbacks       :callbacks
        :value-extractor :value-extractor
-       :msg-stream      {:filter-expr   :msg-stream-filter-expr
-                         :mq-msg-stream {:uri         :uri
-                                         :topic       :topic
-                                         :filter-expr :mq-msg-stream-filter-expr}}})
+       :filter-expr     :qvns-filter-expr
+       :msg-stream      {:uri         :uri
+                         :topic       :topic
+                         :filter-expr :msg-stream-filter-expr}})
   ([& {:as overrides}]
-   (let [override-to-keys {:topic [:msg-stream :mq-msg-stream :topic]}]
-     (reduce (fn [m [k v]] (assoc-in m (get override-to-keys k [k]) v))
+   (let [override-key->keys {:topic [:msg-stream :topic]}]
+     (reduce (fn [m [k v]] (assoc-in m (get override-key->keys k [k]) v))
              (qvns)
              overrides))))
 
@@ -58,7 +57,8 @@
   ([]
    (let [qvns (qvns)]
      [{:topic (qvns/topic qvns)
-       :content-filter (qvns/content-filter qvns)
+       :content-filter (andor/and (qvns/filter-expr qvns)
+                                  (qvns/msg-stream-filter-expr qvns))
        :callbacks (qvns/callbacks qvns)}]))
   ([& {:as overrides}]
    [(merge (helpers/single (subscribe-args)) overrides)]))
@@ -75,16 +75,13 @@
 
     (t/testing "subscribe to other qvns"
       (t/testing
-          "one subscription - different msg-stream filters, same
-          mq-msg-stream"
+          "one subscription - different msg-stream filters, same mq-msg-stream"
           (t/is (= (subscribe :content-filter
                               (andor/and :mq-msg-stream-filter-expr
-                                         (andor/or :msg-filter-1
+                                         (andor/or :msg-filter
                                                    :msg-filter-2)))
-                   (-> (ensured-subscription-state :msg-stream-filter-expr
-                                                   :msg-filter-1)
-                       (ensure :msg-stream-filter-expr
-                               :msg-filter-2)
+                   (-> (ensured-subscription-state)
+                       (ensure :msg-stream-filter-expr :msg-filter-2)
                        decision))))
     
       #_(t/testing "multiple subscriptions"
