@@ -14,9 +14,8 @@
 
 (declare qvns)
 (defn- ensure
-  ([state] (ensure state (qvns)))
-  ([state qvns] (sut/ensure state qvns))
-  ([state selector x & overrrides] (throw (UnsupportedOperationException.))))
+  ([state] (sut/ensure state (qvns)))
+  ([state & overrides] (sut/ensure state (apply qvns overrides))))
 
 (declare state subscribed)
 (defn- ensured-subscription-state []
@@ -35,7 +34,8 @@
                          :topic       :topic
                          :filter-expr :msg-stream-filter-expr}})
   ([& {:as overrides}]
-   (let [override-key->keys {:topic [:msg-stream :topic]}]
+   (let [override-key->keys {:topic            [:msg-stream :topic]
+                             :qvns-filter-expr [:filter-expr]}]
      (reduce (fn [m [k v]] (assoc-in m (get override-key->keys k [k]) v))
              (qvns)
              overrides))))
@@ -47,21 +47,26 @@
 (defn- replace-filter []
   (sut/->ReplaceFilter :content-filter :sub-id :command-id))
 
-(declare subscribe-args)
-(defn- subscribe
-  ([] (sut/->Subscribe (subscribe-args)))
-  ([& overrides]
-   (sut/->Subscribe (apply subscribe-args overrides))))
-
-(defn- subscribe-args
+(defn- single-subscription-subscribe-args
   ([]
    (let [qvns (qvns)]
-     [{:topic (qvns/topic qvns)
-       :content-filter (andor/and (qvns/filter-expr qvns)
-                                  (qvns/msg-stream-filter-expr qvns))
-       :callbacks (qvns/callbacks qvns)}]))
-  ([& {:as overrides}]
-   [(merge (helpers/single (subscribe-args)) overrides)]))
+     {[(qvns/topic qvns) (andor/and (qvns/filter-expr qvns)
+                                    (qvns/msg-stream-filter-expr qvns))]
+      (qvns/callbacks qvns)}))
+  ([override x]
+   (let [override->fn {:content-filter
+                       (fn [[[[topic] callbacks]]] {[topic x] callbacks})}]
+     ((override->fn override) (seq (single-subscription-subscribe-args))))))
+
+(defn- subscribe
+  ([]
+   (sut/->Subscribe (single-subscription-subscribe-args)))
+  ([topic+content-filter->callbacks]
+   (sut/->Subscribe topic+content-filter->callbacks))
+
+  ;; single subscription override
+  ([override x]
+   (sut/->Subscribe (single-subscription-subscribe-args override x))))
 
 (defn- subscribed 
   ([state] (sut/subscribed state :uri :topic :content-filter :sub-id :command-id)))
@@ -75,13 +80,13 @@
 
     (t/testing "subscribe to other qvns"
       (t/testing
-          "one subscription - different msg-stream filters, same mq-msg-stream"
+          "one subscription i.e. diff qvns filters, same msg-stream filter"
           (t/is (= (subscribe :content-filter
-                              (andor/and :mq-msg-stream-filter-expr
-                                         (andor/or :msg-filter
-                                                   :msg-filter-2)))
+                              (andor/and :msg-stream-filter-expr
+                                         (andor/or :qvns-filter-expr
+                                                   :qvns-filter-expr-2)))
                    (-> (ensured-subscription-state)
-                       (ensure :msg-stream-filter-expr :msg-filter-2)
+                       (ensure :qvns-filter-expr :qvns-filter-expr-2)
                        decision))))
     
       #_(t/testing "multiple subscriptions"
@@ -135,4 +140,3 @@
     ;; when there are more qvns associated with the same m-stream
     ;; i.e. multiple value extractors on the same messages.
     ))
-

@@ -9,7 +9,7 @@
   (:filter-expr qvns))
 
 (defn msg-stream-filter-expr [qvns]
-  (get-in qvns [:mgs-stream :filter-exp]))
+  (get-in qvns [:msg-stream :filter-expr]))
 
 (defn topic [qvns]
   (get-in qvns [:msg-stream :topic]))

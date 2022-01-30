@@ -9,19 +9,24 @@
 (defrecord Disconnect [uri])
 ;; when acting on this decision, the amps client needs to be closed 
 ;; should all the subscriptions fail
-(defrecord Subscribe [coll--map--topic+content-filter+callbacks])
+(defrecord Subscribe [topic+content-filter->callbacks])
 
 (defrecord ReplaceFilter [content-filter sub-id command-id])
 (defrecord Unsubscribe [command-id])
 ;; ---
 
+(declare topic+content-filter->callbacks--same-msg-stream
+         topic+content-filter->callbacks--diff-msg-stream)
 (defn- new-state+Subscribe [state qvns]
-  [(conj state qvns) (->Subscribe [{:topic (qvns/topic qvns)
-                                    :content-filter (qvns/content-filter qvns)
-                                    :callbacks (qvns/callbacks qvns)}])])
+  [(conj state qvns)
+   (->Subscribe
+     (concat (topic+content-filter->callbacks--same-msg-stream state qvns)
+             (topic+content-filter->callbacks--diff-msg-stream state qvns)))])
 
 (defn- subscribe? [state qvns]
   (not (contains? state qvns)))
+
+(defn- topic+content-filter->callbacks--same-msg-stream [qvns-coll qvns])
 
 (defn consumed [state sub-id m]
   "returns state+ConsumeValue-coll")
