@@ -14,9 +14,8 @@
 
 (declare qvns)
 (defn- ensure
-  ([state] (ensure state (qvns)))
-  ([state qvns] (sut/ensure state qvns))
-  ([state selector x & overrrides] (throw (UnsupportedOperationException.))))
+  ([state] (sut/ensure state (qvns)))
+  ([state & overrides] (sut/ensure state (apply qvns overrides))))
 
 (declare state subscribed)
 (defn- ensured-subscription-state []
@@ -35,7 +34,8 @@
                          :topic       :topic
                          :filter-expr :msg-stream-filter-expr}})
   ([& {:as overrides}]
-   (let [override-key->keys {:topic [:msg-stream :topic]}]
+   (let [override-key->keys {:topic            [:msg-stream :topic]
+                             :qvns-filter-expr [:filter-expr]}]
      (reduce (fn [m [k v]] (assoc-in m (get override-key->keys k [k]) v))
              (qvns)
              overrides))))
@@ -75,13 +75,13 @@
 
     (t/testing "subscribe to other qvns"
       (t/testing
-          "one subscription - different msg-stream filters, same mq-msg-stream"
+          "one subscription i.e. diff qvns filters, same msg-stream filter"
           (t/is (= (subscribe :content-filter
-                              (andor/and :mq-msg-stream-filter-expr
-                                         (andor/or :msg-filter
-                                                   :msg-filter-2)))
+                              (andor/and :msg-stream-filter-expr
+                                         (andor/or :qvns-filter-expr
+                                                   :qvns-filter-expr-2)))
                    (-> (ensured-subscription-state)
-                       (ensure :msg-stream-filter-expr :msg-filter-2)
+                       (ensure :qvns-filter-expr :qvns-filter-expr-2)
                        decision))))
     
       #_(t/testing "multiple subscriptions"
@@ -135,4 +135,3 @@
     ;; when there are more qvns associated with the same m-stream
     ;; i.e. multiple value extractors on the same messages.
     ))
-

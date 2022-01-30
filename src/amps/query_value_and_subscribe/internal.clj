@@ -16,9 +16,11 @@
 ;; ---
 
 (defn- new-state+Subscribe [state qvns]
-  [(conj state qvns) (->Subscribe [{:topic (qvns/topic qvns)
-                                    :content-filter (qvns/content-filter qvns)
-                                    :callbacks (qvns/callbacks qvns)}])])
+  [(conj state qvns)
+   (->Subscribe [{:topic (qvns/topic qvns)
+                  :content-filter (andor/and (qvns/filter-expr qvns)
+                                             (qvns/msg-stream-filter-expr qvns))
+                  :callbacks (qvns/callbacks qvns)}])])
 
 (defn- subscribe? [state qvns]
   (not (contains? state qvns)))
