@@ -19,7 +19,7 @@
 
 (declare state subscribed)
 (defn- ensured-subscription-state []
-  (-> nil ensure state subscribed state))
+  (-> nil ensure state subscribed))
 
 (defn- handle-message [state]
   (throw (UnsupportedOperationException.)))
@@ -50,9 +50,9 @@
 (defn- single-subscription-subscribe-args
   ([]
    (let [qvns (qvns)]
-     {[(qvns/topic qvns) (andor/and (qvns/filter-expr qvns)
+     {[(qvns/topic qvns) (andor/and (qvns/qvns-filter-expr qvns)
                                     (qvns/msg-stream-filter-expr qvns))]
-      (qvns/callbacks qvns)}))
+      [(qvns/callbacks qvns)]}))
   ([override x]
    (let [override->fn {:content-filter
                        (fn [[[[topic] callbacks]]] {[topic x] callbacks})}]
@@ -75,12 +75,12 @@
   (throw (UnsupportedOperationException.)))
 
 (t/deftest ensure-test
-  (t/testing "basic subscribe"
+  (t/testing "subscribe"
     (t/is (= (subscribe) (-> nil ensure decision)))
 
-    (t/testing "subscribe to other qvns"
-      (t/testing
-          "one subscription i.e. diff qvns filters, same msg-stream filter"
+    (t/testing "multiple qvns"
+      (t/testing "one subscription i.e. same msg-stream filter"
+        (t/testing "diff qvns filter"
           (t/is (= (subscribe :content-filter
                               (andor/and :msg-stream-filter-expr
                                          (andor/or :qvns-filter-expr
@@ -88,6 +88,12 @@
                    (-> (ensured-subscription-state)
                        (ensure :qvns-filter-expr :qvns-filter-expr-2)
                        decision))))
+
+        #_(t/testing "diff value-extractor"
+          (throw (UnsupportedOperationException.)))
+
+        #_(t/testing "diff callbacks"
+          (throw (UnsupportedOperationException.))))
     
       #_(t/testing "multiple subscriptions"
           (throw (UnsupportedOperationException.)))))
