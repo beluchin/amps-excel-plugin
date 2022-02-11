@@ -114,7 +114,16 @@
           (throw (UnsupportedOperationException.))))
     
       #_(t/testing "multiple subscriptions"
-          (throw (UnsupportedOperationException.)))))
+          (throw (UnsupportedOperationException.))))
+
+    #_(t/testing "retry subscription"
+      (t/is (= (subscribe)
+               (-> nil
+                   ensure
+                   state
+                   failed-to-subscribe
+                   ensure
+                   decision)))))
 
   #_(t/testing "replace filter"
       (t/is (= (replace-filter)
