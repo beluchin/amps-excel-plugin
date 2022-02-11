@@ -144,10 +144,13 @@
                    decision))))
 
   #_(t/testing "do nothing"
-      ;; subscription is already in place and no message has yet come in
-      (t/is (nil? (-> (ensured-subscription-state)
+      (t/testing "qvns already ensured"
+        (throw (UnsupportedOperationException.)))
+
+      (t/testing "diff value-extractor from qvns already ensured"
+         (t/is (nil? (-> (ensured-subscription-state)
                       (ensure (qvns :value-extractor :value-extractor-2))
-                      decision)))))
+                      decision))))))
 
 (t/deftest remove-test 
   (t/testing "disconnect"
