@@ -9,6 +9,10 @@
 (defn- consume-value [x]
   (throw (UnsupportedOperationException.)))
 
+(defn- content-filter [qvns]
+  (andor/and (qvns/qvns-filter-expr qvns)
+             (qvns/msg-stream-filter-expr qvns)))
+
 (defn- disconnect []
   (sut/->Disconnect :uri))
 
@@ -21,10 +25,16 @@
 (defn- ensured-subscription-state []
   (-> nil ensure state subscribed))
 
+(declare qvns)
+(defn- failed-to-subscribe [state]
+  (let [qvns (qvns)]
+    (sut/failed-to-subscribe state
+                             (qvns/uri qvns)
+                             (qvns/topic qvns)
+                             (content-filter qvns))))
+
 (defn- handle-message [state]
   (throw (UnsupportedOperationException.)))
-
-(def ^:private state sut/state)
 
 (defn- qvns
   ([] {:callbacks       :callbacks
@@ -35,7 +45,8 @@
                          :filter-expr :msg-stream-filter-expr}})
   ([& {:as overrides}]
    (let [override-key->keys {:topic            [:msg-stream :topic]
-                             :qvns-filter-expr [:filter-expr]}]
+                             :qvns-filter-expr [:filter-expr]
+                             :value-extractor  [:value-extractor]}]
      (reduce (fn [m [k v]] (assoc-in m (get override-key->keys k [k]) v))
              (qvns)
              overrides))))
@@ -50,13 +61,14 @@
 (defn- single-subscription-subscribe-args
   ([]
    (let [qvns (qvns)]
-     {[(qvns/topic qvns) (andor/and (qvns/qvns-filter-expr qvns)
-                                    (qvns/msg-stream-filter-expr qvns))]
+     {[(qvns/topic qvns) (content-filter qvns)]
       [(qvns/callbacks qvns)]}))
   ([override x]
    (let [override->fn {:content-filter
                        (fn [[[[topic] callbacks]]] {[topic x] callbacks})}]
      ((override->fn override) (seq (single-subscription-subscribe-args))))))
+
+(def ^:private state sut/state)
 
 (defn- subscribe
   ([]
@@ -89,8 +101,14 @@
                        (ensure :qvns-filter-expr :qvns-filter-expr-2)
                        decision))))
 
-        #_(t/testing "diff value-extractor"
-          (throw (UnsupportedOperationException.)))
+        (t/testing "diff value-extractor"
+          (t/is (= (subscribe)
+                   (-> nil
+                       ensure
+                       state
+                       failed-to-subscribe
+                       (ensure :value-extractor :value-extractor-2)
+                       decision))))
 
         #_(t/testing "diff callbacks"
           (throw (UnsupportedOperationException.))))

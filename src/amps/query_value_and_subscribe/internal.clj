@@ -71,7 +71,7 @@
 
   returns the state+inactive-reason-consumer-coll")
 
-(defn failed-to-subscribe [state uri topic content-filter])
+(defn failed-to-subscribe [state uri topic content-filter] state)
 
 (def state first)
 

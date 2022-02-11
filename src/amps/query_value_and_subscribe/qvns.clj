@@ -16,3 +16,6 @@
 
 (defn topic [qvns]
   (get-in qvns [:msg-stream :topic]))
+
+(defn uri [qvns]
+  (get-in qvns [:msg-stream :uri]))
