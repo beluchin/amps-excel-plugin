@@ -65,7 +65,10 @@
       [(qvns/callbacks qvns)]}))
   ([override x]
    (let [override->fn {:content-filter
-                       (fn [[[[topic] callbacks]]] {[topic x] callbacks})}]
+                       (fn [[[[topic] callbacks]]] {[topic x] callbacks})
+
+                       :callbacks
+                       (fn [[topic+content-filter]] {topic+content-filter x})}]
      ((override->fn override) (seq (single-subscription-subscribe-args))))))
 
 (def ^:private state sut/state)
@@ -110,8 +113,14 @@
                        (ensure :value-extractor :value-extractor-2)
                        decision))))
 
-        #_(t/testing "diff callbacks"
-          (throw (UnsupportedOperationException.))))
+        (t/testing "diff callbacks"
+          (t/is (= (subscribe :callbacks #{:callbacks :callbacks-2})
+                   (-> nil
+                       ensure
+                       state
+                       failed-to-subscribe
+                       (ensure :callbacks :callbacks-2)
+                       decision)))))
     
       #_(t/testing "multiple subscriptions"
           (throw (UnsupportedOperationException.))))
