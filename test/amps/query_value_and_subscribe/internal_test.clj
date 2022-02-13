@@ -6,12 +6,17 @@
 
 (def ^:private decision sut/decision)
 
+(defn- callbacks []
+  (qvns/callbacks (qvns)))
+
 (defn- consume-value [x]
   (throw (UnsupportedOperationException.)))
 
-(defn- content-filter [qvns]
-  (andor/and (qvns/qvns-filter-expr qvns)
-             (qvns/msg-stream-filter-expr qvns)))
+(defn- content-filter
+  ([] (content-filter (qvns)))
+  ([qvns]
+   (andor/and (qvns/qvns-filter-expr qvns)
+              (qvns/msg-stream-filter-expr qvns))))
 
 (defn- disconnect []
   (sut/->Disconnect :uri))
@@ -122,17 +127,28 @@
                        (ensure :callbacks :callbacks-2)
                        decision)))))
     
-      #_(t/testing "multiple subscriptions"
-          (throw (UnsupportedOperationException.))))
+      (t/testing "multiple subscriptions"
+        (t/testing "diff topic"
+          (t/is (= (subscribe {[:topic (content-filter)] (callbacks)
+                               [:topic-2 (content-filter)] (callbacks)})
+                   (-> nil
+                       ensure
+                       state
+                       failed-to-subscribe
+                       (ensure :topic :topic-2)
+                       decision))))
+
+        #_(t/testing "diff msg stream filter"
+          (throw (UnsupportedOperationException.)))))
 
     #_(t/testing "retry subscription"
-      (t/is (= (subscribe)
-               (-> nil
-                   ensure
-                   state
-                   failed-to-subscribe
-                   ensure
-                   decision)))))
+        (t/is (= (subscribe)
+                 (-> nil
+                     ensure
+                     state
+                     failed-to-subscribe
+                     ensure
+                     decision)))))
 
   #_(t/testing "replace filter"
       (t/is (= (replace-filter)
@@ -157,9 +173,9 @@
         (throw (UnsupportedOperationException.)))
 
       (t/testing "diff value-extractor from qvns already ensured"
-         (t/is (nil? (-> (ensured-subscription-state)
-                      (ensure (qvns :value-extractor :value-extractor-2))
-                      decision))))))
+        (t/is (nil? (-> (ensured-subscription-state)
+                        (ensure (qvns :value-extractor :value-extractor-2))
+                        decision))))))
 
 (t/deftest remove-test 
   (t/testing "disconnect"
