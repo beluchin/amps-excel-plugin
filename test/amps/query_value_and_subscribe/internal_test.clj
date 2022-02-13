@@ -68,7 +68,7 @@
                        (fn [[[[topic] callbacks]]] {[topic x] callbacks})
 
                        :callbacks
-                       (fn [[topic+content-filter]] {topic+content-filter x})}]
+                       (fn [[[topic+content-filter]]] {topic+content-filter x})}]
      ((override->fn override) (seq (single-subscription-subscribe-args))))))
 
 (def ^:private state sut/state)
@@ -113,7 +113,7 @@
                        (ensure :value-extractor :value-extractor-2)
                        decision))))
 
-        #_(t/testing "diff callbacks"
+        (t/testing "diff callbacks"
           (t/is (= (subscribe :callbacks #{:callbacks :callbacks-2})
                    (-> nil
                        ensure

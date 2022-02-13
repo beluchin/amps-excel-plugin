@@ -25,7 +25,7 @@
        (conj (topic+content-filter->callback-set--diff-msg-stream
                state'
                msg-stream)
-             (topic+content-filter+callbacks--same-msg-stream
+             (topic+content-filter->callback-set--same-msg-stream
                state'
                msg-stream )))]))
 
