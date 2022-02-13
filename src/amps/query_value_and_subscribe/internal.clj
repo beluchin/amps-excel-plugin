@@ -9,21 +9,42 @@
 (defrecord Disconnect [uri])
 ;; when acting on this decision, the amps client needs to be closed 
 ;; should all the subscriptions fail
-(defrecord Subscribe [coll--map--topic+content-filter+callbacks])
+(defrecord Subscribe [topic+content-filter->callback-set])
 
 (defrecord ReplaceFilter [content-filter sub-id command-id])
 (defrecord Unsubscribe [command-id])
 ;; ---
 
+(declare topic+content-filter->callback-set--same-msg-stream
+         topic+content-filter->callback-set--diff-msg-stream)
 (defn- new-state+Subscribe [state qvns]
-  [(conj state qvns)
-   (->Subscribe [{:topic (qvns/topic qvns)
-                  :content-filter (andor/and (qvns/filter-expr qvns)
-                                             (qvns/msg-stream-filter-expr qvns))
-                  :callbacks (qvns/callbacks qvns)}])])
+  (let [state' ((fnil conj #{}) state qvns)
+        msg-stream (qvns/msg-stream qvns)]
+    [state'
+     (->Subscribe
+       (conj (topic+content-filter->callback-set--diff-msg-stream
+               state'
+               msg-stream)
+             (topic+content-filter+callbacks--same-msg-stream
+               state'
+               msg-stream )))]))
 
 (defn- subscribe? [state qvns]
   (not (contains? state qvns)))
+
+(defn- topic+content-filter->callback-set--same-msg-stream [qvns-coll msg-stream]
+  (let [qvns-coll' (filter #(#{msg-stream} (qvns/msg-stream %)) qvns-coll)]
+    [
+     ;; topic+content-filter
+     [(:topic msg-stream)
+      (andor/and (:filter-expr msg-stream)
+                 (apply andor/or (map qvns/qvns-filter-expr qvns-coll')))]
+
+     ;; callbacks
+     (into #{} (map qvns/callbacks qvns-coll'))]))
+
+(defn- topic+content-filter->callback-set--diff-msg-stream [qvns-coll msg-stream]
+  {})
 
 (defn consumed [state sub-id m]
   "returns state+ConsumeValue-coll")
@@ -50,10 +71,11 @@
 
   returns the state+inactive-reason-consumer-coll")
 
-(defn failed-to-subscribe [state uri topic content-filter])
+(defn failed-to-subscribe [state uri topic content-filter] state)
 
 (def state first)
 
 (defn remove [state qvns])
 
-(defn subscribed [state uri topic content-filter sub-id command-id])
+(defn subscribed [state uri topic content-filter sub-id command-id]
+  state)
