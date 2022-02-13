@@ -15,24 +15,30 @@
 (defrecord Unsubscribe [command-id])
 ;; ---
 
-(declare topic+content-filter->callback-set--same-msg-stream
+(defn add [state qvns]
+  (update state :all-qvns (fnil conj #{}) qvns))
+
+(defn new? [state qvns]
+  (not (contains? (:all-qvns state) qvns)))
+
+(declare topic+content-filter+callback-set--same-msg-stream
          topic+content-filter->callback-set--diff-msg-stream)
 (defn- new-state+Subscribe [state qvns]
-  (let [state' ((fnil conj #{}) state qvns)
+  (let [state' (add state qvns)
         msg-stream (qvns/msg-stream qvns)]
     [state'
      (->Subscribe
        (conj (topic+content-filter->callback-set--diff-msg-stream
                state'
                msg-stream)
-             (topic+content-filter->callback-set--same-msg-stream
+             (topic+content-filter+callback-set--same-msg-stream
                state'
-               msg-stream )))]))
+               msg-stream)))]))
 
 (defn- subscribe? [state qvns]
-  (not (contains? state qvns)))
+  (or (new? state qvns)))
 
-(defn- topic+content-filter->callback-set--same-msg-stream [qvns-coll msg-stream]
+(defn- topic+content-filter+callback-set--same-msg-stream [qvns-coll msg-stream]
   (let [qvns-coll' (filter #(#{msg-stream} (qvns/msg-stream %)) qvns-coll)]
     [
      ;; topic+content-filter
@@ -43,8 +49,14 @@
      ;; callbacks
      (into #{} (map qvns/callbacks qvns-coll'))]))
 
-(defn- topic+content-filter->callback-set--diff-msg-stream [qvns-coll msg-stream]
-  {})
+;; O(n^2) - consider an improvement
+(defn- topic+content-filter->callback-set--diff-msg-stream [qvns-seq msg-stream]
+  (let [msg-streams (->> qvns-seq
+                         (map qvns/msg-stream)
+                         (filter (partial not= msg-stream))
+                         ;; only those msg stream for the same uri
+                         (filter #{(:uri msg-stream)}))]
+    {}))
 
 (defn consumed [state sub-id m]
   "returns state+ConsumeValue-coll")
