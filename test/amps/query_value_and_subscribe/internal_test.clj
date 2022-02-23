@@ -170,7 +170,13 @@
 
   #_(t/testing "do nothing"
       (t/testing "qvns already ensured"
-        (throw (UnsupportedOperationException.)))
+        (t/testing "already subscribed"
+          (throw (UnsupportedOperationException.)))
+
+        (t/testing "waiting for result of subscription"
+          ;; this could be if the request to ensure is initiated
+          ;; on a different thread.
+          (throw (UnsupportedOperationException.))))
 
       (t/testing "diff value-extractor from qvns already ensured"
         (t/is (nil? (-> (ensured-subscription-state)
