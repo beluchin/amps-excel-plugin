@@ -15,48 +15,42 @@
 (defrecord Unsubscribe [command-id])
 ;; ---
 
-(defn add [state qvns]
-  (update state :all-qvns (fnil conj #{}) qvns))
+(defn- add [state qvns]
+  (update state :qvns-set (fnil conj #{}) qvns))
 
-(defn new? [state qvns]
+(defn- new? [state qvns]
   (not (contains? (:all-qvns state) qvns)))
 
-(declare topic+content-filter+callback-set--same-msg-stream
-         topic+content-filter->callback-set--diff-msg-stream)
-(defn- new-state+Subscribe [state qvns]
-  (let [state' (add state qvns)
-        msg-stream (qvns/msg-stream qvns)]
-    [state'
+(defn- new-state+Subscribe [state uri]
+  (let [msg-stream (qvns/msg-stream qvns)]
+    [state
      (->Subscribe
        (conj (topic+content-filter->callback-set--diff-msg-stream
-               state'
+               state
                msg-stream)
              (topic+content-filter+callback-set--same-msg-stream
-               state'
+               state
                msg-stream)))]))
 
 (defn- subscribe? [state qvns]
   (or (new? state qvns)))
 
-(defn- topic+content-filter+callback-set--same-msg-stream [qvns-coll msg-stream]
-  (let [qvns-coll' (filter #(#{msg-stream} (qvns/msg-stream %)) qvns-coll)]
-    [
-     ;; topic+content-filter
-     [(:topic msg-stream)
-      (andor/and (:filter-expr msg-stream)
-                 (apply andor/or (map qvns/qvns-filter-expr qvns-coll')))]
+(declare qvns-coll-to-subscribe)
+(defn- msg-stream->qvns-coll--to-subscribe
+  [state uri]
+  (let [qvns-coll (qvns-coll-to-subscribe state uri)]
+    (group-by qvns/msg-stream qvns-coll)))
 
-     ;; callbacks
-     (into #{} (map qvns/callbacks qvns-coll'))]))
+(defn- pending-subscription-result-qvns-coll [state uri])
 
-;; O(n^2) - consider an improvement
-(defn- topic+content-filter->callback-set--diff-msg-stream [qvns-seq msg-stream]
-  (let [msg-streams (->> qvns-seq
-                         (map qvns/msg-stream)
-                         (filter (partial not= msg-stream))
-                         ;; only those msg stream for the same uri
-                         (filter #{(:uri msg-stream)}))]
-    {}))
+(defn- qvns-coll [state uri]
+  (filter #(= uri (qvns/uri %)) (:all-qvns state)))
+
+(declare subscribed-qvns-coll)
+(defn- qvns-coll-to-subscribe [state uri]
+  (clojure.set/difference (qvns-coll state uri)
+                          (subscribed-qvns-coll state uri)
+                          (pending-subscription-result-qvns-coll state uri)))
 
 (defn consumed [state sub-id m]
   "returns state+ConsumeValue-coll")
@@ -68,13 +62,14 @@
 
 (defn ensure
   "may decide to make the initial subscription associated with other
-  qvns's on the same uri i.e. different topic or even same topic /
+  qvns's on the same uri i.e. different topic or even same topic but
   different content filter
 
   returns state+decision"
   [state qvns]
-  (cond
-    (subscribe? state qvns) (new-state+Subscribe state qvns)))
+  (let [state' (add state qvns)]
+    (cond
+      (subscribe? state' qvns) (new-state+Subscribe state' (qvns/uri qvns)))))
 
 (defn disconnected [state uri]
   "to be called when the client is disconnected outside of the process
